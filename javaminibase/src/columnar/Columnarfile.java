@@ -23,9 +23,17 @@ public class Columnarfile {
         heap file structure is that of a directory. We do have to figure out
         how to store and add stuff. Maybe using the DataPageInfo object in package heap
         or creating something similar will be useful
+
+        The way heap file are implemented there does not seems any use in specifying
+        the data type. Probably we should store that information in the metadata file
+
+        Metadata attributes:
+        1. Attribute type of each of the file
+
+        TODO: Look into and understand how we can store the metadata information
          */
 
-        
+
 
     }
 
