@@ -5,8 +5,15 @@ import diskmgr.*;
 import bufmgr.*;
 import global.*;
 import heap.*;
+import java.nio.charset.Charset;
 
-public class Columnarfile {
+interface  Filetype {
+    int TEMP = 0;
+    int ORDINARY = 1;
+
+}
+
+public class Columnarfile implements Filetype,  GlobalConst {
     static int numColumns;
     AttrType[] type;
     Heapfile[] columnFile;
@@ -16,23 +23,29 @@ public class Columnarfile {
     private     String 	 _fileName;
     private static int tempfilecount = 0;
 
-    private static String[] _convertToStrings(byte[][] byteStrings) {
+    private static String[] _convertToStrings(byte[] byteStrings) {
+        /*
         String[] data = new String[byteStrings.length];
         for (int i = 0; i < byteStrings.length; i++) {
             data[i] = new String(byteStrings[i], Charset.defaultCharset());
 
         }
         return data;
+        */
+        return new String(byteStrings).split("$");
     }
 
 
-    private static byte[][] _convertToBytes(String[] strings) {
+    private static byte[] _convertToBytes(String st) {
+        /*
         byte[][] data = new byte[strings.length][];
         for (int i = 0; i < strings.length; i++) {
             String string = strings[i];
             data[i] = string.getBytes(Charset.defaultCharset()); // you can chose charset
         }
         return data;
+        */
+        return st.getBytes();
     }
 
 
@@ -41,6 +54,9 @@ public class Columnarfile {
             throws HFException,
             HFBufMgrException,
             HFDiskMgrException,
+            InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            SpaceNotAvailableException,
             IOException{
         numColumns = totalColumns;
         type = attrType;
@@ -74,9 +90,9 @@ public class Columnarfile {
         // We are assuming that the table name will be provided we will not be creating
         // temporary tables right now. Maybe later we can add a clause for it as well
         // if it is required for running queries
-        _fileName = name + "." + 'hdr';
+        _fileName = name + "." + "hdr";
         _ftype = ORDINARY;
-        columnFile = Heapfile[totalColumns];
+        columnFile = new Heapfile[totalColumns];
 
         // The constructor gets run in two different cases.
         // In the first case, the file is new and the header page
@@ -108,17 +124,19 @@ public class Columnarfile {
             metaPage.init(_metaPageId, apage);
             PageId pageId = new PageId(INVALID_PAGE);
 
-            firstDirPage.setNextPage(pageId);
-            firstDirPage.setPrevPage(pageId);
+            metaPage.setNextPage(pageId);
+            metaPage.setPrevPage(pageId);
 
             //Initializing heap files for each of the column
             for (int i = 0; i < totalColumns; i++){
-                columnName = name + "." + String.valueOf(i);
+                String columnName = name + "." + String.valueOf(i);
                 columnFile[i] = new Heapfile(columnName);
+                /*
                 String[] metaInfo = new String[2];
-                metaInfo[0] = columnName;
-                metaInfo[1] = attrType[i].toString();
-                metaPage.insertRecord(_convertToBytes(metaInfo));
+                //metaInfo[0] = columnName;
+                metaInfo[1] = ;
+                */
+                metaPage.insertRecord(_convertToBytes(columnName + "$" + attrType[i].toString()));
             }
             unpinPage(_metaPageId, true /*dirty*/ );
         }
@@ -133,7 +151,8 @@ public class Columnarfile {
             pinPage(metaPageId, metaPage, false/*Rdisk*/);
             // Right now the assumption is that we are only storing as many tuples as the number of rows
             // We would need to update this if we want to store somothing else here as well
-            for (columnRid = metaPage.firstRecord(), i = 0;
+            int i = 0;
+            for (RID columnRid = metaPage.firstRecord();
                  columnRid != null;
                  columnRid = metaPage.nextRecord(columnRid), i++)
             {
@@ -158,18 +177,22 @@ public class Columnarfile {
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
+    /*
     public ValueClass insertTuple(byte[] tuplePtr){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
+    */
 
     public int getTupleCnt(){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
+    /*
+    // Commenting it to avoid build failures
     public TupleScan openTupleScan(){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
-
+    */
     public Scan openColumnScan(int columnNo){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
@@ -199,7 +222,7 @@ public class Columnarfile {
     }
 
 
-    // The following functions are copied from heap class and is something that should be done
+    // The following functions are copied from heap class and is something that should not be done
     // as it introduces code duplication but it should be fine for our purposes
 
     /**
