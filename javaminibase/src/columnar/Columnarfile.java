@@ -12,6 +12,8 @@ public class Columnarfile {
     Heapfile[] columnFile;
     PageId      _metaPageId;   // page number of header page
     int         _ftype;
+
+    pricate int tupleCount = 0;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private static int tempfilecount = 0;
@@ -146,19 +148,30 @@ public class Columnarfile {
     }
 
     public void deleteColumnarFile(){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+        //throw new java.lang.UnsupportedOperationException("Not supported yet.");
+        _file_deleted = true;
+
+        for (int i = 0; i < numColumns; i++){
+            columnFile[i].deleteFile();
+        }
     }
 
-    public TID insertTuple(byte[] tuplePtr){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public TID insertTuple(byte[] tuplePtr) throws SpaceNotAvailableException{
+        if(tupleptr.length >= MAX_SPACE)    {
+            throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
+        }
     }
 
     public ValueClass insertTuple(byte[] tuplePtr){
+        
+    }
+
+    public Tuple getTuple(TID tid){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
     public int getTupleCnt(){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+        return columnFile[0].getRecCnt();
     }
 
     public TupleScan openTupleScan(){
