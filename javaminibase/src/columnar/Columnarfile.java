@@ -162,10 +162,6 @@ public class Columnarfile {
         }
     }
 
-    public ValueClass insertTuple(byte[] tuplePtr){
-        
-    }
-
     public Tuple getTuple(TID tid){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
