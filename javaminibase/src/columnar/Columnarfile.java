@@ -160,6 +160,43 @@ public class Columnarfile {
         if(tupleptr.length >= MAX_SPACE)    {
             throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
         }
+
+        int i = 0;
+        int offset = 0; //The starting location of each column
+        TID tid = new TID();
+        tid.recordIDs = new RID[numColumns];
+        
+
+        
+        for (AttrType attr: type) {
+          tid.recordIDs[i] = new RID();
+          //scan each column type  
+          if (attr.attrType == AttrType.attrInteger) {
+            //insert type int
+            int intAttr = Convert.getIntValue(offset,tupleptr);
+            offset = offset + INTSIZE;
+            
+            byte[] intValue = new byte[INTSIZE];
+            Convert.setIntValue(intAttr, 0, intValue);
+            tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
+          }
+          if (attr.attrType == AttrType.attrString) {
+            //insert type String
+            String strAttr = Convert.getStrValue(offset,tupleptr,Size.STRINGSIZE);
+            offset = offset + Size.STRINGSIZE;
+            byte[] strValue = new byte[Size.STRINGSIZE];
+            Convert.setStrValue(strAttr, 0, strValue);
+            tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
+          }
+          
+          i++;
+        }
+        tid.numRIDs = i;
+        tid.pos = columnFile[0].RidToPos(tid.recordIDs[0]);
+        
+         
+        
+        return tid;
     }
 
     public Tuple getTuple(TID tid){
