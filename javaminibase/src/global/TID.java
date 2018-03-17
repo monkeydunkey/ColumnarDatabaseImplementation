@@ -64,6 +64,6 @@ public class TID extends java.lang.Object {
     }
 
     public void setRID(int column, RID recordId){
-        //todo set the RID of the given column
+        recordIDs[column] = recordId;
     }
 }
