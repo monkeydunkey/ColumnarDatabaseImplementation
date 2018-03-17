@@ -202,20 +202,27 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return columnFile[0].getRecCnt();
     }
 
-    public valueClass getValue(TID tid, column){
+    public valueClass getValue(TID tid, column)
+            throws InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            HFException,
+            HFDiskMgrException,
+            HFBufMgrException,
+            Exception
+    {
         Tuple tupleArr = columnFile[column].getRecord(tid.recordIDs[column]);
         valueClass colVal;
         switch (type[column].toString()){
-            case "attrString":
+            case AttrType.attrString:
                 colVal = new ValueStrClass(tupleArr.getTupleByteArray());
                 break;
-            case "attrInteger":
+            case AttrType.attrInteger:
                 colVal = new ValueIntClass(tupleArr.getTupleByteArray());
                 break;
-            case "attrReal":
+            case AttrType.attrReal:
                 colVal = new ValueRealClass(tupleArr.getTupleByteArray());
                 break;
-            case "attrNull":
+            case AttrType.attrNull:
                 colVal = new ValueNullClass(tupleArr.getTupleByteArray());
                 break;
             default:
@@ -233,12 +240,56 @@ public class Columnarfile implements Filetype,  GlobalConst {
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
-    public boolean updateTuple(TID tid, Tuple newtuple){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean updateTuple(TID tid, Tuple newtuple)
+            throws InvalidSlotNumberException,
+            InvalidUpdateException,
+            InvalidTupleSizeException,
+            HFException,
+            HFDiskMgrException,
+            HFBufMgrException,
+            Exception
+    {
+        byte[] arr;
+        ValueClass updateValue;
+        boolean retValue = true;
+        //int offset = 0; //The starting location of each column
+
+        for (int i = 0; i < numColumns; i++) {
+            AttrType attr = type[i];
+            switch (attr){
+                case AttrType.attrString:
+                    updateValue = new ValueStrClass(newtuple.getStrFld(i));
+                    break;
+                case AttrType.attrInteger:
+                    updateValue = new ValueIntClass(newtuple.getIntFld(i));
+                    break;
+                case AttrType.attrReal:
+                    updateValue = new ValueRealClass(newtuple.getFloFld(i));
+                    break;
+                case AttrType.attrNull:
+                    //Tuple class just provides get functions for int, float and string. Dont know about NULLS or symbols
+                    updateValue = new ValueNullClass(newtuple.getFloFld(i));
+                    break;
+                default:
+                    throw new Exception("Unexpected AttrType" + type[column].toString());
+            }
+            arr = updateValue.getByteArr();
+            retValue &= updateColumnofTuple(tid, new Tuple(arr, 0, arr.length), i);
+        }
+        return retValue
     }
 
-    public boolean updateColumnofTuple(TID tid, Tuple newtuple, int column){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean updateColumnofTuple(TID tid, Tuple newtuple, int column)
+            throws InvalidSlotNumberException,
+            InvalidUpdateException,
+            InvalidTupleSizeException,
+            HFException,
+            HFDiskMgrException,
+            HFBufMgrException,
+            Exception
+    {
+        return columnFile[column].updateRecord(tid.recordIDs[column], newtuple)
+
     }
 
     public boolean createBTreeIndex(int column){
