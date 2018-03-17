@@ -194,15 +194,35 @@ public class Columnarfile implements Filetype,  GlobalConst {
             outputStream.write( tupleArr.getTupleByteArray());
         }
         return new Tuple(outputStream.toByteArray(), 0, totalLength);
-
-
     }
+
     public int getTupleCnt(){
         //As all the heap files containing the different columns should have the same row count, getting
         // row count from any one should be enough
         return columnFile[0].getRecCnt();
     }
 
+    public valueClass getValue(TID tid, column){
+        Tuple tupleArr = columnFile[column].getRecord(tid.recordIDs[column]);
+        valueClass colVal;
+        switch (type[column].toString()){
+            case "attrString":
+                colVal = new ValueStrClass(tupleArr.getTupleByteArray());
+                break;
+            case "attrInteger":
+                colVal = new ValueIntClass(tupleArr.getTupleByteArray());
+                break;
+            case "attrReal":
+                colVal = new ValueRealClass(tupleArr.getTupleByteArray());
+                break;
+            case "attrNull":
+                colVal = new ValueNullClass(tupleArr.getTupleByteArray());
+                break;
+            default:
+                throw new Exception("Unexpected AttrType" + type[column].toString());
+            }
+        return colVal;
+    }
     /*
     // Commenting it to avoid build failures
     public TupleScan openTupleScan(){
