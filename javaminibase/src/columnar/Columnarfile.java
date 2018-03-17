@@ -6,7 +6,7 @@ import bufmgr.*;
 import global.*;
 import heap.*;
 import java.nio.charset.Charset;
-
+import java.io.OutputStream.ByteArrayOutputStream;
 interface  Filetype {
     int TEMP = 0;
     int ORDINARY = 1;
@@ -183,8 +183,24 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
     */
 
+    public Tuple getTuple(TID tid){
+        //Tuple[] tupleArr = new Tuple[numColumns];
+        Tuple tupleArr;
+        int totalLength = 0;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        for (int i = 0; i < numColumns; i++) {
+            tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
+            totalLength += tupleArr.getLength();
+            outputStream.write( tupleArr.getTupleByteArray());
+        }
+        return new Tuple(outputStream.toByteArray(), 0, totalLength);
+
+
+    }
     public int getTupleCnt(){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+        //As all the heap files containing the different columns should have the same row count, getting
+        // row count from any one should be enough
+        return columnFile[0].getRecCnt();
     }
 
     /*
