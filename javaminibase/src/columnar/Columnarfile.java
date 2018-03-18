@@ -5,6 +5,10 @@ import diskmgr.*;
 import bufmgr.*;
 import global.*;
 import heap.*;
+
+
+public class Columnarfile {
+
 import java.nio.charset.Charset;
 import java.io.OutputStream.ByteArrayOutputStream;
 interface  Filetype {
@@ -14,38 +18,50 @@ interface  Filetype {
 }
 
 public class Columnarfile implements Filetype,  GlobalConst {
+
     static int numColumns;
     AttrType[] type;
     Heapfile[] columnFile;
     PageId      _metaPageId;   // page number of header page
     int         _ftype;
+    pricate int tupleCount = 0;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private static int tempfilecount = 0;
 
+
     private static String[] _convertToStrings(byte[] byteStrings) {
-        /*
+        
+
         String[] data = new String[byteStrings.length];
         for (int i = 0; i < byteStrings.length; i++) {
             data[i] = new String(byteStrings[i], Charset.defaultCharset());
 
         }
         return data;
-        */
+
+    }
+
+
+    private static byte[][] _convertToBytes(String[] strings) {
+
+
         return new String(byteStrings).split("$");
     }
 
 
     private static byte[] _convertToBytes(String st) {
-        /*
+
+
         byte[][] data = new byte[strings.length][];
         for (int i = 0; i < strings.length; i++) {
             String string = strings[i];
             data[i] = string.getBytes(Charset.defaultCharset()); // you can chose charset
         }
         return data;
-        */
+
         return st.getBytes();
+
     }
 
 
@@ -57,31 +73,12 @@ public class Columnarfile implements Filetype,  GlobalConst {
             InvalidSlotNumberException,
             InvalidTupleSizeException,
             SpaceNotAvailableException,
+
             IOException{
         numColumns = totalColumns;
         type = attrType;
 
-        /*
-        The way the initialization should work is that for each of the of the
-        columns we will have a separate heap file and we will use that heap
-        file to manage data insertion, deletion and updates.
-
-        The meta data file will also be stored in terms of a heap file. As the
-        heap file structure is that of a directory. We do have to figure out
-        how to store and add stuff. Maybe using the DataPageInfo object in package heap
-        or creating something similar will be useful
-
-        The way heap file are implemented there does not seems any use in specifying
-        the data type. Probably we should store that information in the metadata file
-
-        Metadata attributes:
-        1. Attribute type of each of the file
-        2. name of the each of the columns which will be tablename.columnId
-
-        The name of the column should be enough to reference the heap file stored for that
-        column in memory
-
-         */
+       
 
         // Copying them directly from the heap file constructor.
         _file_deleted = true;
@@ -90,9 +87,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
         // We are assuming that the table name will be provided we will not be creating
         // temporary tables right now. Maybe later we can add a clause for it as well
         // if it is required for running queries
+
         _fileName = name + "." + "hdr";
         _ftype = ORDINARY;
         columnFile = new Heapfile[totalColumns];
+
 
         // The constructor gets run in two different cases.
         // In the first case, the file is new and the header page
@@ -137,6 +136,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 metaInfo[1] = ;
                 */
                 metaPage.insertRecord(_convertToBytes(columnName + "$" + attrType[i].toString()));
+
             }
             unpinPage(_metaPageId, true /*dirty*/ );
         }
@@ -151,6 +151,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
             pinPage(metaPageId, metaPage, false/*Rdisk*/);
             // Right now the assumption is that we are only storing as many tuples as the number of rows
             // We would need to update this if we want to store somothing else here as well
+
             int i = 0;
             for (RID columnRid = metaPage.firstRecord();
                  columnRid != null;
@@ -170,18 +171,58 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
     public void deleteColumnarFile(){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+        
+        _file_deleted = true;
+
+        for (int i = 0; i < numColumns; i++){
+            columnFile[i].deleteFile();
+        }
     }
 
-    public TID insertTuple(byte[] tuplePtr){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public TID insertTuple(byte[] tuplePtr) throws SpaceNotAvailableException{
+        if(tupleptr.length >= MAX_SPACE)    {
+            throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
+        }
+
+        int i = 0;
+        int offset = 0; //The starting location of each column
+        TID tid = new TID();
+        tid.recordIDs = new RID[numColumns];
+        
+        for (AttrType attr: type) {
+          tid.recordIDs[i] = new RID();
+          //scan each column type  
+          if (attr.attrType == AttrType.attrInteger) {
+            //insert type int
+            int intAttr = Convert.getIntValue(offset,tupleptr);
+            offset = offset + INTSIZE;
+            
+            byte[] intValue = new byte[INTSIZE];
+            Convert.setIntValue(intAttr, 0, intValue);
+            tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
+          }
+          if (attr.attrType == AttrType.attrString) {
+            //insert type String
+            String strAttr = Convert.getStrValue(offset,tupleptr,Size.STRINGSIZE);
+            offset = offset + Size.STRINGSIZE;
+
+            byte[] strValue = new byte[Size.STRINGSIZE];
+            Convert.setStrValue(strAttr, 0, strValue);
+            tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
+          }
+          
+          i++;
+        }
+
+        tid.numRIDs = i;
+        tid.pos = columnFile[0].RidToPos(tid.recordIDs[0]);
+        return tid;
     }
 
-    /*
-    public ValueClass insertTuple(byte[] tuplePtr){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
-    }
-    */
+
+
+
+
 
     public Tuple getTuple(TID tid){
         //Tuple[] tupleArr = new Tuple[numColumns];
@@ -197,18 +238,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
 
     }
-    public int getTupleCnt(){
-        //As all the heap files containing the different columns should have the same row count, getting
-        // row count from any one should be enough
-        return columnFile[0].getRecCnt();
-    }
 
-    /*
-    // Commenting it to avoid build failures
-    public TupleScan openTupleScan(){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
-    }
-    */
+
     public Scan openColumnScan(int columnNo){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
@@ -238,7 +269,9 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
 
+
     // The following functions are copied from heap class and is something that should not be done
+
     // as it introduces code duplication but it should be fine for our purposes
 
     /**
