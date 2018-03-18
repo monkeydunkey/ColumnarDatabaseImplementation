@@ -166,8 +166,6 @@ public class Columnarfile {
         TID tid = new TID();
         tid.recordIDs = new RID[numColumns];
         
-
-        
         for (AttrType attr: type) {
           tid.recordIDs[i] = new RID();
           //scan each column type  
@@ -184,6 +182,7 @@ public class Columnarfile {
             //insert type String
             String strAttr = Convert.getStrValue(offset,tupleptr,Size.STRINGSIZE);
             offset = offset + Size.STRINGSIZE;
+
             byte[] strValue = new byte[Size.STRINGSIZE];
             Convert.setStrValue(strAttr, 0, strValue);
             tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
@@ -191,11 +190,9 @@ public class Columnarfile {
           
           i++;
         }
+
         tid.numRIDs = i;
         tid.pos = columnFile[0].RidToPos(tid.recordIDs[0]);
-        
-         
-        
         return tid;
     }
 
