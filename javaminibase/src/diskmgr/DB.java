@@ -5,6 +5,7 @@ package diskmgr;
 import java.io.*;
 import bufmgr.*;
 import global.*;
+import diskmgr.pcounter;
 
 public class DB implements GlobalConst {
 
@@ -153,7 +154,8 @@ public class DB implements GlobalConst {
     catch (IOException e) {
       throw new FileIOException(e, "DB file I/O error");
     }
-    
+    // NEW - Assuming that no exceptions occur, increment the number of pages read by one
+    pcounter.readIncrement();
   }
   
   /** Write the contents in a page object to the specified page.
@@ -183,7 +185,8 @@ public class DB implements GlobalConst {
     catch (IOException e) {
       throw new FileIOException(e, "DB file I/O error");
     }
-    
+    // NEW - Assuming that no exceptions occur, increment the number of pages wtitten by one
+    pcounter.writeIncrement();
   }
   
   /** Allocate a set of pages where the run size is taken to be 1 by default.
