@@ -8,7 +8,7 @@
 #
 #
 
-JVM_HOME_LOCATION="/usr/lib/jvm/java-99-oracle"
+#JVM_HOME_LOCATION="/usr/lib/jvm/java-99-oracle"
 
 ensure_vars_are_set_or_exit(){
 # exit the script if someone forgets to set the JVM_HOME_LOCATION VAR
