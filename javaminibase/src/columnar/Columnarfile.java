@@ -6,7 +6,10 @@ import bufmgr.*;
 import global.*;
 import heap.*;
 import java.nio.charset.Charset;
-import java.io.OutputStream.ByteArrayOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
 
 
 interface  Filetype {
@@ -26,6 +29,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private static int tempfilecount = 0;
+    private static int INTSIZE = 4;
 
 
     private static String[] _convertToStrings(byte[] byteStrings) {
