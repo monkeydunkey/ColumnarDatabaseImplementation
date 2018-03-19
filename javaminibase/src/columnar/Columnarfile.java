@@ -224,9 +224,6 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
 
 
-
-
-
     public Tuple getTuple(TID tid){
         //Tuple[] tupleArr = new Tuple[numColumns];
         try {

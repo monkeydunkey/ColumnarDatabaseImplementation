@@ -33,6 +33,8 @@ public class BatchInsert extends TestDriver implements GlobalConst{
         System.out.println("NUMCOLUMNS: " + argv[3]);
 
         int numcolumns = Integer.parseInt(argv[3]);
+        //Database must exist
+        String dbpath = argv[1];
 
         AttrType[] type = new AttrType[numcolumns];
 
@@ -119,7 +121,7 @@ public class BatchInsert extends TestDriver implements GlobalConst{
                     if(attr.attrType == AttrType.attrInteger)
                     {
                         Convert.setIntValue(Integer.parseInt(column), offset, tupledata);
-                        offset = offset + 4;
+                        offset = offset + Size.INTSIZE;
                     }
                     else if (attr.attrType == AttrType.attrString)
                     {
