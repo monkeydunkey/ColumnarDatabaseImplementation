@@ -47,7 +47,7 @@ public class TupleScan {
      */
     boolean position(TID tid){
 	    for (int i = 0; i < numColumns; i++) {
-	    	if !(scanList[i].position(tid.recordIDs[i]))
+	    	if (!(scanList[i].position(tid.recordIDs[i])))
 	            return false;
 	    }
 	    return true;
