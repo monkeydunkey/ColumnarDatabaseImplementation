@@ -32,7 +32,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     private static int INTSIZE = 4;
 
 
-    private static String[] _convertToStrings(byte[] byteStrings) {
+    private static String[] _convertToStrings(byte[][] byteStrings) {
         
 
         String[] data = new String[byteStrings.length];
@@ -174,7 +174,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
     public TID insertTuple(byte[] tuplePtr) throws SpaceNotAvailableException{
-        if(tupleptr.length >= MAX_SPACE)    {
+        if(tuplePtr.length >= MAX_SPACE)    {
             throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
         }
 
@@ -188,16 +188,16 @@ public class Columnarfile implements Filetype,  GlobalConst {
           //scan each column type  
           if (attr.attrType == AttrType.attrInteger) {
             //insert type int
-            int intAttr = Convert.getIntValue(offset,tupleptr);
-            offset = offset + INTSIZE;
+            int intAttr = Convert.getIntValue(offset,tuplePtr);
+            offset = offset + Size.INTSIZE;
             
-            byte[] intValue = new byte[INTSIZE];
+            byte[] intValue = new byte[Size.INTSIZE];
             Convert.setIntValue(intAttr, 0, intValue);
             tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
           }
           if (attr.attrType == AttrType.attrString) {
             //insert type String
-            String strAttr = Convert.getStrValue(offset,tupleptr,Size.STRINGSIZE);
+            String strAttr = Convert.getStrValue(offset,tuplePtr,Size.STRINGSIZE);
             offset = offset + Size.STRINGSIZE;
 
             byte[] strValue = new byte[Size.STRINGSIZE];
@@ -209,7 +209,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
 
         tid.numRIDs = i;
-        tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
+        tid.position = tid.recordIDs[0]; //?
         return tid;
     }
     
