@@ -5,13 +5,12 @@ import diskmgr.*;
 import bufmgr.*;
 import global.*;
 import heap.*;
+
+
+public class Columnarfile {
+
 import java.nio.charset.Charset;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
-
-
+import java.io.OutputStream.ByteArrayOutputStream;
 interface  Filetype {
     int TEMP = 0;
     int ORDINARY = 1;
@@ -20,19 +19,18 @@ interface  Filetype {
 
 public class Columnarfile implements Filetype,  GlobalConst {
 
-    public static int numColumns;
-    public AttrType[] type;
-    public Heapfile[] columnFile;
-    public PageId      _metaPageId;   // page number of header page
-    public int         _ftype;
-    private int tupleCount = 0;
+    static int numColumns;
+    AttrType[] type;
+    Heapfile[] columnFile;
+    PageId      _metaPageId;   // page number of header page
+    int         _ftype;
+    pricate int tupleCount = 0;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private static int tempfilecount = 0;
-    private static int INTSIZE = 4;
 
 
-    private static String[] _convertToStrings(byte[][] byteStrings) {
+    private static String[] _convertToStrings(byte[] byteStrings) {
         
 
         String[] data = new String[byteStrings.length];
@@ -48,6 +46,13 @@ public class Columnarfile implements Filetype,  GlobalConst {
     private static byte[][] _convertToBytes(String[] strings) {
 
 
+        return new String(byteStrings).split("$");
+    }
+
+
+    private static byte[] _convertToBytes(String st) {
+
+
         byte[][] data = new byte[strings.length][];
         for (int i = 0; i < strings.length; i++) {
             String string = strings[i];
@@ -55,6 +60,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
         return data;
 
+        return st.getBytes();
 
     }
 
@@ -174,13 +180,13 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
     public TID insertTuple(byte[] tuplePtr) throws SpaceNotAvailableException{
-        if(tuplePtr.length >= MAX_SPACE)    {
+        if(tupleptr.length >= MAX_SPACE)    {
             throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
         }
 
         int i = 0;
         int offset = 0; //The starting location of each column
-        TID tid = new TID(numColumns);
+        TID tid = new TID();
         tid.recordIDs = new RID[numColumns];
         
         for (AttrType attr: type) {
@@ -188,16 +194,16 @@ public class Columnarfile implements Filetype,  GlobalConst {
           //scan each column type  
           if (attr.attrType == AttrType.attrInteger) {
             //insert type int
-            int intAttr = Convert.getIntValue(offset,tuplePtr);
-            offset = offset + Size.INTSIZE;
+            int intAttr = Convert.getIntValue(offset,tupleptr);
+            offset = offset + INTSIZE;
             
-            byte[] intValue = new byte[Size.INTSIZE];
+            byte[] intValue = new byte[INTSIZE];
             Convert.setIntValue(intAttr, 0, intValue);
             tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
           }
           if (attr.attrType == AttrType.attrString) {
             //insert type String
-            String strAttr = Convert.getStrValue(offset,tuplePtr,Size.STRINGSIZE);
+            String strAttr = Convert.getStrValue(offset,tupleptr,Size.STRINGSIZE);
             offset = offset + Size.STRINGSIZE;
 
             byte[] strValue = new byte[Size.STRINGSIZE];
@@ -209,22 +215,14 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
 
         tid.numRIDs = i;
-        tid.position = tid.recordIDs[0]; //?
+        tid.pos = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
-    
-    /** Initiate a tuple sequential scan on Columnar File.
-     * @exception InvalidTupleSizeException Invalid tuple size
-     * @exception IOException I/O errors
-     *
-     */
-    public TupleScan openTupleScan() 
-      throws InvalidTupleSizeException,
-  	   IOException
-      {
-        TupleScan tpScan = new TupleScan(this);
-        return tpScan;
-      }
+
+
+
+
+
 
     public Tuple getTuple(TID tid){
         //Tuple[] tupleArr = new Tuple[numColumns];

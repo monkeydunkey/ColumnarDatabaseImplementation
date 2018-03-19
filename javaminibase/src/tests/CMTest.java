@@ -121,29 +121,6 @@ class CMDriver extends TestDriver implements GlobalConst {
     }
 
     protected boolean test2() {
-    	System.out.println("\n  Test 2: Creating a Tuple Scan Object on columnar file\n");
-        boolean status = OK;
-        RID rid = new RID();
-        Columnarfile f = null;
-
-        System.out.println("  - Creating a columnar file\n");
-        try {
-            AttrType[] attrTypes = new AttrType[2];
-            attrTypes[0] = new AttrType(1);
-            attrTypes[1] = new AttrType(1);
-            f = new Columnarfile("test_file_2", 2, attrTypes);
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("*** Could not create a columnar file\n");
-            e.printStackTrace();
-        }
-
-        if (status == OK && SystemDefs.JavabaseBM.getNumUnpinnedBuffers()
-                != SystemDefs.JavabaseBM.getNumBuffers()) {
-            System.err.println("*** The heap file has left pages pinned\n");
-            status = FAIL;
-        }
-        
         return true;
     }
 

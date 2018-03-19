@@ -1,6 +1,6 @@
 /* File Tuple.java */
 
-package columnar;
+package heap;
 
 import java.io.*;
 import java.lang.*;
