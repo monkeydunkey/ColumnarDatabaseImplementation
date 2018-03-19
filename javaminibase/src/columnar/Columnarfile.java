@@ -20,11 +20,11 @@ interface  Filetype {
 
 public class Columnarfile implements Filetype,  GlobalConst {
 
-    static int numColumns;
-    AttrType[] type;
-    Heapfile[] columnFile;
-    PageId      _metaPageId;   // page number of header page
-    int         _ftype;
+    public static int numColumns;
+    public AttrType[] type;
+    public Heapfile[] columnFile;
+    public PageId      _metaPageId;   // page number of header page
+    public int         _ftype;
     private int tupleCount = 0;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
