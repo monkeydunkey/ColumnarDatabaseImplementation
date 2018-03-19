@@ -135,11 +135,9 @@ private boolean FAIL = false;
 			}
 
 			System.out.println("Insertion done!");
-			System.out.println("Disk read count: "+(pcounter.rcounter - readcount)+" Disk write count: "+(pcounter.wcounter-writecount));
+			System.out.println("Disk read count: "+(pcounter.rcounter - readcount));
+			System.out.println("Disk write count: "+(pcounter.wcounter - writecount));
 			
-			SystemDefs.JavabaseBM.resetAllPinCount();
-			SystemDefs.JavabaseBM.flushAllPages();
-			SystemDefs.JavabaseDB.closeDB();
 		} 
 
 		catch (Exception e){
