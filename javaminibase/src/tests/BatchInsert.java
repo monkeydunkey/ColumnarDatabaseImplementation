@@ -79,16 +79,15 @@ private boolean FAIL = false;
 					//Parse string(length) attribute
 					type[i] = new AttrType(AttrType.attrString);
 					
-					StringTokenizer temp = new StringTokenizer(tokentype);
+					StringTokenizer temp1 = new StringTokenizer(tokentype);
 					
 					temp1.nextToken("(");
-					String dummy = temp.nextToken("(");
-					temp = null; 
-					temp =	new StringTokenizer(dummy);
-					String dummy1 = temp.nextToken(")"); 
-					Size.STRINGSIZE = Integer.parseInt(dummy1);
-
-					System.out.println("size: "+ Size.STRINGSIZE);
+					// dummy is the "25)" part
+					String dummy = temp1.nextToken("(");
+					temp1 = null; 
+					temp1 =	new StringTokenizer(dummy);
+					String stringlength = temp1.nextToken(")"); 
+					Size.STRINGSIZE = Integer.parseInt(stringlength);
 					tuplelength = tuplelength + Size.STRINGSIZE;
 				}
 				i++;		
