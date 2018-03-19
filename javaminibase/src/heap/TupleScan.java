@@ -1,14 +1,25 @@
 package heap;
 
 import global.TID;
+import 
 
 public class TupleScan {
+      
+    public TupleScan(Columnarfile cf) throws InvalidTupleSizeException, IOException
+    {
+        Scan[] scanList = new Scan[numColumns];
+        for (int i=0; i< numColumns; i++) {
+            scanList[i] = columnFile[i].openScan();
+        }
+    }
 
     /**
      * Closes the TupleScan object
      */
     void closetuplescan(){
-        //todo
+        for (int i = 0; i < numColumns; i++) {
+            scanList[i].closeScan();
+        }
     }
 
     /**
@@ -16,10 +27,18 @@ public class TupleScan {
      * @param tid
      * @return
      */
-    Tuple getNext(TID tid){
-        //todo
-        return null;
-    }
+    Tuple getNext(TID tid) throws InvalidTupleSizeException, IOException
+    {
+        Tuple tupleArr;
+        int totalLength = 0;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        for (int i = 0; i < numColumns; i++) {
+            tupleArr = this.columnFile[i].getNext(tid.recordIDs[i]);
+            totalLength += tupleArr.getLength();
+            outputStream.write( tupleArr.getTupleByteArray());
+        }
+        return new Tuple(outputStream.toByteArray(), 0, totalLength);
+   }
 
     /**
      * Position all scan cursors to the records with the given rids
@@ -27,7 +46,10 @@ public class TupleScan {
      * @return
      */
     boolean position(TID tid){
-        //todo
-        return false;
+	    for (int i = 0; i < numColumns; i++) {
+	    	if !(scanList[i].position(tid.recordIDs[i]))
+	            return false;
+	    }
+	    return true;
     }
 }
