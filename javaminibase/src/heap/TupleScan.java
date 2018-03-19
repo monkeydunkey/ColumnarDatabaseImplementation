@@ -1,7 +1,7 @@
 package heap;
 
 import global.TID;
-import columnar.ColumnarFile;
+import columnar.Columnarfile;
 import columnar.Scan;
 import columnar.Tuple;
 import java.io.*;
