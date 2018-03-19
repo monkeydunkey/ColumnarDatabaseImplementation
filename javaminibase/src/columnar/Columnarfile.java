@@ -41,7 +41,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
 
-    private static byte[][] _convertToBytes(String[] strings) {}
+    private static byte[][] _convertToBytes(String[] strings) {
 
 
         byte[][] data = new byte[strings.length][];
