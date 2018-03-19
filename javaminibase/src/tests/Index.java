@@ -25,14 +25,19 @@ public class Index extends TestDriver implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void main( String argv[] ) {
+    public static void main( String[] args ) {
         pcounter.initialize(); // Initializes read & write counters to 0
 
-        String filePath = "./";
-        System.out.println( "COLUMNDBNAME: " + argv[0] ); // Name of DB previously inserted
-        System.out.println( "COLUMNARFILE: " + argv[1] );
-        System.out.println( "COLUMNNAME: " + argv[2] );
-        System.out.println( "INDEXTYPE: " + argv[3] );
+        String colDBName = args[0];
+        String colFile = args[1];
+        String colName = args[2];
+        String ixType = args[3];
+
+        //String filePath = "./";
+        System.out.println( "COLUMNDBNAME: " + args[0] ); // Name of DB previously inserted?
+        System.out.println( "COLUMNARFILE: " + args[1] );
+        System.out.println( "COLUMNNAME: " + args[2] );
+        System.out.println( "INDEXTYPE: " + args[3] );
 
         System.out.println( "Running index tests..." );
 
@@ -44,5 +49,12 @@ public class Index extends TestDriver implements GlobalConst {
         }
 
         // TODO - Implement rest of program
+        /*
+         * Logic
+         * Use COLUMNDBNAME to lookup the database (e.g.colDB1)
+         * Use COLUMNARFILENAME 
+         * Use COLUMNNAME to lookup attribute
+         * Use INDEX to select how column in indexed
+         */
     }
 }
