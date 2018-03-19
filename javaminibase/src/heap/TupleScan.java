@@ -2,6 +2,7 @@ package heap;
 
 import global.TID;
 import columnar.*;
+import java.io.*;
 
 public class TupleScan {
     
