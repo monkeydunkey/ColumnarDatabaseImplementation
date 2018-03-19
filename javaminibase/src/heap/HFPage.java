@@ -88,8 +88,7 @@ public class HFPage extends Page
      */
 
     public HFPage(Page page) {
-
-
+        data = page.getpage();
     }
 
     /**
