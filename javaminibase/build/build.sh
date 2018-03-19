@@ -26,12 +26,14 @@ echo "copying all make files"
 
 cp ./makefiles/Makefile ../src
 cp ./makefiles/btree/Makefile ../src/btree
+cp ./makefiles/chainexception/Makefile ../src/chainexception
 cp ./makefiles/bufmgr/Makefile ../src/bufmgr
 cp ./makefiles/catalog/Makefile ../src/catalog
 cp ./makefiles/diskmgr/Makefile ../src/diskmgr
 cp ./makefiles/global/Makefile ../src/global
 cp ./makefiles/heap/Makefile ../src/heap
 cp ./makefiles/index/Makefile ../src/index
+cp ./makefiles/iterator/Makefile ../src/iterator
 cp ./makefiles/tests/Makefile ../src/tests
 }
 
