@@ -8,10 +8,12 @@ import java.io.*;
 
 public class TupleScan {
     
-	public Scan[] scanList;
+	private Scan[] scanList;
+	private ColumnarFile tempClmnFile;
 	
     public TupleScan(Columnarfile cf) throws InvalidTupleSizeException, IOException
     {
+    	tempClmnFile = cf;
         scanList = new Scan[numColumns];
         for (int i=0; i < numColumns; i++) {
             scanList[i] = cf.columnFile[i].openScan();
@@ -38,7 +40,7 @@ public class TupleScan {
         int totalLength = 0;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         for (int i = 0; i < numColumns; i++) {
-            tupleArr = this.columnFile[i].getNext(tid.recordIDs[i]);
+            tupleArr = tempClmnFile.columnFile[i].getNext(tid.recordIDs[i]);
             totalLength += tupleArr.getLength();
             outputStream.write( tupleArr.getTupleByteArray());
         }
