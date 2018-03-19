@@ -1,4 +1,4 @@
-package heap;
+package columnar;
 
 
 /** File DataPageInfo.java */
