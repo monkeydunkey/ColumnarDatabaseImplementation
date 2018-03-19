@@ -4,11 +4,13 @@ import global.TID;
 import columnar.*;
 
 public class TupleScan {
-      
+    
+	public Scan[] scanList;
+	
     public TupleScan(Columnarfile cf) throws InvalidTupleSizeException, IOException
     {
-        Scan[] scanList = new Scan[numColumns];
-        for (int i=0; i< numColumns; i++) {
+        scanList = new Scan[numColumns];
+        for (int i=0; i < numColumns; i++) {
             scanList[i] = cf.columnFile[i].openScan();
         }
     }
@@ -47,7 +49,7 @@ public class TupleScan {
      */
     boolean position(TID tid){
 	    for (int i = 0; i < numColumns; i++) {
-	    	if (!(scanList[i].position(tid.recordIDs[i])))
+	    	if (scanList[i].position(tid.recordIDs[i]) == false)
 	            return false;
 	    }
 	    return true;

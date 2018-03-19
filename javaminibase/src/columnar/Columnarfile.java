@@ -218,11 +218,19 @@ public class Columnarfile implements Filetype,  GlobalConst {
         tid.pos = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
-
-
-
-
-
+    
+    /** Initiate a tuple sequential scan on Columnar File.
+     * @exception InvalidTupleSizeException Invalid tuple size
+     * @exception IOException I/O errors
+     *
+     */
+    public TupleScan openTupleScan() 
+      throws InvalidTupleSizeException,
+  	   IOException
+      {
+        TupleScan tpScan = new TupleScan(this);
+        return tpScan;
+      }
 
     public Tuple getTuple(TID tid){
         //Tuple[] tupleArr = new Tuple[numColumns];
