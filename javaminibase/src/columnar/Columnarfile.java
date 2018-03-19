@@ -5,12 +5,12 @@ import diskmgr.*;
 import bufmgr.*;
 import global.*;
 import heap.*;
-
+import java.nio.charset.Charset;
+import java.io.OutputStream.ByteArrayOutputStream;
 
 public class Columnarfile {
 
-import java.nio.charset.Charset;
-import java.io.OutputStream.ByteArrayOutputStream;
+
 interface  Filetype {
     int TEMP = 0;
     int ORDINARY = 1;
@@ -24,7 +24,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     Heapfile[] columnFile;
     PageId      _metaPageId;   // page number of header page
     int         _ftype;
-    pricate int tupleCount = 0;
+    private int tupleCount = 0;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private static int tempfilecount = 0;
