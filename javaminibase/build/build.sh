@@ -3,9 +3,12 @@
 # How to run this program
 # Execute this from javaminibase/build folder:
 #
+# cd javaminibase/build
 # export JVM_HOME_LOCATION={{ YOUR PATH HERE }}
 # ./build.sh
 #
+# cd ../src
+# make db
 #
 
 #JVM_HOME_LOCATION="/usr/lib/jvm/java-99-oracle"
