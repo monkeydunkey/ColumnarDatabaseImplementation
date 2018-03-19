@@ -1,6 +1,7 @@
 package heap;
 
 import global.TID;
+import columnar.*;
 
 public class TupleScan {
       
