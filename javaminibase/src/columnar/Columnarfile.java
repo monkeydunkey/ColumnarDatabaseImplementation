@@ -205,7 +205,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
 
         tid.numRIDs = i;
-        tid.pos = columnFile[0].RidToPos(tid.recordIDs[0]);
+        tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
     
