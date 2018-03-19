@@ -3,10 +3,13 @@ package global;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Tuple ID Class
+ */
 public class TID extends java.lang.Object {
-    int numRIDs;
-    int position;
-    RID[] recordIDs;
+    public int numRIDs;
+    public int position;
+    public RID[] recordIDs;
 
     public TID(int numRIDs) {
         this.numRIDs = numRIDs;
@@ -45,10 +48,15 @@ public class TID extends java.lang.Object {
      * @exception java.io.IOException I/O errors
      */
     public void writeToByteArray(byte [] ary, int offset) throws java.io.IOException {
+        // start at 0 offset, next offset will be 0 + size of this item
         Convert.setIntValue ( numRIDs, offset, ary);
-        Convert.setIntValue ( position, offset+4, ary);
+        Convert.setIntValue ( position, offset+4, ary);// previous: int = 4, +4
 
-        //todo add each rid to the byte array
+        for (RID recordID : recordIDs) {
+            Convert.setIntValue(recordID.slotNo, offset+4, ary);
+            recordID.pageNo.writeToByteArray(ary, offset+4);// this is just writing an int, so it is size 4
+        }
+
     }
 
     public void setPosition(int position) {
@@ -56,6 +64,6 @@ public class TID extends java.lang.Object {
     }
 
     public void setRID(int column, RID recordId){
-        //todo set the RID of the given column
+        recordIDs[column] = recordId;
     }
 }
