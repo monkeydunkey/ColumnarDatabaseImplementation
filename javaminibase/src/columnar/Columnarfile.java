@@ -42,20 +42,16 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
     private static byte[][] _convertToBytes(String[] strings) {
 
-
-        return new String(byteStrings).split("$");
-    }
-
-
-    private static byte[] _convertToBytes(String st) {
-
-
         byte[][] data = new byte[strings.length][];
         for (int i = 0; i < strings.length; i++) {
             String string = strings[i];
             data[i] = string.getBytes(Charset.defaultCharset()); // you can chose charset
         }
         return data;
+    }
+
+
+    private static byte[] _convertToBytes(String st) {
 
         return st.getBytes();
 
@@ -233,16 +229,20 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
     public Tuple getTuple(TID tid){
         //Tuple[] tupleArr = new Tuple[numColumns];
-        Tuple tupleArr;
-        int totalLength = 0;
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        for (int i = 0; i < numColumns; i++) {
-            tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
-            totalLength += tupleArr.getLength();
-            outputStream.write( tupleArr.getTupleByteArray());
+        try {
+            Tuple tupleArr;
+            int totalLength = 0;
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            for (int i = 0; i < numColumns; i++) {
+                tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
+                totalLength += tupleArr.getLength();
+                outputStream.write(tupleArr.getTupleByteArray());
+            }
+            return new Tuple(outputStream.toByteArray(), 0, totalLength);
         }
-        return new Tuple(outputStream.toByteArray(), 0, totalLength);
-
+        catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
