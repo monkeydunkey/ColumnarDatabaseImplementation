@@ -9,7 +9,7 @@ import java.io.*;
 public class TupleScan {
     
 	private Scan[] scanList;
-	private ColumnarFile tempClmnFile;
+	private Columnarfile tempClmnFile;
 	
     public TupleScan(Columnarfile cf) throws InvalidTupleSizeException, IOException
     {
