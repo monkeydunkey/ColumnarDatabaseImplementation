@@ -8,8 +8,6 @@ import heap.*;
 import java.nio.charset.Charset;
 import java.io.OutputStream.ByteArrayOutputStream;
 
-public class Columnarfile {
-
 
 interface  Filetype {
     int TEMP = 0;
