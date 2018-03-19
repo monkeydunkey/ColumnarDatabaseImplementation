@@ -41,14 +41,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
 
-    private static byte[][] _convertToBytes(String[] strings) {
-
-
-        return new String(byteStrings).split("$");
-    }
-
-
-    private static byte[] _convertToBytes(String st) {
+    private static byte[][] _convertToBytes(String[] strings) {}
 
 
         byte[][] data = new byte[strings.length][];
@@ -58,7 +51,6 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
         return data;
 
-        return st.getBytes();
 
     }
 
@@ -184,7 +176,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
         int i = 0;
         int offset = 0; //The starting location of each column
-        TID tid = new TID();
+        TID tid = new TID(numColumns);
         tid.recordIDs = new RID[numColumns];
         
         for (AttrType attr: type) {
