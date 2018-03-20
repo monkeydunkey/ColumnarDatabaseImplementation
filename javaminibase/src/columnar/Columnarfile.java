@@ -184,7 +184,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         try {
             int i = 0;
             int offset = 0; //The starting location of each column
-            TID tid = new TID();
+            TID tid = new TID(numColumns);
             tid.recordIDs = new RID[numColumns];
 
             for (AttrType attr : type) {
@@ -220,6 +220,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
             e.printStackTrace();
         }
 
+        return null;
+
     }
 
 
@@ -240,6 +242,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
 
     }
 
