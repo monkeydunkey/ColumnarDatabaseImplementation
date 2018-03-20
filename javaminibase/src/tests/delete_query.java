@@ -12,7 +12,7 @@ import java.util.Arrays;
 
 import diskmgr.pcounter;
 
-public class DeleteQuery extends TestDriver implements GlobalConst {
+public class delete_query extends TestDriver implements GlobalConst {
     /*
      * Command line invocation of:
      * delete_query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE PURGED
@@ -29,17 +29,18 @@ public class DeleteQuery extends TestDriver implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void main( String argv[] ) {
+    public static void main( String[] args ) {
         pcounter.initialize(); // Initializes read & write counters to 0
 
-        String filePath = "./";
-        System.out.println( "COLUMNDBNAME: " + argv[0] ); // Name of DB previously inserted
-        System.out.println( "COLUMNARFILE: " + argv[1] );
-        System.out.println( "[TARGETCOLUMNNAMES]: " + argv[2] );
-        System.out.println( "VALUECONSTRAINT: " + argv[3] );
-        System.out.println( "NUMBUF: " + argv[4] );
-        System.out.println( "ACCESSTYPE: " + argv[5] );
-        System.out.println( "PURGED: " + argv[6] );
+        /* Uncomment for debugging */
+        /* System.out.println( "COLUMNDBNAME: " + argv[0] ); // Name of DB previously inserted
+         * System.out.println( "COLUMNARFILE: " + argv[1] );
+         * System.out.println( "[TARGETCOLUMNNAMES]: " + argv[2] );
+         * System.out.println( "VALUECONSTRAINT: " + argv[3] );
+         * System.out.println( "NUMBUF: " + argv[4] );
+         * System.out.println( "ACCESSTYPE: " + argv[5] );
+         * System.out.println( "PURGED: " + argv[6] );
+         */
 
         System.out.println( "Running delete_query tests..." );
 
