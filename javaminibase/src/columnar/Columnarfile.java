@@ -13,12 +13,12 @@ interface  Filetype {
 }
 
 public class Columnarfile implements Filetype,  GlobalConst {
-    static int numColumns;
-    AttrType[] type;
-    Heapfile[] columnFile;
-    Heapfile   HeaderFile;
-    PageId      _metaPageId;   // page number of header page
-    int         _ftype;
+    public static int numColumns;
+    public AttrType[] type;
+    public Heapfile[] columnFile;
+    public Heapfile   HeaderFile;
+    public PageId      _metaPageId;   // page number of header page
+    public int         _ftype;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private     int INTSIZE = 4;
