@@ -1,12 +1,11 @@
 package columnar;
 
-import java.io.*;
-import diskmgr.*;
-import bufmgr.*;
+import diskmgr.Page;
 import global.*;
 import heap.*;
-import java.nio.charset.Charset;
-import java.io.OutputStream.ByteArrayOutputStream;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 interface  Filetype {
     int TEMP = 0;
     int ORDINARY = 1;
@@ -21,6 +20,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
     int         _ftype;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
+    private     int INTSIZE = 4;
+    private     int STRINGSIZE = 25;
     private static int tempfilecount = 0;
 
     private static String[] _convertToStrings(byte[] byteStrings) {
@@ -164,12 +165,16 @@ public class Columnarfile implements Filetype,  GlobalConst {
             unpinPage(metaPageId, true /* = DIRTY */);
         }
         _file_deleted = false;
-
-
-
     }
 
-    public void deleteColumnarFile(){
+    public void deleteColumnarFile()
+            throws InvalidSlotNumberException,
+            FileAlreadyDeletedException,
+            InvalidTupleSizeException,
+            HFBufMgrException,
+            HFDiskMgrException,
+            IOException
+    {
 
         _file_deleted = true;
 
@@ -178,14 +183,23 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
     }
 
-    public TID insertTuple(byte[] tuplePtr) throws SpaceNotAvailableException{
+    public TID insertTuple(byte[] tupleptr)
+            throws SpaceNotAvailableException,
+            InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            SpaceNotAvailableException,
+            HFException,
+            HFBufMgrException,
+            HFDiskMgrException,
+            IOException
+    {
         if(tupleptr.length >= MAX_SPACE)    {
             throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
         }
 
         int i = 0;
         int offset = 0; //The starting location of each column
-        TID tid = new TID();
+        TID tid = new TID(numColumns);
         tid.recordIDs = new RID[numColumns];
 
         for (AttrType attr: type) {
@@ -202,10 +216,10 @@ public class Columnarfile implements Filetype,  GlobalConst {
           }
           if (attr.attrType == AttrType.attrString) {
             //insert type String
-            String strAttr = Convert.getStrValue(offset,tupleptr,Size.STRINGSIZE);
-            offset = offset + Size.STRINGSIZE;
+            String strAttr = Convert.getStrValue(offset,tupleptr,STRINGSIZE);
+            offset = offset + STRINGSIZE;
 
-            byte[] strValue = new byte[Size.STRINGSIZE];
+            byte[] strValue = new byte[STRINGSIZE];
             Convert.setStrValue(strAttr, 0, strValue);
             tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
           }
@@ -214,7 +228,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
 
         tid.numRIDs = i;
-        tid.pos = columnFile[0].RidToPos(tid.recordIDs[0]);
+        tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
 
@@ -223,7 +237,14 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
 
 
-    public Tuple getTuple(TID tid){
+    public Tuple getTuple(TID tid)
+            throws InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            HFException,
+            HFDiskMgrException,
+            HFBufMgrException,
+            Exception
+    {
         //Tuple[] tupleArr = new Tuple[numColumns];
         Tuple tupleArr;
         int totalLength = 0;
@@ -238,13 +259,19 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
     }
 
-    public int getTupleCnt(){
+    public int getTupleCnt()
+            throws InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            HFDiskMgrException,
+            HFBufMgrException,
+            IOException
+    {
         //As all the heap files containing the different columns should have the same row count, getting
         // row count from any one should be enough
         return columnFile[0].getRecCnt();
     }
 
-    public valueClass getValue(TID tid, column)
+    public ValueClass getValue(TID tid, int column)
             throws InvalidSlotNumberException,
             InvalidTupleSizeException,
             HFException,
@@ -253,19 +280,13 @@ public class Columnarfile implements Filetype,  GlobalConst {
             Exception
     {
         Tuple tupleArr = columnFile[column].getRecord(tid.recordIDs[column]);
-        valueClass colVal;
-        switch (type[column].toString()){
+        ValueClass colVal;
+        switch (type[column].attrType){
             case AttrType.attrString:
                 colVal = new ValueStrClass(tupleArr.getTupleByteArray());
                 break;
             case AttrType.attrInteger:
                 colVal = new ValueIntClass(tupleArr.getTupleByteArray());
-                break;
-            case AttrType.attrReal:
-                colVal = new ValueRealClass(tupleArr.getTupleByteArray());
-                break;
-            case AttrType.attrNull:
-                colVal = new ValueNullClass(tupleArr.getTupleByteArray());
                 break;
             default:
                 throw new Exception("Unexpected AttrType" + type[column].toString());
@@ -298,27 +319,20 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
         for (int i = 0; i < numColumns; i++) {
             AttrType attr = type[i];
-            switch (attr){
+            switch (attr.attrType){
                 case AttrType.attrString:
                     updateValue = new ValueStrClass(newtuple.getStrFld(i));
                     break;
                 case AttrType.attrInteger:
                     updateValue = new ValueIntClass(newtuple.getIntFld(i));
                     break;
-                case AttrType.attrReal:
-                    updateValue = new ValueRealClass(newtuple.getFloFld(i));
-                    break;
-                case AttrType.attrNull:
-                    //Tuple class just provides get functions for int, float and string. Dont know about NULLS or symbols
-                    updateValue = new ValueNullClass(newtuple.getFloFld(i));
-                    break;
                 default:
-                    throw new Exception("Unexpected AttrType" + type[column].toString());
+                    throw new Exception("Unexpected AttrType" + type[i].toString());
             }
             arr = updateValue.getByteArr();
             retValue &= updateColumnofTuple(tid, new Tuple(arr, 0, arr.length), i);
         }
-        return retValue
+        return retValue;
     }
 
     public boolean updateColumnofTuple(TID tid, Tuple newtuple, int column)
@@ -330,7 +344,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
             HFBufMgrException,
             Exception
     {
-        return columnFile[column].updateRecord(tid.recordIDs[column], newtuple)
+        return columnFile[column].updateRecord(tid.recordIDs[column], newtuple);
 
     }
 
@@ -338,7 +352,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
-    public boolean createBitMapIndex(int columnNo, valueClass value){
+    public boolean createBitMapIndex(int columnNo, ValueClass value){
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
