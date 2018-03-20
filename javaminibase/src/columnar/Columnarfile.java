@@ -196,6 +196,16 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
     }
 
+    public void setAttrOffset(int[] offsetArr)
+            throws Exception
+    {
+        if (offsets.length != offsetArr.length){
+            throw new Exception("Offset array length is not correct");
+        } else {
+            offsets = offsetArr.clone();
+        }
+    }
+
     public TID insertTuple(byte[] tupleptr)
             throws SpaceNotAvailableException,
             InvalidSlotNumberException,
@@ -212,8 +222,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
         int i = 0;
         int offset = 0; //The starting location of each column
-        TID tid = new TID(numColumns);
-        tid.recordIDs = new RID[numColumns];
+        TID tid = new TID(numColumns + 1);
+        tid.recordIDs = new RID[numColumns + 1];
 
         for (AttrType attr: type) {
           tid.recordIDs[i] = new RID();
@@ -239,16 +249,12 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
           i++;
         }
-
+        ValueIntClass newRow = new ValueIntClass(0);
+        tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
         tid.numRIDs = i;
         tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
-
-
-
-
-
 
     public Tuple getTuple(TID tid)
             throws InvalidSlotNumberException,
@@ -372,8 +378,18 @@ public class Columnarfile implements Filetype,  GlobalConst {
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
-    public boolean markTupleDeleted(TID tid){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean markTupleDeleted(TID tid)
+            throws InvalidSlotNumberException,
+            InvalidUpdateException,
+            InvalidTupleSizeException,
+            HFException,
+            HFDiskMgrException,
+            HFBufMgrException,
+            Exception
+    {
+        ValueIntClass toDelete = new ValueIntClass(1);
+        byte[] arr = toDelete.getByteArr();
+        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns], new Tuple(arr, 0, arr.length));
     }
 
     public boolean purgeAllDeletedTuples(){
