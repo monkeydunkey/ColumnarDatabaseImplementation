@@ -16,15 +16,16 @@ public class Columnarfile implements Filetype,  GlobalConst {
     static int numColumns;
     AttrType[] type;
     Heapfile[] columnFile;
+    Heapfile   HeaderFile;
     PageId      _metaPageId;   // page number of header page
     int         _ftype;
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private     int INTSIZE = 4;
-    private     int STRINGSIZE = 25;
+    private     int STRINGSIZE = 25; //The default string size
     private static int tempfilecount = 0;
-
-    private static String[] _convertToStrings(byte[] byteStrings) {
+    private     int[] offsets; //store the offset count for each column
+    private static String _convertToStrings(byte[] byteStrings) {
         /*
         String[] data = new String[byteStrings.length];
         for (int i = 0; i < byteStrings.length; i++) {
@@ -33,7 +34,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         }
         return data;
         */
-        return new String(byteStrings).split("$");
+        return new String(byteStrings);
     }
 
 
@@ -49,8 +50,25 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return st.getBytes();
     }
 
+    private byte[] _getColumnHeaderInsertTuple(String ColumnName, int Type, int Offset){
+        byte[] ColumnNameByteArr = ColumnName.getBytes();
+        ValueIntClass typeArr = new ValueIntClass(Type);
+        ValueIntClass offsetArr = new ValueIntClass(Offset);
+        byte[] arr = new byte[ColumnNameByteArr.length + 8]; // it is 4 + 4 for 2 ints
+        System.arraycopy (ColumnNameByteArr, 0, arr, 0, ColumnNameByteArr.length);
+        System.arraycopy (typeArr.getByteArr(), 0, arr, ColumnNameByteArr.length, 4);
+        System.arraycopy (offsetArr.getByteArr(), 0, arr, ColumnNameByteArr.length + 4, 4);
+        return arr;
+    }
+
+    private String _getColumnStringName(byte[] arr){
+        byte[] stringArr = new byte[arr.length - 8]; // it is 4 + 4 for 2 ints
+        System.arraycopy (arr, 0, stringArr, 0, stringArr.length);
+        return _convertToStrings(stringArr);
+    }
 
 
+    //Assumming this constructor will only be called to create a new Columnar File
     public Columnarfile(String name, int totalColumns, AttrType[] attrType)
             throws HFException,
             HFBufMgrException,
@@ -93,8 +111,9 @@ public class Columnarfile implements Filetype,  GlobalConst {
         // if it is required for running queries
         _fileName = name + "." + "hdr";
         _ftype = ORDINARY;
-        columnFile = new Heapfile[totalColumns];
-
+        // +1 for storing the deletion heap file
+        columnFile = new Heapfile[totalColumns + 1];
+        offsets = new int[totalColumns];
         // The constructor gets run in two different cases.
         // In the first case, the file is new and the header page
         // must be initialized.  This case is detected via a failure
@@ -103,68 +122,62 @@ public class Columnarfile implements Filetype,  GlobalConst {
         // the header page into the buffer pool
 
         // try to open the file
+        HeaderFile = new Heapfile(_fileName);
+        ValueIntClass columnCount = new ValueIntClass(totalColumns + 1);
+        HeaderFile.insertRecord(columnCount.getByteArr());
 
-        Page apage = new Page();
-        _metaPageId = null;
-        //Getting the file entry from harddisk I think
-        if (_ftype == ORDINARY)
-            _metaPageId = get_file_entry(_fileName);
-
-        if(_metaPageId==null)
-        {
-            // file doesn't exist. First create it.
-            _metaPageId = newPage(apage, 1);
-            // check error
-            if(_metaPageId == null)
-                throw new HFException(null, "can't new page");
-
-            add_file_entry(_fileName, _metaPageId);
-            // check error(new exception: Could not add file entry
-
-            HFPage metaPage = new HFPage();
-            metaPage.init(_metaPageId, apage);
-            PageId pageId = new PageId(INVALID_PAGE);
-
-            metaPage.setNextPage(pageId);
-            metaPage.setPrevPage(pageId);
-
-            //Initializing heap files for each of the column
-            for (int i = 0; i < totalColumns; i++){
-                String columnName = name + "." + String.valueOf(i);
-                columnFile[i] = new Heapfile(columnName);
-                /*
+        //Initializing heap files for each of the column
+        for (int i = 0; i < totalColumns; i++){
+            String columnName = name + "." + String.valueOf(i);
+            columnFile[i] = new Heapfile(columnName);
+            /*
                 String[] metaInfo = new String[2];
                 //metaInfo[0] = columnName;
                 metaInfo[1] = ;
-                */
-                metaPage.insertRecord(_convertToBytes(columnName + "$" + attrType[i].toString()));
-            }
-            unpinPage(_metaPageId, true /*dirty*/ );
+             */
+            int offset = attrType[i].toString() == "attrInteger" ? INTSIZE : STRINGSIZE;
+            HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, attrType[i].attrType, offset));
+            offsets[i] = offset;
         }
-        else{
-            //got to read the entries and populate the meta data information
-            //TODO: read from the meta data page
-            PageId metaPageId = new PageId(_metaPageId.pid);
-            PageId nextDirPageId = new PageId();  // OK
-            HFPage metaPage = new HFPage();
-            Tuple atuple;
-            //pinning the page so that it is not flushed while we are getting the column metadata
-            pinPage(metaPageId, metaPage, false/*Rdisk*/);
-            // Right now the assumption is that we are only storing as many tuples as the number of rows
-            // We would need to update this if we want to store somothing else here as well
-            int i = 0;
-            for (RID columnRid = metaPage.firstRecord();
-                 columnRid != null;
-                 columnRid = metaPage.nextRecord(columnRid), i++)
-            {
-                atuple = metaPage.getRecord(columnRid);
-                // convert this byte array to string to get the column name and attr type back
-                String[] metaInfo = _convertToStrings(atuple.getTupleByteArray());
-                columnFile[i] = new Heapfile(metaInfo[0]);
+        //Inserting the final entry for delete marking file
+        String columnName = name + ".deletion";
+        columnFile[totalColumns] = new Heapfile(columnName);
+
+        int offset = INTSIZE;
+        HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, 1, offset));
+    }
+
+    public Columnarfile(String name)
+            throws HFException,
+            HFBufMgrException,
+            HFDiskMgrException,
+            InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            SpaceNotAvailableException,
+            IOException
+    {
+        _fileName = name + "." + "hdr";
+        HeaderFile = new Heapfile(_fileName);
+        Scan headerFileScan = HeaderFile.openScan();
+        RID emptyRID = new RID();
+        Tuple colCountTuple = headerFileScan.getNext(emptyRID);
+        ValueIntClass columnCount = new ValueIntClass(colCountTuple.getTupleByteArray());
+        numColumns = columnCount.value - 1;
+        columnFile = new Heapfile[numColumns + 1];
+        offsets = new int[numColumns];
+        type = new AttrType[numColumns];
+        for (int i = 0; i < columnCount.value; i++){
+            colCountTuple = headerFileScan.getNext(emptyRID);
+            byte[] colData = colCountTuple.getTupleByteArray();
+            String colName = Convert.getStrValue(0, colData, colData.length - 8);
+            int colType = Convert.getIntValue(colData.length - 8, colData);
+            int colOffset = Convert.getIntValue(colData.length - 4, colData);
+            if (i != columnCount.value - 1) {
+                offsets[i] = colOffset;
+                type[i] = new AttrType(colType);
             }
-            unpinPage(metaPageId, true /* = DIRTY */);
+            columnFile[i] = new Heapfile(colName);
         }
-        _file_deleted = false;
     }
 
     public void deleteColumnarFile()
@@ -208,18 +221,18 @@ public class Columnarfile implements Filetype,  GlobalConst {
           if (attr.attrType == AttrType.attrInteger) {
             //insert type int
             int intAttr = Convert.getIntValue(offset,tupleptr);
-            offset = offset + INTSIZE;
+            offset = offset + offsets[i];
 
-            byte[] intValue = new byte[INTSIZE];
+            byte[] intValue = new byte[offsets[i]];
             Convert.setIntValue(intAttr, 0, intValue);
             tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
           }
           if (attr.attrType == AttrType.attrString) {
             //insert type String
-            String strAttr = Convert.getStrValue(offset,tupleptr,STRINGSIZE);
-            offset = offset + STRINGSIZE;
+            String strAttr = Convert.getStrValue(offset,tupleptr,offsets[i]);
+            offset = offset + offsets[i];
 
-            byte[] strValue = new byte[STRINGSIZE];
+            byte[] strValue = new byte[offsets[i]];
             Convert.setStrValue(strAttr, 0, strValue);
             tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
           }
