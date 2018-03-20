@@ -299,8 +299,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
     */
-    public Scan openColumnScan(int columnNo){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public Scan openColumnScan(int columnNo)
+            throws InvalidTupleSizeException,
+            IOException
+    {
+        return columnFile[columnNo].openScan();
     }
 
     public boolean updateTuple(TID tid, Tuple newtuple)
