@@ -9,6 +9,7 @@ import btree.BTreeFile;
 import columnar.*;
 import java.io.*;
 import java.util.Arrays;
+import columnar.*;
 
 import diskmgr.pcounter;
 
@@ -33,11 +34,14 @@ public class Index extends TestDriver implements GlobalConst {
         String colName = args[2];
         String ixType = args[3];
 
-        //String filePath = "./";
-        System.out.println( "COLUMNDBNAME: " + args[0] ); // Name of DB previously inserted?
-        System.out.println( "COLUMNARFILE: " + args[1] );
-        System.out.println( "COLUMNNAME: " + args[2] );
-        System.out.println( "INDEXTYPE: " + args[3] );
+        /* Uncomment for debugging */
+        /*
+         *String filePath = "./";
+         * System.out.println( "COLUMNDBNAME: " + args[0] ); // Name of DB previously inserted?
+         * System.out.println( "COLUMNARFILE: " + args[1] );
+         * System.out.println( "COLUMNNAME: " + args[2] );
+         * System.out.println( "INDEXTYPE: " + args[3] );
+         */
 
         System.out.println( "Running index tests..." );
 
@@ -52,9 +56,29 @@ public class Index extends TestDriver implements GlobalConst {
         /*
          * Logic
          * Use COLUMNDBNAME to lookup the database (e.g.colDB1)
-         * Use COLUMNARFILENAME 
+         * Use COLUMNARFILENAME to look up columnar file
          * Use COLUMNNAME to lookup attribute
          * Use INDEX to select how column in indexed
          */
+        // Open the ColumnDB using the provided string
+        ColumnDB.openDB(COLUMNDBNAME);
+        // Retrieve the Columnarfile using the provided string
+        Columnarfile cFile = new Columnarfile(COLUMNARFILENAME)
+        
+        if( ixType == "BTREE" )
+        {
+        	//
+        }
+        else if( ixType == "BITMAP" )
+        {
+
+        }
+        else
+        {
+        	System.out.println("Error - INDEXTYPE should be either BTREE or BITMAP!");
+        }
+        System.out.println("Index tests finished!");
+        System.out.println("Disk read count: " + pcounter.rcounter);
+        System.out.println("Disk write count: " + pcounter.wcounter);
     }
 }
