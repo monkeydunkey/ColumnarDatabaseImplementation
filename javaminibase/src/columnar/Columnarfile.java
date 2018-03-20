@@ -50,7 +50,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return st.getBytes();
     }
 
-    private byte[] _getColumnHeaderInsertTuple(String ColumnName, int Type, int Offset){
+    private byte[] _getColumnHeaderInsertTuple(String ColumnName, int Type, int Offset)
+    {
         byte[] ColumnNameByteArr = ColumnName.getBytes();
         ValueIntClass typeArr = new ValueIntClass(Type);
         ValueIntClass offsetArr = new ValueIntClass(Offset);
@@ -166,12 +167,19 @@ public class Columnarfile implements Filetype,  GlobalConst {
         columnFile = new Heapfile[numColumns + 1];
         offsets = new int[numColumns];
         type = new AttrType[numColumns];
+
         for (int i = 0; i < columnCount.value; i++){
+            emptyRID = new RID();
             colCountTuple = headerFileScan.getNext(emptyRID);
             byte[] colData = colCountTuple.getTupleByteArray();
-            String colName = Convert.getStrValue(0, colData, colData.length - 8);
+
+            byte[] StringArr = new byte[colData.length - 8];
+            System.arraycopy (colData, 0, StringArr, 0, StringArr.length);
+            String colName = new String(StringArr);
+
             int colType = Convert.getIntValue(colData.length - 8, colData);
             int colOffset = Convert.getIntValue(colData.length - 4, colData);
+
             if (i != columnCount.value - 1) {
                 offsets[i] = colOffset;
                 type[i] = new AttrType(colType);
@@ -338,15 +346,19 @@ public class Columnarfile implements Filetype,  GlobalConst {
         ValueClass updateValue;
         boolean retValue = true;
         //int offset = 0; //The starting location of each column
-
+        byte[] data;
+        int totalOffset = 0;
         for (int i = 0; i < numColumns; i++) {
             AttrType attr = type[i];
+            data = new byte[offsets[i]];
+            System.arraycopy (newtuple.getTupleByteArray(), totalOffset, data, 0, offsets[i]);
+            totalOffset += offsets[i];
             switch (attr.attrType){
                 case AttrType.attrString:
-                    updateValue = new ValueStrClass(newtuple.getStrFld(i));
+                    updateValue = new ValueStrClass(data);
                     break;
                 case AttrType.attrInteger:
-                    updateValue = new ValueIntClass(newtuple.getIntFld(i));
+                    updateValue = new ValueIntClass(data);
                     break;
                 default:
                     throw new Exception("Unexpected AttrType" + type[i].toString());
