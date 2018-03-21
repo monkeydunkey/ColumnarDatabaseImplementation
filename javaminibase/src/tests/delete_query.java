@@ -40,12 +40,13 @@ public class delete_query extends TestDriver implements GlobalConst {
         String valConst_ColName = "";
         String valConst_Operator = "";
         String valConst_Value = "";
-        String numBuf = "";
+        int numBuf = 0;
         String accessType = "";
-        String purged = "";
+        boolean purged = false;
         List<String> targetColNames = new ArrayList<>();
         boolean colNamesDone = false;
         int newIndex = 0;
+        int purgedBit = 0;
 
         for( int i = 0; i < args.length; i++ )
         {
@@ -94,7 +95,7 @@ public class delete_query extends TestDriver implements GlobalConst {
             }
             else if( i == newIndex + 3 ) // NUMBUF
             {
-                numBuf = args[i];
+                numBuf = Integer.parseInt(args[i]);
             }
             else if( i == newIndex + 4 ) // ACCESSTYPE
             {
@@ -102,7 +103,9 @@ public class delete_query extends TestDriver implements GlobalConst {
             }
             else // PURGED
             {
-                purged = args[i];
+                purgedBit = Integer.parseInt(args[i]);
+                if( purgedBit == 1 )
+                    purged = true;
             }
         }
 
@@ -125,12 +128,16 @@ public class delete_query extends TestDriver implements GlobalConst {
         System.out.println( "Running delete_query tests..." );
 
         try {
-            SystemDefs sysdef = new SystemDefs( dbpath, NUMBUF+20, NUMBUF, "Clock" );
+            SystemDefs sysdef = new SystemDefs( dbName, NUMBUF+20, NUMBUF, "Clock" );
         }
         catch( Exception E ) {
             Runtime.getRuntime().exit(1);
         }
 
         // TODO - Implement rest of program
+
+        System.out.println("delete_query tests finished!");
+        System.out.println("Disk read count: " + pcounter.rcounter);
+        System.out.println("Disk write count: " + pcounter.wcounter);
     }
 }
