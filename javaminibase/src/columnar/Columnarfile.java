@@ -6,6 +6,7 @@ import heap.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
 interface  Filetype {
     int TEMP = 0;
     int ORDINARY = 1;
@@ -13,26 +14,31 @@ interface  Filetype {
 }
 
 public class Columnarfile implements Filetype,  GlobalConst {
+
     public static int numColumns;
     public AttrType[] type;
     public Heapfile[] columnFile;
     public Heapfile   HeaderFile;
     public PageId      _metaPageId;   // page number of header page
     public int         _ftype;
+
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private     int INTSIZE = 4;
     private     int STRINGSIZE = 25; //The default string size
     private static int tempfilecount = 0;
+
     private     int[] offsets; //store the offset count for each column
     private static String _convertToStrings(byte[] byteStrings) {
         /*
+
         String[] data = new String[byteStrings.length];
         for (int i = 0; i < byteStrings.length; i++) {
             data[i] = new String(byteStrings[i], Charset.defaultCharset());
 
         }
         return data;
+
         */
         return new String(byteStrings);
     }
@@ -40,13 +46,22 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
     private static byte[] _convertToBytes(String st) {
         /*
+
         byte[][] data = new byte[strings.length][];
         for (int i = 0; i < strings.length; i++) {
             String string = strings[i];
             data[i] = string.getBytes(Charset.defaultCharset()); // you can chose charset
         }
         return data;
+
+    }
+
+
+    private static byte[] _convertToBytes(String st) {
+
+
         */
+
         return st.getBytes();
     }
 
@@ -192,9 +207,14 @@ public class Columnarfile implements Filetype,  GlobalConst {
         _file_deleted = true;
 
         for (int i = 0; i < numColumns; i++){
-            columnFile[i].deleteFile();
+            try {
+                columnFile[i].deleteFile();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
+
 
     public TID insertTuple(byte[] tupleptr)
             throws SpaceNotAvailableException,
@@ -246,7 +266,17 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
 
+            tid.numRIDs = i;
+            tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
+            return tid;
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
 
+        return null;
+
+    }
 
 
 
@@ -259,16 +289,21 @@ public class Columnarfile implements Filetype,  GlobalConst {
             Exception
     {
         //Tuple[] tupleArr = new Tuple[numColumns];
-        Tuple tupleArr;
-        int totalLength = 0;
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        for (int i = 0; i < numColumns; i++) {
-            tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
-            totalLength += tupleArr.getLength();
-            outputStream.write( tupleArr.getTupleByteArray());
+        try {
+            Tuple tupleArr;
+            int totalLength = 0;
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            for (int i = 0; i < numColumns; i++) {
+                tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
+                totalLength += tupleArr.getLength();
+                outputStream.write(tupleArr.getTupleByteArray());
+            }
+            return new Tuple(outputStream.toByteArray(), 0, totalLength);
         }
-        return new Tuple(outputStream.toByteArray(), 0, totalLength);
-
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
 
     }
 
