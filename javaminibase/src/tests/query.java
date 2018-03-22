@@ -115,18 +115,43 @@ public class query extends TestDriver implements GlobalConst {
          * System.out.println("ACCESSTYPE: " + accessType);
          */
 
-        System.out.println( "Running query tests..." );
+        System.out.println( "Running query tests...\n" );
 
+        SystemDefs sysdef = new SystemDefs( dbName, numBuf+20, numBuf, "Clock" );
+
+        // Open the ColumnDB using the provided string
+        //ColumnDB cDB = new ColumnDB();
+        //cDB.openDB(dbName);
+        // Retrieve the Columnarfile using the provided string
         try {
-            SystemDefs sysdef = new SystemDefs( dbName, NUMBUF+20, NUMBUF, "Clock" );
+            Columnarfile cFile = new Columnarfile(cfName);
         }
         catch( Exception E ) {
             Runtime.getRuntime().exit(1);
         }
 
-        // TODO - Implement rest of program
+        if( accessType == "FILESCAN" )
+        {
 
-        System.out.println("query tests finished!");
+        }
+        else if( accessType == "COLUMNSCAN" )
+        {
+
+        }
+        else if( accessType == "BTREE" )
+        {
+
+        }
+        else if( accessType == "BITMAP" )
+        {
+
+        }
+        else
+        {
+            System.out.println("Error - ACCESSTYPE should be either FILESCAN, COLUMNSCAN, BTREE, or BITMAP!");
+        }
+
+        System.out.println("query tests finished!\n");
         System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
     }
