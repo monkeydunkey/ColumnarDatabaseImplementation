@@ -1043,27 +1043,6 @@ public class Heapfile implements Filetype,  GlobalConst {
 
   } // end of delete_file_entry
 
-	public int RidToPos(RID rid)
-			throws InvalidSlotNumberException,
-			InvalidTupleSizeException,
-			HFBufMgrException, IOException
-	{
-
-		int position = 0;
-		HFPage currentPage = new HFPage();
-		PageId dirPageId = new PageId(_firstDirPageId.pid);
-		RID currentDataPageRid = new RID();
-		DataPageInfo dpinfo;
-		Tuple atuple = new Tuple();
-		pinPage(dirPageId,currentPage,false);
-
-		for (currentDataPageRid = currentPage.firstRecord();
-			 currentDataPageRid != null;
-			 currentDataPageRid =
-					 currentPage.nextRecord(currentDataPageRid))
-		{
-			atuple = currentPage.getRecord(currentDataPageRid);
-
 
   public int RidToPos(RID rid)
 			throws InvalidSlotNumberException,

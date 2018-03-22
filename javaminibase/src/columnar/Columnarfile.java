@@ -266,19 +266,6 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
 
-            tid.numRIDs = i;
-            tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
-            return tid;
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-
-        return null;
-
-    }
-
-
 
     public Tuple getTuple(TID tid)
             throws InvalidSlotNumberException,
