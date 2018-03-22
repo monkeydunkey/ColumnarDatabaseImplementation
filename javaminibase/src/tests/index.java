@@ -17,7 +17,8 @@ public class index extends TestDriver implements GlobalConst {
     /*
      * Command line invocation of:
      * index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE
-     * COLUMNDBNAME, COLUMNARFILENAME, COLUMNNAME and INDEXTYPE are strings
+     * COLUMNDBNAME, COLUMNARFILENAME, and INDEXTYPE
+     * COLUMNNAME is an integer of the column index
      * INDEXTYPE is either BTREE or BITMAP
      */
 
@@ -31,22 +32,22 @@ public class index extends TestDriver implements GlobalConst {
 
         String colDBName = args[0];
         String colFile = args[1];
-        String colName = args[2];
+        int colNum = Integer.parseInt(args[2]);
         String ixType = args[3];
 
         /* Uncomment for debugging */
         /*
          *String filePath = "./";
-         * System.out.println( "COLUMNDBNAME: " + args[0] ); // Name of DB previously inserted?
-         * System.out.println( "COLUMNARFILE: " + args[1] );
-         * System.out.println( "COLUMNNAME: " + args[2] );
-         * System.out.println( "INDEXTYPE: " + args[3] );
+         * System.out.println( "COLUMNDBNAME: " + colDBName );
+         * System.out.println( "COLUMNARFILE: " + colFile );
+         * System.out.println( "COLUMNNAME: " + colName );
+         * System.out.println( "INDEXTYPE: " + ixType );
          */
 
-        System.out.println( "Running index tests..." );
+        System.out.println( "Running index tests...\n" );
 
         try {
-            SystemDefs sysdef = new SystemDefs( dbpath, NUMBUF+20, NUMBUF, "Clock" );
+            SystemDefs sysdef = new SystemDefs( colDBName, NUMBUF+20, NUMBUF, "Clock" );
         }
         catch( Exception E ) {
             Runtime.getRuntime().exit(1);
@@ -62,30 +63,30 @@ public class index extends TestDriver implements GlobalConst {
          */
 
         // Open the ColumnDB using the provided string
-        ColumnDB.openDB(colDBName);
+        ColumnDB cDB = new ColumnDB();
+        cDB.openDB(colDBName);
         // Retrieve the Columnarfile using the provided string
         Columnarfile cFile = new Columnarfile(colFile);
-        // find columnNo (not implemented yet)
-        int columnNo = cFile.getColumnNo(colName);
         
         bool success = false;
 
         if( ixType == "BTREE" )
         {
-        	success = cFile.createBTreeIndex(columnNo);
+        	success = cFile.createBTreeIndex(colNum);
+            BTreeFile btFile = new BTreeFile(cFile);
         }
         else if( ixType == "BITMAP" )
         {
-            ValueClass valClass = new ValueClass();
-            success = cFile.createBitMapIndex(columnNo, valClass);
+            success = cFile.createBitMapIndex(colName, cFile.type[colNum]);
+            BitMapFile bmFile = new BitMapFile(cFile);
         }
         else
         {
         	System.out.println("Error - INDEXTYPE should be either BTREE or BITMAP!");
         }
 
-        System.out.println("Index tests finished!");
-        System.out.println("Disk read count: " + pcounter.rcounter);
+        System.out.println("Index tests finished!\n");
+        System.out.println("Disk read count: " + pcounter.rcounter); // Maybe subtract from intital count?
         System.out.println("Disk write count: " + pcounter.wcounter);
     }
 }
