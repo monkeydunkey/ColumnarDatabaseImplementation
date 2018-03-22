@@ -1,19 +1,23 @@
 package bitmap;
 
 import btree.*;
+import bufmgr.HashEntryNotFoundException;
+import bufmgr.InvalidFrameNumberException;
+import bufmgr.PageUnpinnedException;
+import bufmgr.ReplacerException;
 import columnar.Columnarfile;
-import columnar.valueClass;
-import global.GlobalConst;
+import diskmgr.Page;
 import global.PageId;
 import global.RID;
 import global.SystemDefs;
+import global.ValueClass;
 
 import java.io.IOException;
 
 /**
  * Create a class called BitMapFile with the following specifications (see BTreeFile for analogy):
  */
-public class BitMapFile extends IndexFile implements GlobalConst{
+public class BitMapFile {
 
     private String dbname;
     private BitMapHeaderPage headerPage;
@@ -27,7 +31,7 @@ public class BitMapFile extends IndexFile implements GlobalConst{
     public BitMapFile(java.lang.String filename) throws GetFileEntryException {
         headerPageId=get_file_entry(filename);
         headerPage= new  BitMapHeaderPage(headerPageId);
-        dbname = new String(filename);
+        dbname = filename;
     }
 
     /**
@@ -38,25 +42,131 @@ public class BitMapFile extends IndexFile implements GlobalConst{
      * @param ColumnNo
      * @param value
      */
-    public BitMapFile(java.lang.String filename, Columnarfile columnfile, int ColumnNo, valueClass value){
-        /*
-            todo
-        * */
+    public BitMapFile(java.lang.String filename, Columnarfile columnfile, int ColumnNo, ValueClass value) throws GetFileEntryException, AddFileEntryException {
+        headerPageId = get_file_entry(filename);
+        if (headerPageId == null) //file not exist
+        {
+            headerPage= new  BitMapHeaderPage(headerPageId);
+            headerPageId = headerPage.getPageId();
+            add_file_entry(filename, headerPageId);
+//            headerPage.set_magic0(MAGIC0);
+//            headerPage.set_rootId(new PageId(INVALID_PAGE));
+//            headerPage.set_keyType((short) keytype);
+//            headerPage.set_maxKeySize(keysize);
+//            headerPage.set_deleteFashion(delete_fashion);
+//            headerPage.setType(NodeType.BTHEAD);//
+        } else {
+            headerPage= new  BitMapHeaderPage(headerPageId);
+        }
+
+        dbname = new String(filename);
     }
 
-    void close(){
+    void close() throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
         //    Close the BitMap file.
-        //todo
+        if (headerPage != null) {
+            SystemDefs.JavabaseBM.unpinPage(headerPageId, true);
+            headerPage = null;
+        }
     }
 
-    void destroyBitMapFile(){
-        //todo
-        //    Destroy the entire BitMap file.
+    void destroyBitMapFile() throws IteratorException, IOException, PinPageException, ConstructPageException, FreePageException, UnpinPageException, DeleteFileEntryException {
+        if (headerPage != null) {
+            PageId pgId = headerPage.getPageId();
+            if (pgId.pid != INVALID_PAGE)
+                _destroyFile(pgId);
+            unpinPage(headerPageId);
+            freePage(headerPageId);
+            delete_file_entry(dbname);
+            headerPage = null;
+        }
+    }
+
+    private void _destroyFile(PageId pageno)
+            throws IOException,
+            IteratorException,
+            PinPageException,
+            ConstructPageException,
+            UnpinPageException,
+            FreePageException {
+
+        Page page = pinPage(pageno);
+
+        if (sortedPage.getType() == NodeType.INDEX) {
+            // todo traverse to free all child pages
+            BTIndexPage indexPage = new BTIndexPage(page, headerPage.get_keyType());
+            RID rid = new RID();
+            PageId childId;
+            KeyDataEntry entry;
+            for (entry = indexPage.getFirst(rid);
+                 entry != null; entry = indexPage.getNext(rid)) {
+                childId = ((IndexData) (entry.data)).getData();
+                _destroyFile(childId);
+            }
+        } else { // BTLeafPage
+
+            unpinPage(pageno);
+            freePage(pageno);
+        }
+
+    }
+
+    private void unpinPage(PageId pageno, boolean dirty)
+            throws UnpinPageException {
+        try {
+            SystemDefs.JavabaseBM.unpinPage(pageno, dirty);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new UnpinPageException(e, "");
+        }
+    }
+
+    private void unpinPage(PageId pageno)
+            throws UnpinPageException {
+        try {
+            SystemDefs.JavabaseBM.unpinPage(pageno, false /* = not DIRTY */);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new UnpinPageException(e, "");
+        }
+    }
+
+    private void freePage(PageId pageno)
+            throws FreePageException {
+        try {
+            SystemDefs.JavabaseBM.freePage(pageno);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new FreePageException(e, "");
+        }
+
+    }
+
+    private void delete_file_entry(String filename)
+            throws DeleteFileEntryException {
+        try {
+            SystemDefs.JavabaseDB.delete_file_entry(filename);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new DeleteFileEntryException(e, "");
+        }
+    }
+
+
+    private Page pinPage(PageId pageno)
+            throws PinPageException {
+        try {
+            Page page = new Page();
+            SystemDefs.JavabaseBM.pinPage(pageno, page, false/*Rdisk*/);
+            return page;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new PinPageException(e, "");
+        }
     }
 
     BitMapHeaderPage getHeaderPage(){
-        return null;//todo
-        //    Access method to data member.
+        return headerPage;
     }
 
     boolean Delete(int position){
@@ -79,14 +189,13 @@ public class BitMapFile extends IndexFile implements GlobalConst{
         }
     }
 
-    @Override
-    public void insert(KeyClass data, RID rid) throws KeyTooLongException, KeyNotMatchException, LeafInsertRecException, IndexInsertRecException, ConstructPageException, UnpinPageException, PinPageException, NodeNotMatchException, ConvertException, DeleteRecException, IndexSearchException, IteratorException, LeafDeleteException, InsertException, IOException {
-        //todo maybe, is this required?
-    }
-
-    @Override
-    public boolean Delete(KeyClass data, RID rid) throws DeleteFashionException, LeafRedistributeException, RedistributeException, InsertRecException, KeyNotMatchException, UnpinPageException, IndexInsertRecException, FreePageException, RecordNotFoundException, PinPageException, IndexFullDeleteException, LeafDeleteException, IteratorException, ConstructPageException, DeleteRecException, IndexSearchException, IOException {
-        //todo maybe, is this required?
-        return false;
+    private void add_file_entry(String fileName, PageId pageno)
+            throws AddFileEntryException {
+        try {
+            SystemDefs.JavabaseDB.add_file_entry(fileName, pageno);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new AddFileEntryException(e, "");
+        }
     }
 }
