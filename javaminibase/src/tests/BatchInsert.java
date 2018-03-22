@@ -1,5 +1,6 @@
 package tests;
 
+import diskmgr.ColumnDB;
 import global.*;
 import heap.Heapfile;
 import heap.Scan;
@@ -27,14 +28,16 @@ public class BatchInsert extends TestDriver implements GlobalConst{
         int readcount = 0, writecount = 0;
 
         String filepath = "./";
+
         System.out.println("DATAFILENAME: " + argv[0]);
         System.out.println("COLUMNDBNAME: " + argv[1]);
         System.out.println("COLUMNARFILENAME: " + argv[2]);
         System.out.println("NUMCOLUMNS: " + argv[3]);
 
-        int numcolumns = Integer.parseInt(argv[3]);
+
         //Database must exist
         String dbpath = argv[1];
+        int numcolumns = Integer.parseInt(argv[3]);
 
         AttrType[] type = new AttrType[numcolumns];
 
@@ -48,7 +51,12 @@ public class BatchInsert extends TestDriver implements GlobalConst{
             Runtime.getRuntime().exit(1);
         }
 
+        ColumnDB db = new ColumnDB();
+
+
         try {
+            db.openDB(dbpath);
+
             //Borrowed tokenizer
             FileInputStream fin = new FileInputStream(filepath+argv[0]);
             DataInputStream din = new DataInputStream(fin);
@@ -95,12 +103,6 @@ public class BatchInsert extends TestDriver implements GlobalConst{
                 i++;
             }
 
-            //Create a new columnarfile
-			/*
-			if db exists then open it
-
-			else setup a new file
-			*/
             Columnarfile cf = new Columnarfile (argv[2], numcolumns, type);
 
 
