@@ -1,3 +1,5 @@
+
+
 JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home
 LIBPATH = ../lib
 
@@ -28,4 +30,5 @@ together:*.java
 
 clean:
 
-	\rm -f *.class *~ \#* core
+	\rm -f *.class *~ \#* core 
+

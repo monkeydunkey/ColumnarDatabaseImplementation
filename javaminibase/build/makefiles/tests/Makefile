@@ -6,6 +6,13 @@ BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)
 JAVA  = $(JDKPATH)/bin/java  -classpath $(CLASSPATH)
 
+# test columnar file
+CMTest:CMTest.java
+        $(JAVAC) TestDriver.java CMTest.java
+
+cmtest: CMTest
+        $(JAVA) tests.CMTest
+
 # test buffer manager
 
 BMTest:BMTest.java
