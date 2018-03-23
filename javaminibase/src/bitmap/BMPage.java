@@ -5,6 +5,7 @@ import java.lang.*;
 
 import global.*;
 import diskmgr.*;
+import heap.ConstSlot;
 
 public class BMPage extends Page
         implements ConstSlot, GlobalConst{
@@ -107,6 +108,18 @@ public class BMPage extends Page
         return true;
     }
 
+    /**
+     * @throws IOException I/O errors
+     * @param    slotno    slot number
+     * @return the length of record the given slot contains
+     */
+    public short getSlotLength(int slotno)
+            throws IOException {
+        int position = DPFIXED + slotno * SIZE_OF_SLOT;
+        short val = Convert.getShortValue(position, data);
+        return val;
+    }
+
     /* Constructor of class BMPage initialize a new page */
     public void init(PageId pageNo, Page apage)
             throws IOException {
@@ -175,6 +188,8 @@ public class BMPage extends Page
         return data;
     }
 
-    public void writeBMPageArray(byte[]) {}
+    public void writeBMPageArray(byte[] data) throws IOException, FileIOException, InvalidPageNumberException {
+        SystemDefs.JavabaseDB.write_page(new PageId(getCurPage().pid), new Page(data));
+    }
 
 }
