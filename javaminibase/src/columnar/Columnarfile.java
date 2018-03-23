@@ -1,5 +1,6 @@
 package columnar;
 
+import btree.*;
 import diskmgr.Page;
 import global.*;
 import heap.*;
@@ -486,8 +487,47 @@ public class Columnarfile implements Filetype,  GlobalConst {
         HeaderFile.updateRecord(headerRIDs[column], new Tuple(headerUpdateArr, 0, headerUpdateArr.length));
     }
 
-    public boolean createBTreeIndex(int column){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean createBTreeIndex(int column)
+            throws  GetFileEntryException,
+                    ConstructPageException,
+                    IOException,
+                    AddFileEntryException
+    {
+        try {
+            String indexFileName = _fileName + "." + String.valueOf(column) + ".Btree";
+            //Setting the delete fashion to 1 which seems to be the default
+            BTreeFile btree = new BTreeFile(indexFileName, type[column].attrType, offsets[column], 1);
+            TupleScan cfs = new TupleScan(this);
+            TID emptyTID = new TID(numColumns);
+            Tuple dataTuple =  cfs.getNext(emptyTID);
+            while (dataTuple != null){
+                int offset = 0;
+                KeyClass key;
+                for (int i = 0; i < column; i++) {
+                    offset += offsets[i];
+                }
+                byte[] dataArr = new byte[offsets[column]];
+                System.arraycopy (dataTuple.getTupleByteArray(), offset, dataArr, 0, offsets[column]);
+                switch (type[column].attrType){
+                    case AttrType.attrString:
+                        ValueStrClass st = new ValueStrClass(dataArr);
+                        key = new StringKey(st.value);
+                        break;
+                    case AttrType.attrInteger:
+                        ValueIntClass it = new ValueIntClass(dataArr);
+                        key = new IntegerKey(it.value);
+                        break;
+                    default:
+                        throw new Exception("Unexpected AttrType" + type[column].toString());
+                }
+                btree.insert(key, emptyTID.recordIDs[numColumns + 1]);
+            }
+        }
+        catch (Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public boolean createBitMapIndex(int columnNo, ValueClass value){
