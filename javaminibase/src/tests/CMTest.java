@@ -91,9 +91,8 @@ class CMDriver extends TestDriver implements GlobalConst {
 
     protected boolean test1() {
 
-        System.out.println("\n  Test 1: Initialize a columnar file\n");
+        System.out.println("\n  Test 1: Initialize a columnar file with 2 int columns\n");
         boolean status = OK;
-        RID rid = new RID();
         Columnarfile f = null;
 
         System.out.println("  - Creating a columnar file\n");
@@ -121,7 +120,90 @@ class CMDriver extends TestDriver implements GlobalConst {
     }
 
     protected boolean test2() {
-        return true;
+        System.out.println("\n  Test 2: Opening the Columnar File created in the last step and add some entries\n");
+        boolean status = OK;
+        TID insertedVal;
+        Columnarfile f = null;
+        try {
+            System.out.println("  - Opening Already created columnar file\n");
+            f = new Columnarfile("test_file");
+
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not read the created columnar file\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        try {
+            System.out.println("  - Adding some entries to the columnar file\n");
+            byte[] dataArray = new byte[8];
+            ValueIntClass val1 = new ValueIntClass(1);
+            ValueIntClass val2 = new ValueIntClass(20);
+            System.arraycopy (val1.getByteArr(), 0, dataArray, 0, 4);
+            System.arraycopy (val2.getByteArr(), 0, dataArray, 4, 4);
+            insertedVal = f.insertTuple(dataArray);
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not insert values\n");
+            e.printStackTrace();
+            return status;
+        }
+        try{
+            System.out.println("  - Reading the inserted Value\n");
+            byte[] storedDataArray  = f.getTuple(insertedVal).getTupleByteArray();
+            byte[] val1 = new byte[4];
+            byte[] val2 = new byte[4];
+            System.arraycopy (storedDataArray, 0, val1, 0, 4);
+            System.arraycopy (storedDataArray, 4, val2, 0, 4);
+            ValueIntClass val1Class = new ValueIntClass(val1);
+            ValueIntClass val2Class = new ValueIntClass(val2);
+            if (val1Class.value != 1 || val2Class.value != 20){
+                status = FAIL;
+            }
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not insert values\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        try{
+            System.out.println("  - Updating the inserted value\n");
+            byte[] dataArray = new byte[8];
+            ValueIntClass val1 = new ValueIntClass(11);
+            ValueIntClass val2 = new ValueIntClass(2);
+            System.arraycopy (val1.getByteArr(), 0, dataArray, 0, 4);
+            System.arraycopy (val2.getByteArr(), 0, dataArray, 4, 4);
+            Tuple newtuple = new Tuple(dataArray, 0, 8);
+            f.updateTuple(insertedVal, newtuple);
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not Update inserted values\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        try{
+            System.out.println("  - Reading the Updated Values\n");
+            byte[] storedDataArray  = f.getTuple(insertedVal).getTupleByteArray();
+            byte[] val1 = new byte[4];
+            byte[] val2 = new byte[4];
+            System.arraycopy (storedDataArray, 0, val1, 0, 4);
+            System.arraycopy (storedDataArray, 4, val2, 0, 4);
+            ValueIntClass val1Class = new ValueIntClass(val1);
+            ValueIntClass val2Class = new ValueIntClass(val2);
+            if (val1Class.value != 11 || val2Class.value != 2){
+                status = FAIL;
+            }
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Updated Values not correct values\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        return status;
     }
 
     protected boolean test3() {
@@ -174,119 +256,7 @@ class CMDriver extends TestDriver implements GlobalConst {
 
     protected String testName() {
 
-        return "Heap File";
-    }
-}
-
-// This is added to substitute the struct construct in C++
-class DummyRecord {
-
-    //content of the record
-    public int ival;
-    public float fval;
-    public String name;
-
-    //length under control
-    private int reclen;
-
-    private byte[] data;
-
-    /**
-     * Default constructor
-     */
-    public DummyRecord() {
-    }
-
-    /**
-     * another constructor
-     */
-    public DummyRecord(int _reclen) {
-        setRecLen(_reclen);
-        data = new byte[_reclen];
-    }
-
-    /**
-     * constructor: convert a byte array to DummyRecord object.
-     *
-     * @param arecord a byte array which represents the DummyRecord object
-     */
-    public DummyRecord(byte[] arecord)
-            throws java.io.IOException {
-        setIntRec(arecord);
-        setFloRec(arecord);
-        setStrRec(arecord);
-        data = arecord;
-        setRecLen(name.length());
-    }
-
-    /**
-     * constructor: translate a tuple to a DummyRecord object
-     * it will make a copy of the data in the tuple
-     *
-     * @param atuple: the input tuple
-     */
-    public DummyRecord(Tuple _atuple)
-            throws java.io.IOException {
-        data = new byte[_atuple.getLength()];
-        data = _atuple.getTupleByteArray();
-        setRecLen(_atuple.getLength());
-
-        setIntRec(data);
-        setFloRec(data);
-        setStrRec(data);
-
-    }
-
-    /**
-     * convert this class objcet to a byte array
-     * this is used when you want to write this object to a byte array
-     */
-    public byte[] toByteArray()
-            throws java.io.IOException {
-        //    data = new byte[reclen];
-        Convert.setIntValue(ival, 0, data);
-        Convert.setFloValue(fval, 4, data);
-        Convert.setStrValue(name, 8, data);
-        return data;
-    }
-
-    /**
-     * get the integer value out of the byte array and set it to
-     * the int value of the DummyRecord object
-     */
-    public void setIntRec(byte[] _data)
-            throws java.io.IOException {
-        ival = Convert.getIntValue(0, _data);
-    }
-
-    /**
-     * get the float value out of the byte array and set it to
-     * the float value of the DummyRecord object
-     */
-    public void setFloRec(byte[] _data)
-            throws java.io.IOException {
-        fval = Convert.getFloValue(4, _data);
-    }
-
-    /**
-     * get the String value out of the byte array and set it to
-     * the float value of the HTDummyRecorHT object
-     */
-    public void setStrRec(byte[] _data)
-            throws java.io.IOException {
-        // System.out.println("reclne= "+reclen);
-        // System.out.println("data size "+_data.size());
-        name = Convert.getStrValue(8, _data, reclen - 8);
-    }
-
-    //Other access methods to the size of the String field and
-    //the size of the record
-    public void setRecLen(int size) {
-        reclen = size;
-    }
-
-    public int getRecLength() {
-        return reclen;
+        return "Columnar File";
     }
 }
 
@@ -300,7 +270,7 @@ public class CMTest {
         dbstatus = hd.runTests();
 
         if (dbstatus != true) {
-            System.err.println("Error encountered during buffer manager tests:\n");
+            System.err.println("Error encountered during Columnar file tests:\n");
             Runtime.getRuntime().exit(1);
         }
 
