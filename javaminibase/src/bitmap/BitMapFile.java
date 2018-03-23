@@ -7,17 +7,14 @@ import bufmgr.PageUnpinnedException;
 import bufmgr.ReplacerException;
 import columnar.Columnarfile;
 import diskmgr.Page;
-import global.PageId;
-import global.RID;
-import global.SystemDefs;
-import global.ValueClass;
+import global.*;
 
 import java.io.IOException;
 
 /**
  * Create a class called BitMapFile with the following specifications (see BTreeFile for analogy):
  */
-public class BitMapFile {
+public class BitMapFile implements GlobalConst{
 
     private String dbname;
     private BitMapHeaderPage headerPage;
