@@ -72,11 +72,17 @@ public class index extends TestDriver implements GlobalConst {
         {
         	success = cFile.createBTreeIndex(colNum);
             BTreeFile btFile = new BTreeFile(cFile);
+
+
+            System.out.println("SUCCESS - BTREE index created!");
+
+        }
         }
         else if( ixType == "BITMAP" )
         {
             success = cFile.createBitMapIndex(colName, cFile.type[colNum]);
             BitMapFile bmFile = new BitMapFile(cFile);
+            System.out.println("SUCCESS - BITMAP index created!");
         }
         else
         {
@@ -87,12 +93,10 @@ public class index extends TestDriver implements GlobalConst {
         System.out.println("Disk read count: " + pcounter.rcounter); // Maybe subtract from intital count?
         System.out.println("Disk write count: " + pcounter.wcounter);
 
-        try {
-            SystemDefs.JavabaseBM.resetAllPinCount();
-            SystemDefs.JavabaseBM.flushAllPages();
-            SystemDefs.JavabaseDB.closeDB();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+        SystemDefs.JavabaseBM.resetAllPinCount();
+        SystemDefs.JavabaseBM.flushAllPages();
+        SystemDefs.JavabaseDB.closeDB();
+
     }
 }
