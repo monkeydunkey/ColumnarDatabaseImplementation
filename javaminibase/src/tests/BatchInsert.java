@@ -36,17 +36,11 @@ private boolean FAIL = false;
 
 		AttrType[] type = new AttrType[numcolumns];
 
-		System.out.print ("\n" + "Running " + testName() + " tests...." + "\n");
+
     
 	    try {
-	      SystemDefs sysdef = new SystemDefs( dbpath, NUMBUF+20, NUMBUF, "Clock" );
-	    }
-	    
-	    catch (Exception e) {
-	      Runtime.getRuntime().exit(1);
-	    }
-		
-		try {
+			SystemDefs sysdef = new SystemDefs(argv[1],100000,100,"Clock");
+
 			//Borrowed tokenizer
 			FileInputStream fin = new FileInputStream(filepath+argv[0]);
 			DataInputStream din = new DataInputStream(fin);
@@ -136,7 +130,11 @@ private boolean FAIL = false;
 			System.out.println("Insertion done!");
 			System.out.println("Disk read count: "+(pcounter.rcounter - readcount));
 			System.out.println("Disk write count: "+(pcounter.wcounter - writecount));
-			
+
+			//Closing the DB
+			SystemDefs.JavabaseBM.resetAllPinCount();
+			SystemDefs.JavabaseBM.flushAllPages();
+			SystemDefs.JavabaseDB.closeDB();
 		} 
 
 		catch (Exception e){
