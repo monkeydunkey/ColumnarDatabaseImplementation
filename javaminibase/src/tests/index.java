@@ -46,25 +46,23 @@ public class index extends TestDriver implements GlobalConst {
 
         System.out.println( "Running index tests...\n" );
 
-        try {
-            SystemDefs sysdef = new SystemDefs( colDBName, NUMBUF+20, NUMBUF, "Clock" );
-        }
-        catch( Exception E ) {
-            Runtime.getRuntime().exit(1);
-        }
+
+
+
 
         // TODO - Implement rest of program
         /*
          * Logic
          * Use COLUMNDBNAME to lookup the database (e.g.colDB1)
          * Use COLUMNARFILENAME to look up columnar file
-         * Use COLUMNNAME to lookup attribute
+         * Use COLUMNNAME(ColNum) to lookup attribute
          * Use INDEX to select how column in indexed
          */
 
         // Open the ColumnDB using the provided string
-        ColumnDB cDB = new ColumnDB();
-        cDB.openDB(colDBName);
+        SystemDefs sysdef = new SystemDefs( colDBName, NUMBUF+20, NUMBUF, "Clock" );
+        //ColumnDB cDB = new ColumnDB();
+        //cDB.openDB(colDBName);
         // Retrieve the Columnarfile using the provided string
         Columnarfile cFile = new Columnarfile(colFile);
         
@@ -88,5 +86,13 @@ public class index extends TestDriver implements GlobalConst {
         System.out.println("Index tests finished!\n");
         System.out.println("Disk read count: " + pcounter.rcounter); // Maybe subtract from intital count?
         System.out.println("Disk write count: " + pcounter.wcounter);
+
+        try {
+            SystemDefs.JavabaseBM.resetAllPinCount();
+            SystemDefs.JavabaseBM.flushAllPages();
+            SystemDefs.JavabaseDB.closeDB();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
