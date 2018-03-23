@@ -34,7 +34,7 @@ public class TupleScan {
      * @param tid
      * @return
      */
-    Tuple getNext(TID tid) throws InvalidTupleSizeException, IOException
+    public Tuple getNext(TID tid) throws InvalidTupleSizeException, IOException
     {
         Tuple tupleArr;
         int totalLength = 0;
