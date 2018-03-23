@@ -1,5 +1,7 @@
 package tests;
 
+import btree.IntegerKey;
+import btree.KeyClass;
 import global.*;
 import heap.Heapfile;
 import heap.Scan;
@@ -38,11 +40,12 @@ public class query extends TestDriver implements GlobalConst {
         String cfName = "";
         String valConst_ColName = "";
         String valConst_Operator = "";
-        String valConst_Value = "";
+        int valConst_Value = 0;
         int numBuf = 0;
         String accessType = "";
         List<String> targetColNames = new ArrayList<>();
         boolean colNamesDone = false;
+        Columnarfile cFile = null;
         int newIndex = 0;
 
         for( int i = 0; i < args.length; i++ )
@@ -88,7 +91,7 @@ public class query extends TestDriver implements GlobalConst {
             }
             else if( i == newIndex + 2 ) // VALUECONSTRAINT -> VALUE
             {
-                valConst_Value = args[i].substring( 0, args[i].length() - 1 ); // Removes } from VALUE
+                valConst_Value = Integer.parseInt(args[i].substring( 0, args[i].length() - 1 )); // Removes } from VALUE
             }
             else if( i == newIndex + 3 ) // NUMBUF
             {
@@ -117,34 +120,61 @@ public class query extends TestDriver implements GlobalConst {
 
         System.out.println( "Running query tests...\n" );
 
-        SystemDefs sysdef = new SystemDefs( dbName, numBuf+20, numBuf, "Clock" );
+        SystemDefs sysdef = new SystemDefs( dbName, numBuf+20, numBuf, "Clock" ); // Open DB w/ user specified buff pages
 
-        // Open the ColumnDB using the provided string
-        //ColumnDB cDB = new ColumnDB();
-        //cDB.openDB(dbName);
-        // Retrieve the Columnarfile using the provided string
         try {
-            Columnarfile cFile = new Columnarfile(cfName);
+            cFile = new Columnarfile(cfName);
         }
         catch( Exception E ) {
             Runtime.getRuntime().exit(1);
         }
-
+        boolean success = false;
         if( accessType == "FILESCAN" )
         {
-
+            // Get data from "Headerfile" heapfile of columnar file created above
+            // Call FileScan consructor with relevant information
+            // Consider TARGETCOLUMNNAMES here
         }
         else if( accessType == "COLUMNSCAN" )
         {
-
+            // Get data from "Headerfile" heapfile of columnar file created above
+            // Call ColumnarFileScan consructor with relevant information
+            // Consider TARGETCOLUMNNAMES here
         }
         else if( accessType == "BTREE" )
         {
-
+            // success = cFile.createBTreeIndex(valConst_ColName.{GETCOLNUM});
+            // Need a way of finding the column number given the column name
+            KeyClass hiKey, lowKey;
+            if( valConst_Operator == "=" )
+            {
+                hiKey = new IntegerKey(valConst_Value);
+                lowKey = new IntegerKey(valConst_Value);
+            }
+            else if( valConst_Operator == ">" )
+            {
+                hiKey = null;
+                lowKey = new IntegerKey(valConst_Value);
+            }
+            else if( valConst_Operator == "<" )
+            {
+                hiKey = new IntegerKey(valConst_Value);
+                lowKey = null;
+            }
+            // Consider TARGETCOLUMNNAMES here
+            // BTreeFile = ...
+            // BTFileScan scan = {BTREEFILE}.new_scan(hiKey, lowKey);
+            // KeyDataEntry entry = scan.get_next();
+            // if(entry!=null)
+            //  System.out.println("SCAN RESULT: "+ entry.key + " " + entry.data);
+            // else
+            //  System.out.println("AT THE END OF SCAN!");
         }
         else if( accessType == "BITMAP" )
         {
-
+            // success = cFile.createBitMapIndex(valConst_ColName.{GETCOLNUM},{VALUECLASS});
+            // Need a way of finding the column number given the column name
+            // Consider TARGETCOLUMNNAMES here
         }
         else
         {
