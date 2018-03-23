@@ -1,5 +1,7 @@
 package tests;
 
+import diskmgr.ColumnDB;
+
 import global.*;
 import heap.Heapfile;
 import heap.Scan;
@@ -141,4 +143,5 @@ private boolean FAIL = false;
 			e.printStackTrace();
 		}
 	}
+
 }

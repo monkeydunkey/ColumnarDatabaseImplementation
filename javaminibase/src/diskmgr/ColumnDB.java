@@ -4,8 +4,9 @@ import java.io.*;
 import bufmgr.*;
 import global.*;
 
-public class ColumnDB implements GlobalConst {
-    /**
-	**/
-    public ColumnDB() { }
-}//end of ColumnDB class
+public class ColumnDB extends DB{
+    public ColumnDB () {
+
+    }
+}
+
