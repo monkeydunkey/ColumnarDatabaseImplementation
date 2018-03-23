@@ -1074,5 +1074,6 @@ public class Heapfile implements Filetype,  GlobalConst {
 	  unpinPage(dirPageId,false);
 	  return position;
   }
+
   
 }// End of HeapFile 

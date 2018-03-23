@@ -6,7 +6,6 @@ import heap.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
 interface  Filetype {
     int TEMP = 0;
     int ORDINARY = 1;
@@ -279,7 +278,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
         _file_deleted = true;
 
         for (int i = 0; i < numColumns; i++){
-            columnFile[i].deleteFile();
+            try {
+                columnFile[i].deleteFile();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -344,6 +347,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return tid;
     }
 
+
+
+
+
+
     public Tuple getTuple(TID tid)
             throws InvalidSlotNumberException,
             InvalidTupleSizeException,
@@ -353,16 +361,21 @@ public class Columnarfile implements Filetype,  GlobalConst {
             Exception
     {
         //Tuple[] tupleArr = new Tuple[numColumns];
-        Tuple tupleArr;
-        int totalLength = 0;
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        for (int i = 0; i < numColumns; i++) {
-            tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
-            totalLength += tupleArr.getLength();
-            outputStream.write( tupleArr.getTupleByteArray());
+        try {
+            Tuple tupleArr;
+            int totalLength = 0;
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            for (int i = 0; i < numColumns; i++) {
+                tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
+                totalLength += tupleArr.getLength();
+                outputStream.write(tupleArr.getTupleByteArray());
+            }
+            return new Tuple(outputStream.toByteArray(), 0, totalLength);
         }
-        return new Tuple(outputStream.toByteArray(), 0, totalLength);
-
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
 
     }
 
@@ -495,14 +508,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns], new Tuple(arr, 0, arr.length));
     }
 
-    public boolean purgeAllDeletedTuples()
-            throws InvalidTupleSizeException,
-            IOException
-    {
-        TID emptyTID = new TID(numColumns + 2);
-        TupleScan fileScan = new TupleScan(this);
-        //TODO: this is still pending
-        return true;
+    public boolean purgeAllDeletedTuples(){
+        throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
 
