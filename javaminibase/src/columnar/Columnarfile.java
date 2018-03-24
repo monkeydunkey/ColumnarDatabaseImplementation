@@ -7,6 +7,8 @@ import heap.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+
 interface  Filetype {
     int TEMP = 0;
     int ORDINARY = 1;
@@ -669,18 +671,21 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
 
     public int getColumnIndexByName(String columnName){
-        /*
-        *
-        *
-        *
-        * */
-        return 0;//todo
+        if(getColumnNames() != null){
+            return Arrays.asList(getColumnNames()).indexOf(columnName);
+        }
+        return -1;
     }
 
     public ValueClass getColumnTypeByName(String columnName){
-        /*
-        * */
-        return null;//todo
+        int columnIndexByName = getColumnIndexByName(columnName);
+        if(columnIndexByName != -1){
+            AttrType attrType = type[columnIndexByName];
+            if(attrType != null){
+                return attrType.getValueClass();
+            }
+        }
+        return null;
     }
 
 
