@@ -32,7 +32,7 @@ public class query extends TestDriver implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void main( String[] args ) {
+    public static void run( String[] args ) {
         pcounter.initialize(); // Initializes read & write counters to 0
 
         String str = "";
