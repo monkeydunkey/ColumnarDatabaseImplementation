@@ -1,6 +1,6 @@
 package bitmap;
 
-import btree.BTreeHeaderPage;
+
 import btree.ConstructPageException;
 import diskmgr.Page;
 import global.PageId;
