@@ -21,6 +21,9 @@ public class Columnarfile implements Filetype,  GlobalConst {
     public Heapfile   HeaderFile;
     public PageId      _metaPageId;   // page number of header page
     public int         _ftype;
+
+    public String [] columnNames;
+
     private     boolean     _file_deleted;
     private     String 	 _fileName;
     private     int INTSIZE = 4;

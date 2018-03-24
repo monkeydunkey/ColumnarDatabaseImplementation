@@ -37,7 +37,7 @@ private boolean FAIL = false;
 		int numcolumns = Integer.parseInt(argv[3]);
 
 		AttrType[] type = new AttrType[numcolumns];
-
+		String[] columnnames = new String[numcolumns];
 
     
 	    try {
@@ -54,7 +54,8 @@ private boolean FAIL = false;
 			String line = bin.readLine();
 		
 			StringTokenizer st = new StringTokenizer(line);
-			int i = 0, tuplelength = 0;
+			int i = 0;
+			int tuplelength = 0;
 
 			while(st.hasMoreTokens())	
 			{	
@@ -63,7 +64,8 @@ private boolean FAIL = false;
 				
 				String tokenname = temp.nextToken(":");
 				String tokentype = temp.nextToken(":");
-				
+
+				columnnames[i] = tokenname;
 				
 				if (tokentype.equals("int"))
 					//Parse int attribute
@@ -96,7 +98,7 @@ private boolean FAIL = false;
 			else setup a new file
 			*/
 			Columnarfile cf = new Columnarfile (argv[2], numcolumns, type);
-			
+			cf.columnNames = columnnames;
 
 
 			System.out.println("Inserting tuples START");
