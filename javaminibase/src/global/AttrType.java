@@ -50,4 +50,14 @@ public class AttrType {
     }
     return ("Unexpected AttrType " + attrType);
   }
+
+  public ValueClass getValueClass(){
+    switch (attrType) {
+      case attrString:
+        return new ValueStrClass("attrString");
+      case attrInteger:
+        return new ValueIntClass(1);
+    }
+    return null;//unexpected type
+  }
 }

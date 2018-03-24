@@ -1,11 +1,9 @@
 package tests;
 
+import btree.*;
+import bufmgr.*;
 import global.*;
-import heap.Heapfile;
-import heap.Scan;
-import heap.Tuple;
-import btree.BT;
-import btree.BTreeFile;
+import heap.*;
 import columnar.*;
 import bitmap.*;
 import java.io.*;
@@ -17,6 +15,8 @@ public class index extends TestDriver implements GlobalConst {
     /*
      * Command line invocation of:
      * index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE
+     *
+     *
      * COLUMNDBNAME, COLUMNARFILENAME, and INDEXTYPE
      * COLUMNNAME is an integer of the column index
      * INDEXTYPE is either BTREE or BITMAP
@@ -27,66 +27,80 @@ public class index extends TestDriver implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void main( String[] args ) {
+    public static void main( String[] args ) throws HFDiskMgrException, InvalidTupleSizeException, HFException, InvalidSlotNumberException, SpaceNotAvailableException, HFBufMgrException, IOException, AddFileEntryException, GetFileEntryException, ConstructPageException {
         pcounter.initialize(); // Initializes read & write counters to 0
 
-        String colDBName = args[0];
-        String colFile = args[1];
-        int colNum = Integer.parseInt(args[2]);
-        String ixType = args[3];
+        final String COLUMN_DB_NAME = args[0];
+        final String COLUMNAR_FILE_NAME = args[1];
+        final String COLUMN_NAME = args[2];
+        final String INDEX_TYPE = args[3];
 
         /* Uncomment for debugging */
         /*
          *String filePath = "./";
-         * System.out.println( "COLUMNDBNAME: " + colDBName );
-         * System.out.println( "COLUMNARFILE: " + colFile );
-         * System.out.println( "COLUMNNAME: " + colName );
-         * System.out.println( "INDEXTYPE: " + ixType );
+         * System.out.println( "COLUMNDBNAME: " + COLUMN_DB_NAME );
+         * System.out.println( "COLUMNARFILE: " + COLUMNAR_FILE_NAME );
+         * System.out.println( "COLUMNNAME: " + COLUMN_NAME );
+         * System.out.println( "INDEXTYPE: " + INDEX_TYPE );
          */
 
         System.out.println( "Running index tests...\n" );
 
-        try {
-            SystemDefs sysdef = new SystemDefs( colDBName, NUMBUF+20, NUMBUF, "Clock" );
-        }
-        catch( Exception E ) {
-            Runtime.getRuntime().exit(1);
-        }
-
         // TODO - Implement rest of program
         /*
          * Logic
-         * Use COLUMNDBNAME to lookup the database (e.g.colDB1)
-         * Use COLUMNARFILENAME to look up columnar file
-         * Use COLUMNNAME to lookup attribute
-         * Use INDEX to select how column in indexed
+         * Use COLUMN_DB_NAME to lookup the database (e.g.colDB1)
+         * Use COLUMNAR_FILE_NAME to look up columnar file
+         * Use COLUMN_NAME to lookup attribute
+         * Use INDEX_TYPE to select how column in indexed
          */
 
         // Open the ColumnDB using the provided string
-        ColumnDB cDB = new ColumnDB();
-        cDB.openDB(colDBName);
-        // Retrieve the Columnarfile using the provided string
-        Columnarfile cFile = new Columnarfile(colFile);
-        
-        bool success = false;
+        SystemDefs sysdef = new SystemDefs( COLUMN_DB_NAME, NUMBUF+20, NUMBUF, "Clock" );
+        Columnarfile cFile = null;
 
-        if( ixType == "BTREE" )
-        {
-        	success = cFile.createBTreeIndex(colNum);
-            BTreeFile btFile = new BTreeFile(cFile);
+        try {
+            // Retrieve the Columnarfile using the provided string
+
+            cFile = new Columnarfile(COLUMNAR_FILE_NAME);
         }
-        else if( ixType == "BITMAP" )
+        catch(IOException e) {
+            e.printStackTrace();
+        }
+        
+        boolean success = false;
+
+        if( INDEX_TYPE.equals("BTREE"))
         {
-            success = cFile.createBitMapIndex(colName, cFile.type[colNum]);
-            BitMapFile bmFile = new BitMapFile(cFile);
+            // todo convert COLUMN_NAME to int value
+        	// success = cFile.createBTreeIndex(COLUMN_NAME);
+
+        }
+        else if( INDEX_TYPE.equals("BITMAP") )
+        {
+            // todo determine the type (ValueClass) to send as parameter 2
+            success = cFile.createBitMapIndex(cFile.getColumnIndexByName(COLUMN_NAME), cFile.getColumnTypeByName(COLUMN_NAME));
         }
         else
         {
         	System.out.println("Error - INDEXTYPE should be either BTREE or BITMAP!");
         }
+        if(!success)
+            System.out.println("Error - Could not create index!");
+        else
+            System.out.println("SUCCESS - Index created!");
 
         System.out.println("Index tests finished!\n");
-        System.out.println("Disk read count: " + pcounter.rcounter); // Maybe subtract from intital count?
+        System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
+
+        try {
+            //SystemDefs.JavabaseBM.resetAllPinCount(); todo, why is this method not here?
+            SystemDefs.JavabaseBM.flushAllPages();
+            SystemDefs.JavabaseDB.closeDB();
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 }

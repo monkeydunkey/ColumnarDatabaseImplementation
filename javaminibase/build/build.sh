@@ -31,6 +31,7 @@ cp ./makefiles/Makefile ../src
 cp ./makefiles/btree/Makefile ../src/btree
 cp ./makefiles/chainexception/Makefile ../src/chainexception
 cp ./makefiles/bufmgr/Makefile ../src/bufmgr
+cp ./makefiles/bitmap/Makefile ../src/bitmap
 cp ./makefiles/catalog/Makefile ../src/catalog
 cp ./makefiles/columnar/Makefile ../src/columnar
 cp ./makefiles/diskmgr/Makefile ../src/diskmgr
