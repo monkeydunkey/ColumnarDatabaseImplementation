@@ -2,7 +2,9 @@ package tests;
 
 import global.*;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 
 class IndexProgramDriver extends TestDriver
@@ -76,8 +78,32 @@ class IndexProgramDriver extends TestDriver
 
         boolean status = OK;
 
-        System.err.println("------------------- TEST 1 completed ---------------------\n");
 
+        Runtime rt = Runtime.getRuntime();
+        try {
+            // index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE
+            Process proc = rt.exec("java index columnNameA columnarFileName columnNameA BITMAP");
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+
+            // read the output from the command
+            System.out.println("Here is the standard output of the command:\n");
+            String s = null;
+            while ((s = stdInput.readLine()) != null) {
+                System.out.println(s);
+            }
+
+
+            // read any errors from the attempted command
+            System.out.println("Here is the standard error of the command (if any):\n");
+            while ((s = stdError.readLine()) != null) {
+                System.out.println(s);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.err.println("------------------- TEST 1 completed ---------------------\n");
         return status;
     }
 
