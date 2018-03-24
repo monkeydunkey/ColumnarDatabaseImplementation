@@ -1049,35 +1049,35 @@ public class Heapfile implements Filetype,  GlobalConst {
 	InvalidTupleSizeException,
 	HFBufMgrException, IOException
   {
-
-	int position = 0;
-	Tuple temp = new Tuple();
-	HFPage currentPage = new HFPage();
-	PageId dirPageId = new PageId(_firstDirPageId.pid);
-	RID currentPageRid = new RID();
-	DataPageInfo dpinfo;
-
-	pinPage(dirPageId, currentPage, false);
-
-	for (currentPageRid = currentPage.firstRecord();
-	   currentPageRid != null;
-	   currentPageRid = currentPage.nextRecord(currentDataPageRid)) {
-	  //search all pages
-	  temp = currentPage.getRecord(currentDataPageRid);
-
-	  dpinfo = new DataPageInfo(temp);
-	  if (dpinfo.pageId.pid == rid.pageNo.pid) {
-		  break; //Found position
-	  }
-	  else {
-		  position = position + dpinfo.recct; //Or jump to next data page
-	  }
-	}
-
-	position = position + rid.slotNo + 1;
-	unpinPage(dirPageId, false);
-	return position;
-
+//
+//	int position = 0;
+//	Tuple temp = new Tuple();
+//	HFPage currentPage = new HFPage();
+//	PageId dirPageId = new PageId(_firstDirPageId.pid);
+//	RID currentPageRid = new RID();
+//	DataPageInfo dpinfo;
+//
+//	pinPage(dirPageId, currentPage, false);
+//
+//	for (currentPageRid = currentPage.firstRecord();
+//	   currentPageRid != null;
+//	   currentPageRid = currentPage.nextRecord(currentDataPageRid)) {
+//	  //search all pages
+//	  temp = currentPage.getRecord(currentDataPageRid);
+//
+//	  dpinfo = new DataPageInfo(temp);
+//	  if (dpinfo.pageId.pid == rid.pageNo.pid) {
+//		  break; //Found position
+//	  }
+//	  else {
+//		  position = position + dpinfo.recct; //Or jump to next data page
+//	  }
+//	}
+//
+//	position = position + rid.slotNo + 1;
+//	unpinPage(dirPageId, false);
+//	return position;
+	return 0;//todo fix @Lawrence Luo
 
 
   }
