@@ -76,16 +76,3 @@ SMJoin:SM_JoinTest.java
 
 sortmerge: SMJoin
 	$(JAVA) tests.SM_JoinTest
-
-# test index program
-
-IProgram:IndexProgramTest.java
-	$(JAVAC) IndexProgramTest.java TestDriver.java
-
-iprogram: IProgram
-	$(JAVA) tests.IndexProgramTest
-
-
-
-
-
