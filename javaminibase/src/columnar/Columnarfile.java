@@ -657,4 +657,20 @@ public class Columnarfile implements Filetype,  GlobalConst {
     } // end of delete_file_entry
 
 
+    public int getColumnIndexByName(String columnName){
+        /*
+        *
+        *
+        *
+        * */
+        return 0;//todo
+    }
+
+    public ValueClass getColumnTypeByName(String columnName){
+        /*
+        * */
+        return null;//todo
+    }
+
+
 }
