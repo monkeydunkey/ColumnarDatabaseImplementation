@@ -71,8 +71,7 @@ public class index extends TestDriver implements GlobalConst {
 
         if( ixType == "BTREE" )
         {
-        	success = cFile.createBTreeIndex(colNum);
-
+            success = cFile.createBTreeIndex(colNum);
         }
         else if( ixType == "BITMAP" )
         {
