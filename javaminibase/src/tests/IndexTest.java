@@ -3,8 +3,6 @@ package tests;
 import java.io.*;
 
 import global.*;
-import bufmgr.*;
-import diskmgr.*;
 import heap.*;
 import iterator.*;
 import index.*;
@@ -787,7 +785,7 @@ public class IndexTest {
     public static void main(String argv[]) {
         boolean indexstatus;
 
-        IndexDriver indext = new IndexDriver();
+        IndexProgramDriver indext = new IndexProgramDriver();
 
         indexstatus = indext.runTests();
         if (indexstatus != true) {

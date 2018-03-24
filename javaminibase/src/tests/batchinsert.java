@@ -15,41 +15,36 @@ import java.util.StringTokenizer;
 
 import diskmgr.pcounter;
 
-public class batchinsert extends TestDriver implements GlobalConst{
+public class batchinsert {
 
-private int TRUE  = 1;
-private int FALSE = 0;
-private boolean OK = true;
-private boolean FAIL = false;
-	
-	public static void main (String argv[])
+	public static void main (String[] argv)
 	{	
+		pcounter.initialize();
 		
-		
-		int readcount = 0, writecount = 0; 
-
 		String filepath = "./";
-		System.out.println("DATAFILENAME: " + argv[0]);
-		System.out.println("COLUMNDBNAME: " + argv[1]);
-		System.out.println("COLUMNARFILENAME: " + argv[2]);
-		System.out.println("NUMCOLUMNS: " + argv[3]);
+		String DATA_FILE_NAME = argv[0];
+		String COLUMN_DB_NAME = argv[1];
+		String COLUMNAR_FILE_NAME = argv[2];
+		String NUM_OF_COLUMNS = argv[3];
 
-		int numcolumns = Integer.parseInt(argv[3]);
+		System.out.println("DATAFILENAME: " + DATA_FILE_NAME);
+		System.out.println("COLUMNDBNAME: " + COLUMN_DB_NAME);
+		System.out.println("COLUMNARFILENAME: " + COLUMNAR_FILE_NAME);
+		System.out.println("NUMCOLUMNS: " + NUM_OF_COLUMNS);
+
+		int numcolumns = Integer.parseInt(NUM_OF_COLUMNS);
 
 		AttrType[] type = new AttrType[numcolumns];
 		String[] columnnames = new String[numcolumns];
 
     
 	    try {
-			SystemDefs sysdef = new SystemDefs(argv[1],100000,100,"Clock");
+			SystemDefs sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
 
 			//Borrowed tokenizer
-			FileInputStream fin = new FileInputStream(filepath+argv[0]);
+			FileInputStream fin = new FileInputStream(filepath+ DATA_FILE_NAME);
 			DataInputStream din = new DataInputStream(fin);
 			BufferedReader bin = new BufferedReader(new InputStreamReader(din));
-			
-			readcount = pcounter.rcounter;
-			writecount = pcounter.wcounter;
 			
 			String line = bin.readLine();
 		
@@ -97,7 +92,7 @@ private boolean FAIL = false;
 
 			else setup a new file
 			*/
-			Columnarfile cf = new Columnarfile (argv[2], numcolumns, type);
+			Columnarfile cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type);
 			cf.setColumnNames(columnnames);
 
 
@@ -132,11 +127,11 @@ private boolean FAIL = false;
 			}
 
 			System.out.println("Insertion done!");
-			System.out.println("Disk read count: "+(pcounter.rcounter - readcount));
-			System.out.println("Disk write count: "+(pcounter.wcounter - writecount));
+			System.out.println("Disk read count: "+ pcounter.rcounter);
+			System.out.println("Disk write count: "+ pcounter.wcounter );
 
 			//Closing the DB
-			SystemDefs.JavabaseBM.resetAllPinCount();
+			//SystemDefs.JavabaseBM.resetAllPinCount();
 			SystemDefs.JavabaseBM.flushAllPages();
 			SystemDefs.JavabaseDB.closeDB();
 		} 
