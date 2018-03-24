@@ -14,7 +14,7 @@ import diskmgr.pcounter;
 import java.util.Scanner;
 
 public class TestPrompt {
-    public static void menu()
+    private static void menu()
     {
         System.out.println("---------------------------- MENU ----------------------------");
         System.out.println("Format of command line input: \n");
@@ -58,7 +58,7 @@ public class TestPrompt {
             list.remove(0);
             split = list.toArray(split);
 
-            if( command == "batchinsert" )
+            if( command.equals("batchinsert") )
             {
                 try {
                     batchinsert.run(split);
@@ -66,7 +66,7 @@ public class TestPrompt {
                     e.printStackTrace();
                 }
             }
-            else if( command == "index" )
+            else if( command.equals("index") )
             {
                 try {
                     index.run(split);
@@ -74,7 +74,7 @@ public class TestPrompt {
                     e.printStackTrace();
                 }
             }
-            else if( command == "query" )
+            else if( command.equals("query") )
             {
                 //Uncomment when query is finished
 //                try {
@@ -83,7 +83,7 @@ public class TestPrompt {
 //                    e.printStackTrace();
 //                }
             }
-            else if( command == "delete_query" )
+            else if( command.equals("delete_query") )
             {
                 //Uncomment when delete_query is finished
 //                try {
@@ -92,7 +92,7 @@ public class TestPrompt {
 //                    e.printStackTrace();
 //                }
             }
-            else if( command == "quit" )
+            else if( command.equals("quit") )
             {
                 quit = true;
             }
@@ -102,6 +102,7 @@ public class TestPrompt {
             }
         } while( !quit );
         System.out.println("Exiting....\n");
+        
         // Done with database operations!
         try {
             SystemDefs.JavabaseBM.flushAllPages();
