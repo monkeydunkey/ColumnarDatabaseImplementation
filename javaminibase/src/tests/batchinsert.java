@@ -15,7 +15,7 @@ import java.util.StringTokenizer;
 
 import diskmgr.pcounter;
 
-public class BatchInsert extends TestDriver implements GlobalConst{
+public class batchinsert extends TestDriver implements GlobalConst{
 
 private int TRUE  = 1;
 private int FALSE = 0;
