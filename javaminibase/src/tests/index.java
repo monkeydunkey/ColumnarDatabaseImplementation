@@ -27,7 +27,7 @@ public class index extends TestDriver implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void main( String[] args ) throws HFDiskMgrException, InvalidTupleSizeException, HFException, InvalidSlotNumberException, SpaceNotAvailableException, HFBufMgrException, IOException, AddFileEntryException, GetFileEntryException, ConstructPageException {
+    public static void run( String[] args ) throws HFDiskMgrException, InvalidTupleSizeException, HFException, InvalidSlotNumberException, SpaceNotAvailableException, HFBufMgrException, IOException, AddFileEntryException, GetFileEntryException, ConstructPageException {
         pcounter.initialize(); // Initializes read & write counters to 0
 
         final String COLUMN_DB_NAME = args[0];
@@ -44,7 +44,7 @@ public class index extends TestDriver implements GlobalConst {
          * System.out.println( "INDEXTYPE: " + INDEX_TYPE );
          */
 
-        System.out.println( "Running index tests...\n" );
+        System.out.println( "Running index test...\n" );
 
         // TODO - Implement rest of program
         /*
@@ -90,17 +90,8 @@ public class index extends TestDriver implements GlobalConst {
         else
             System.out.println("SUCCESS - Index created!");
 
-        System.out.println("Index tests finished!\n");
+        System.out.println("Index test finished!\n");
         System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
-
-        try {
-            //SystemDefs.JavabaseBM.resetAllPinCount(); todo, why is this method not here?
-            SystemDefs.JavabaseBM.flushAllPages();
-            SystemDefs.JavabaseDB.closeDB();
-        }
-        catch(Exception e) {
-            e.printStackTrace();
-        }
     }
 }
