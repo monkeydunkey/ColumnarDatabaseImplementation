@@ -662,8 +662,16 @@ public class HFPage extends Page
             Convert.setShortValue(slotCnt, SLOT_CNT, data);
         }
     }
-
-    void setCurPage_forGivenPosition(int Position) {
+    /*
+    This is supposed to be called if the page is currently the one first heap directory page
+     */
+    void setCurPage_forGivenPosition(int Position)
+            throws InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            HFBufMgrException,
+            IOException,
+            Exception
+    {
         /*
          * todo
          * sets the value of curPage to the page which contains
@@ -673,8 +681,53 @@ public class HFPage extends Page
          * Position = index of slot
          * curPage =
          * */
+        int totalRecords = 0;
+        PageId currentDirPageId = new PageId(this.curPage.pid);
 
+        HFPage currentDirPage = new HFPage();
+        HFPage currentDataPage = new HFPage();
+        RID currentDataPageRid = new RID();
+        PageId nextDirPageId = new PageId();
+        Tuple atuple = new Tuple();
+        /*
+        Loop over the directory pages till you find the page containing the given position
+        as this loop is over the page directory we won't actually be reading all the pages
+         */
+        while (currentDirPageId.pid != INVALID_PAGE)
+        {
+            for( currentDataPageRid = currentDirPage.firstRecord();
+                 currentDataPageRid != null;
+                 currentDataPageRid = currentDirPage.nextRecord(currentDataPageRid))
+            {
+                try{
+                    atuple = currentDirPage.getRecord(currentDataPageRid);
+                }
+                catch (InvalidSlotNumberException e)
+                {
+                    throw e;
+                }
 
+                DataPageInfo dpinfo = new DataPageInfo(atuple);
+                try{
+                    totalRecords += dpinfo.recct;
+                    //Check if the number of records read is greater than the position if yes we have reached the
+                    //page containing the given position. So setting the page number as asked
+                    if(totalRecords >= Position)
+                    {
+                        this.curPage = dpinfo.pageId;
+                        return;
+                    }
+                }catch (Exception e)
+                {
+                    throw e;
+                }
+
+            }
+            nextDirPageId = currentDirPage.getNextPage();
+            currentDirPageId.pid = nextDirPageId.pid;
+        }
+        //Throw an exception as the searched position does not exists
+        throw new Exception("The given position does not exists");
     }
 
 }

@@ -2,6 +2,7 @@ package diskmgr;
 
 public class pcounter
 {
+
 	public static int rcounter;
 	public static int wcounter;
 
@@ -29,4 +30,5 @@ public class pcounter
 	{
 		wcounter++;
 	}
+
 }
