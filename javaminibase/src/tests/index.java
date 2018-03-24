@@ -1,5 +1,6 @@
 package tests;
 
+import bufmgr.*;
 import global.*;
 import heap.Heapfile;
 import heap.Scan;
@@ -46,47 +47,57 @@ public class index extends TestDriver implements GlobalConst {
 
         System.out.println( "Running index tests...\n" );
 
-        try {
-            SystemDefs sysdef = new SystemDefs( colDBName, NUMBUF+20, NUMBUF, "Clock" );
-        }
-        catch( Exception E ) {
-            Runtime.getRuntime().exit(1);
-        }
-
         // TODO - Implement rest of program
         /*
          * Logic
-         * Use COLUMNDBNAME to lookup the database (e.g.colDB1)
-         * Use COLUMNARFILENAME to look up columnar file
-         * Use COLUMNNAME to lookup attribute
-         * Use INDEX to select how column in indexed
+         * Use colDBName to lookup the database (e.g.colDB1)
+         * Use colFile to look up columnar file
+         * Use colNum to lookup attribute
+         * Use ixType to select how column in indexed
          */
 
         // Open the ColumnDB using the provided string
-        ColumnDB cDB = new ColumnDB();
-        cDB.openDB(colDBName);
-        // Retrieve the Columnarfile using the provided string
-        Columnarfile cFile = new Columnarfile(colFile);
+        SystemDefs sysdef = new SystemDefs( colDBName, NUMBUF+20, NUMBUF, "Clock" );
+
+        try {
+            // Retrieve the Columnarfile using the provided string
+            Columnarfile cFile = new Columnarfile(colFile);
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+        }
         
-        bool success = false;
+        boolean success = false;
 
         if( ixType == "BTREE" )
         {
         	success = cFile.createBTreeIndex(colNum);
-            BTreeFile btFile = new BTreeFile(cFile);
+
         }
         else if( ixType == "BITMAP" )
         {
             success = cFile.createBitMapIndex(colName, cFile.type[colNum]);
-            BitMapFile bmFile = new BitMapFile(cFile);
         }
         else
         {
         	System.out.println("Error - INDEXTYPE should be either BTREE or BITMAP!");
         }
+        if(!success)
+            System.out.println("Error - Could not create index!");
+        else
+            System.out.println("SUCCESS - Index created!");
 
         System.out.println("Index tests finished!\n");
-        System.out.println("Disk read count: " + pcounter.rcounter); // Maybe subtract from intital count?
+        System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
+
+        try {
+            SystemDefs.JavabaseBM.resetAllPinCount();
+            SystemDefs.JavabaseBM.flushAllPages();
+            SystemDefs.JavabaseDB.closeDB();
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 }
