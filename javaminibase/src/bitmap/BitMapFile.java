@@ -25,33 +25,29 @@ public class BitMapFile implements GlobalConst{
      * @param filename the Bit Map File tree file name. Input parameter.
      * @throws GetFileEntryException
      */
-    public BitMapFile(java.lang.String filename) throws GetFileEntryException {
+    public BitMapFile(java.lang.String filename) throws GetFileEntryException, ConstructPageException {
         headerPageId=get_file_entry(filename);
-        headerPage= new  BitMapHeaderPage(headerPageId);
+        headerPage= new BitMapHeaderPage(headerPageId);
         dbname = filename;
     }
 
     /**
      * BitMapFile class; an index file with given filename should not already exist; this creates the BitMap file
      * from scratch.
+     * @see btree.BTreeFile#BTreeFile(String filename, int keytype,int keysize, int delete_fashion)
      * @param filename
      * @param columnfile
      * @param ColumnNo
      * @param value
      */
-    public BitMapFile(java.lang.String filename, Columnarfile columnfile, int ColumnNo, ValueClass value) throws GetFileEntryException, AddFileEntryException {
+    public BitMapFile(java.lang.String filename, Columnarfile columnfile, int ColumnNo, ValueClass value) throws GetFileEntryException, AddFileEntryException, ConstructPageException, IOException {
         headerPageId = get_file_entry(filename);
         if (headerPageId == null) //file not exist
         {
-            headerPage= new  BitMapHeaderPage(headerPageId);
+            headerPage= new BitMapHeaderPage();
             headerPageId = headerPage.getPageId();
             add_file_entry(filename, headerPageId);
-//            headerPage.set_magic0(MAGIC0);
-//            headerPage.set_rootId(new PageId(INVALID_PAGE));
-//            headerPage.set_keyType((short) keytype);
-//            headerPage.set_maxKeySize(keysize);
-//            headerPage.set_deleteFashion(delete_fashion);
-//            headerPage.setType(NodeType.BTHEAD);//
+            headerPage.set_rootId(new PageId(INVALID_PAGE));
         } else {
             headerPage= new  BitMapHeaderPage(headerPageId);
         }
