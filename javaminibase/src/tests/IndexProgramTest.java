@@ -116,7 +116,7 @@ class IndexProgramDriver extends TestDriver
     }
 
     protected String testName() {
-        return "Index";
+        return "Index Program Tests";
     }
 }
 
@@ -128,9 +128,9 @@ public class IndexProgramTest {
 
         indexstatus = indext.runTests();
         if (indexstatus != true) {
-            System.out.println("Error ocurred during index tests");
+            System.out.println("Error ocurred during "+indext.testName());
         } else {
-            System.out.println("Index tests completed successfully");
+            System.out.println(indext.testName()+" completed successfully");
         }
     }
 }
