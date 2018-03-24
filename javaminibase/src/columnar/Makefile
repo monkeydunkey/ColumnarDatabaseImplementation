@@ -1,4 +1,6 @@
-JDKPATH = /Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home
+
+
+JDKPATH=/usr/lib/jvm/java-8-oracle
 LIBPATH = ../lib
 
 CLASSPATH = $(JDKPATH)/lib/classes.zip:.:..:$(LIBPATH)
@@ -28,4 +30,5 @@ together:*.java
 
 clean:
 
-	\rm -f *.class *~ \#* core
+	\rm -f *.class *~ \#* core 
+
