@@ -88,23 +88,24 @@ public class BitMapFile implements GlobalConst{
             FreePageException {
 
         Page page = pinPage(pageno);
+        // todo traverse to free all child pages
 
-        if (sortedPage.getType() == NodeType.INDEX) {
-            // todo traverse to free all child pages
-            BTIndexPage indexPage = new BTIndexPage(page, headerPage.get_keyType());
-            RID rid = new RID();
-            PageId childId;
-            KeyDataEntry entry;
-            for (entry = indexPage.getFirst(rid);
-                 entry != null; entry = indexPage.getNext(rid)) {
-                childId = ((IndexData) (entry.data)).getData();
-                _destroyFile(childId);
-            }
-        } else { // BTLeafPage
-
-            unpinPage(pageno);
-            freePage(pageno);
-        }
+//        if (sortedPage.getType() == NodeType.INDEX) {
+//
+//            BTIndexPage indexPage = new BTIndexPage(page, headerPage.get_keyType());
+//            RID rid = new RID();
+//            PageId childId;
+//            KeyDataEntry entry;
+//            for (entry = indexPage.getFirst(rid);
+//                 entry != null; entry = indexPage.getNext(rid)) {
+//                childId = ((IndexData) (entry.data)).getData();
+//                _destroyFile(childId);
+//            }
+//        } else { // BTLeafPage
+//
+//            unpinPage(pageno);
+//            freePage(pageno);
+//        }
 
     }
 
