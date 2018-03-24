@@ -44,7 +44,6 @@ public class TestPrompt {
 
     public static void main( String[] args )
     {
-        SystemDefs sysDef;
         boolean quit = false;
         do
         {
@@ -77,11 +76,21 @@ public class TestPrompt {
             }
             else if( command == "query" )
             {
-
+                //Uncomment when query is finished
+//                try {
+//                    query.run(split);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
             }
             else if( command == "delete_query" )
             {
-
+                //Uncomment when delete_query is finished
+//                try {
+//                    delete_query.run(split);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
             }
             else if( command == "quit" )
             {
@@ -89,13 +98,12 @@ public class TestPrompt {
             }
             else
             {
-                System.out.println( "ERROR - Invalid input!" );
+                System.out.println( "ERROR - Invalid input! Please try again!\n" );
             }
         } while( !quit );
-
+        System.out.println("Exiting....\n");
         // Done with database operations!
         try {
-            //SystemDefs.JavabaseBM.resetAllPinCount(); todo, why is this method not here?
             SystemDefs.JavabaseBM.flushAllPages();
             SystemDefs.JavabaseDB.closeDB();
         }
