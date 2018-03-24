@@ -98,7 +98,7 @@ private boolean FAIL = false;
 			else setup a new file
 			*/
 			Columnarfile cf = new Columnarfile (argv[2], numcolumns, type);
-			cf.columnNames = columnnames;
+			cf.setColumnNames(columnnames);
 
 
 			System.out.println("Inserting tuples START");

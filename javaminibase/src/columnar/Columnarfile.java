@@ -22,7 +22,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     public PageId      _metaPageId;   // page number of header page
     public int         _ftype;
 
-    public String [] columnNames;
+    private String [] columnNames;
 
     private     boolean     _file_deleted;
     private     String 	 _fileName;
@@ -555,6 +555,14 @@ public class Columnarfile implements Filetype,  GlobalConst {
         throw new java.lang.UnsupportedOperationException("Not supported yet.");
     }
 
+
+    public void setColumnNames(String[] columnNames) {
+        this.columnNames = columnNames;
+    }
+
+    public String[] void getColumnNames() {
+        return this.columnNames;
+    }
 
     // The following functions are copied from heap class and is something that should not be done
     // as it introduces code duplication but it should be fine for our purposes
