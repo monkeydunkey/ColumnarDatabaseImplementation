@@ -11,10 +11,10 @@ public class BMPage extends HFPage{
 
     int keyType;
 
-    public BitMapPage()
+    public BMPage()
     { }
 
-    public BitMapPage(Page page, int keyType)
+    public BMPage(Page page, int keyType)
     {
         try {
             super(page);

@@ -4,15 +4,35 @@ import bufmgr.*;
 import diskmgr.Page;
 import global.*;
 import heap.*;
+import columnar.*;
 
 import java.io.IOException;
+
+private BitMapHeaderPage headerPage;
+private PageId  headerPageId;
+private String  dbname;
+private Columnarfile cFile;
+private int columnNo;
+private ValueClass value;
 
 /**
  * Create a class called BitMapFile with the following specifications (see BTreeFile for analogy):
  */
 public class BitMapFile implements GlobalConst extends HeapFile{
 
+    public void close()
 
+    {
+        try {
+            if (headerPage != null) {
+                SystemDefs.JavabaseBM.unpinPage(headerPageId, true);
+                headerPage = null;
+            }
+        }
+        catch (Exception e) {
+            e.printStackTree();
+        }
+    }
 
     private void unpinPage(PageId pageno, boolean dirty)
             throws UnpinPageException {

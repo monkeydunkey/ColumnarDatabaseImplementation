@@ -1082,5 +1082,62 @@ public class Heapfile implements Filetype,  GlobalConst {
 
   }
 
+
+	public RID PosToRid(int pos)
+	{
+		try
+		{
+			int position = 0;
+			boolean flag = false;
+			HFPage currentPage = new HFPage();
+			PageId dirPageId = new PageId(_firstDirPageId.pid);
+			PageId nextDirId = null;
+			RID currentDataPageRid = new RID();
+			DataPageInfo dpinfo = null;
+			Tuple atuple = new Tuple();
+
+			pinPage(dirPageId,currentPage,false);
+
+			while (currentPage != null) {
+				flag = false;
+				for (currentDataPageRid = currentPage.firstRecord();
+					 position < pos;
+					 currentDataPageRid = currentPage.nextRecord(currentDataPageRid))
+					{
+						if(currentDataPageRid == null)
+						{
+							flag = true;
+							break;
+						}
+
+						atuple = currentPage.getRecord(currentDataPageRid);
+
+						dpinfo = new DataPageInfo(atuple);
+
+						position = position + dpinfo.recct;
+					}
+				if(nextDirId != null)
+					unpinPage(nextDirId,false);
+				if(dirPageId != null)	{
+					unpinPage(dirPageId,false);
+					dirPageId = null;
+				}
+				if(flag == false)
+					break;
+				nextDirId = currentPage.getNextPage();
+				pinPage(nextDirId, currentPage, false);
+			}
+			RID rid = new RID();
+			rid.pageNo = dpinfo.pageId;
+			rid.slotNo = (dpinfo.recct - (position - pos) )-1;
+
+			return rid;
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
   
 }// End of HeapFile 
