@@ -24,8 +24,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
     public Heapfile   HeaderFile;
     public PageId      _metaPageId;   // page number of header page
     public int         _ftype;
+    public String[] columnNames;
 
-    private String[] columnNames;
 
     private     boolean     _file_deleted;
     private     String 	 _fileName;
@@ -155,6 +155,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         numColumns = totalColumns;
         type = attrType;
         indexType = new IndexType[numColumns];
+        columnNames = new String[numColumns];
         /*
         The way the initialization should work is that for each of the of the
         columns we will have a separate heap file and we will use that heap
@@ -206,7 +207,64 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
         //Initializing heap files for each of the column
         for (int i = 0; i < totalColumns; i++){
+
             String columnName = name + "." + String.valueOf(i);
+            columnNames[i] = columnName;
+            columnFile[i] = new Heapfile(columnName);
+            /*
+                String[] metaInfo = new String[2];
+                //metaInfo[0] = columnName;
+                metaInfo[1] = ;
+             */
+            int offset = attrType[i].toString() == "attrInteger" ? INTSIZE : STRINGSIZE;
+            headerRIDs[i] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, attrType[i].attrType, offset, 0));
+            offsets[i] = offset;
+            indexType[i] = new IndexType(0);
+        }
+        //Inserting the final entry for delete marking file
+        String columnName = name + ".deletion";
+        columnFile[totalColumns] = new Heapfile(columnName);
+        headerRIDs[totalColumns] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, 1, INTSIZE, 0));
+
+        //Inserting the final entry for tuple tracking file
+        columnName = name + ".tupleTracking";
+        columnFile[totalColumns + 1] = new Heapfile(columnName);
+        headerRIDs[totalColumns + 1] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, 1, INTSIZE, 0));
+    }
+
+    public Columnarfile(String name, int totalColumns, AttrType[] attrType, String[] colNames)
+            throws HFException,
+            HFBufMgrException,
+            HFDiskMgrException,
+            InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            SpaceNotAvailableException,
+            IOException{
+        numColumns = totalColumns;
+        columnNames = colNames;
+        type = attrType;
+        indexType = new IndexType[numColumns];
+
+        _file_deleted = true;
+        _fileName = null;
+
+
+        _fileName = name + "." + "hdr";
+        _ftype = ORDINARY;
+        // +2 for storing the deletion heap file and RID to TID mapping heap file
+        columnFile = new Heapfile[totalColumns + 2];
+        headerRIDs = new RID[totalColumns + 2];
+        offsets = new int[totalColumns];
+
+
+        // try to open the file
+        HeaderFile = new Heapfile(_fileName);
+        ValueIntClass columnCount = new ValueIntClass(totalColumns + 2);
+        HeaderFile.insertRecord(columnCount.getByteArr());
+
+        //Initializing heap files for each of the column
+        for (int i = 0; i < totalColumns; i++){
+            String columnName = name + "." + columnNames[i];
             columnFile[i] = new Heapfile(columnName);
             /*
                 String[] metaInfo = new String[2];
@@ -240,6 +298,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     {
         _fileName = name + "." + "hdr";
         HeaderFile = new Heapfile(_fileName);
+        columnNames = new String[numColumns];
         Scan headerFileScan = HeaderFile.openScan();
         RID emptyRID = new RID();
         Tuple colCountTuple = headerFileScan.getNext(emptyRID);
@@ -270,6 +329,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 offsets[i] = colOffset;
                 type[i] = new AttrType(colType);
                 indexType[i] = new IndexType(index);
+                columnNames[i] = colName.split("\\.")[1];
             }
             columnFile[i] = new Heapfile(colName);
         }
@@ -597,8 +657,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
     }
 
 
-    public void setColumnNames(String[] columnNames) {
-        this.columnNames = columnNames;
+    public void setColumnNames(String[] columnnames) {
+        this.columnNames = columnnames;
     }
 
     public String[] getColumnNames() {
@@ -710,8 +770,15 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
 
     public int getColumnIndexByName(String columnName){
-        if(getColumnNames() != null){
-            return Arrays.asList(getColumnNames()).indexOf(columnName);
+//        if(getColumnNames() != null){
+//            return Arrays.asList(getColumnNames()).indexOf(columnName);
+//        }
+        for( int i = 0; i < columnNames.length; i++ )
+        {
+            if(columnNames[i].trim().equals(columnName.trim()))
+            {
+                return i;
+            }
         }
         return -1;
     }
