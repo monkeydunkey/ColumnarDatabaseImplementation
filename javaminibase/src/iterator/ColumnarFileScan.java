@@ -5,7 +5,7 @@ import heap.*;
 import global.*;
 import bufmgr.*;
 import diskmgr.*;
-
+import columnar.*;
 
 import java.lang.*;
 import java.io.*;
@@ -14,8 +14,8 @@ public class ColumnarFileScan extends Iterator{
     private AttrType[] _in1;
     private short in1_len;
     private short[] s_sizes;
-    private Heapfile f;
-    private Scan scan;
+    private Columnarfile f;
+    private TupleScan scan;
     private Tuple     tuple1;
     private Tuple    Jtuple;
     private int        t1_size;
@@ -73,18 +73,20 @@ public class ColumnarFileScan extends Iterator{
         t1_size = tuple1.size();
 
         try {
-            f = new Heapfile(file_name);
-
+            f = new Columnarfile(file_name);
+            if (f == null){
+                System.out.println("Columnar FIle is null");
+            }
         }
         catch(Exception e) {
-            throw new FileScanException(e, "Create new heapfile failed");
+            throw new FileScanException(e, "Opening Columnar File failed");
         }
 
         try {
-            scan = f.openScan();
+            scan = new TupleScan(f);
         }
         catch(Exception e){
-            throw new FileScanException(e, "openScan() failed");
+            throw new FileScanException(e, "Creating tuple scan failed");
         }
     }
 
@@ -119,13 +121,17 @@ public class ColumnarFileScan extends Iterator{
             FieldNumberOutOfBoundException,
             WrongPermat
     {
-        RID rid = new RID();;
+        TID tid = new TID(f.numColumns);
 
         while(true) {
-            if((tuple1 =  scan.getNext(rid)) == null) {
+            if((tuple1 =  scan.getNext(tid)) == null) {
                 return null;
             }
-
+            int TotalSpaceNeeded = (in1_len + 2) * 2 + tuple1.getLength();
+            int headerOffset = (in1_len + 2) * 2;
+            byte[] arr = new byte[TotalSpaceNeeded];
+            System.arraycopy (tuple1.getTupleByteArray(), 0, arr, headerOffset, tuple1.getLength());
+            tuple1 = new Tuple(arr, 0, arr.length);
             tuple1.setHdr(in1_len, _in1, s_sizes);
             if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true){
                 Projection.Project(tuple1, _in1,  Jtuple, perm_mat, nOutFlds);
@@ -142,7 +148,7 @@ public class ColumnarFileScan extends Iterator{
     {
 
         if (!closeFlag) {
-            scan.closescan();
+            scan.closeTupleScan();
             closeFlag = true;
         }
     }
