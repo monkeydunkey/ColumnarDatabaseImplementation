@@ -69,7 +69,7 @@ public class TestPrompt {
             else if( command.equals("index") )
             {
                 try {
-                    index.run(split);
+                    Index.run(split);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -102,7 +102,7 @@ public class TestPrompt {
             }
         } while( !quit );
         System.out.println("Exiting....\n");
-        
+
         // Done with database operations!
         try {
             SystemDefs.JavabaseBM.flushAllPages();
