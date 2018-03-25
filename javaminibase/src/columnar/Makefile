@@ -1,6 +1,6 @@
 
 
-JDKPATH=/usr/lib/jvm/java-8-oracle
+JDKPATH=/Library/Java/JavaVirtualMachines/jdk1.8.0_101.jdk/Contents/Home
 LIBPATH = ../lib
 
 CLASSPATH = $(JDKPATH)/lib/classes.zip:.:..:$(LIBPATH)
