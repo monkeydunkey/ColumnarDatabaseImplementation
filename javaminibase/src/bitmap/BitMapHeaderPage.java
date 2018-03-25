@@ -11,5 +11,4 @@ public class BMHeaderPage extends HFPage{
     ArrayList<BMPage> bmPageList;
 
 
-
 }
