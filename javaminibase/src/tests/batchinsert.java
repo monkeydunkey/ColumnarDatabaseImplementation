@@ -17,7 +17,7 @@ import diskmgr.pcounter;
 
 public class batchinsert {
 
-	public static void main (String[] argv)
+	public static void run(String[] argv)
 	{	
 		pcounter.initialize();
 		
@@ -129,11 +129,6 @@ public class batchinsert {
 			System.out.println("Insertion done!");
 			System.out.println("Disk read count: "+ pcounter.rcounter);
 			System.out.println("Disk write count: "+ pcounter.wcounter );
-
-			//Closing the DB
-			//SystemDefs.JavabaseBM.resetAllPinCount();
-			SystemDefs.JavabaseBM.flushAllPages();
-			SystemDefs.JavabaseDB.closeDB();
 		} 
 
 		catch (Exception e){
