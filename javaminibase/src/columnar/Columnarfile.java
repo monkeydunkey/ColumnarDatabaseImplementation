@@ -329,7 +329,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 offsets[i] = colOffset;
                 type[i] = new AttrType(colType);
                 indexType[i] = new IndexType(index);
-                columnNames[i] = colName.split(".")[1];
+                columnNames[i] = colName.split("\\.")[1];
             }
             columnFile[i] = new Heapfile(colName);
         }
@@ -775,7 +775,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
 //        }
         for( int i = 0; i < columnNames.length; i++ )
         {
-            if( columnNames[i].equals(columnName))
+            if(columnNames[i].trim().equals(columnName.trim()))
             {
                 return i;
             }
