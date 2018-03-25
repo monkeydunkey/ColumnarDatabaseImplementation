@@ -1,13 +1,10 @@
 package tests;
 
-import btree.IntegerKey;
-import btree.KeyClass;
+import btree.*;
 import global.*;
 import heap.Heapfile;
 import heap.Scan;
 import heap.Tuple;
-import btree.BT;
-import btree.BTreeFile;
 import columnar.*;
 import java.io.*;
 import java.util.Arrays;
@@ -15,10 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diskmgr.pcounter;
-import iterator.CondExpr;
-import iterator.FileScan;
-import iterator.FldSpec;
-import iterator.RelSpec;
+import iterator.*;
 
 public class query extends TestDriver implements GlobalConst {
     /*
@@ -44,8 +38,10 @@ public class query extends TestDriver implements GlobalConst {
         String cfName = "";
         String valConst_ColName = "";
         String valConst_Operator = "";
-        int valConst_Value = 0;
+        //int valConst_Value = 0;
+        String valConst_Value = "";
         int numBuf = 0;
+        int columnCount = 0;
         String accessType = "";
         List<String> targetColNames = new ArrayList<>();
         boolean colNamesDone = false;
@@ -95,7 +91,8 @@ public class query extends TestDriver implements GlobalConst {
             }
             else if( i == newIndex + 2 ) // VALUECONSTRAINT -> VALUE
             {
-                valConst_Value = Integer.parseInt(args[i].substring( 0, args[i].length() - 1 )); // Removes } from VALUE
+                //valConst_Value = Integer.parseInt(args[i].substring( 0, args[i].length() - 1 )); // Removes } from VALUE
+                valConst_Value = args[i].substring( 0, args[i].length() - 1 ); // Removes } from VALUE
             }
             else if( i == newIndex + 3 ) // NUMBUF
             {
@@ -122,12 +119,13 @@ public class query extends TestDriver implements GlobalConst {
          * System.out.println("ACCESSTYPE: " + accessType);
          */
 
-        System.out.println( "Running query tests...\n" );
+        System.out.println( "Running query test...\n" );
 
         SystemDefs sysdef = new SystemDefs( dbName, numBuf+20, numBuf, "Clock" ); // Open DB w/ user specified buff pages
 
         try {
             cFile = new Columnarfile(cfName);
+            columnCount = cFile.numColumns;
         }
         catch( Exception E ) {
             Runtime.getRuntime().exit(1);
@@ -135,72 +133,145 @@ public class query extends TestDriver implements GlobalConst {
 
         boolean success = false;
 
-        if( accessType == "FILESCAN" )
+        // Checking to see whether value is a string or an integer
+        boolean isInt = false;
+        try
+        {
+            Integer.parseInt(valConst_Value);
+            isInt = true;
+        }
+        catch (NumberFormatException ex)
+        {
+            isInt = false;
+        }
+
+        if( accessType == "FILESCAN" || accessType == "COLUMNSCAN")
         {
             // Get data from "Headerfile" heapfile of columnar file created above
             // Call FileScan consructor with relevant information
             // Consider TARGETCOLUMNNAMES here
+            boolean fScanNOTcScan = true;
+            FileScan fScanObj;
+            ColumnarFileScan cScanObj;
+            if(accessType != "FILESCAN") {
+                fScanNOTcScan = false;
+                cScanObj = null;
+            }else {
+                fScanObj = null;
+            }
+
             CondExpr[] outFilter = new CondExpr[1];
             outFilter[0] = new CondExpr();
-
-            outFilter[1].op    = new AttrOperator(AttrOperator.aopEQ);
+            switch(valConst_Operator) {
+                case "=":
+                    outFilter[1].op = new AttrOperator(AttrOperator.aopEQ);
+                    break;
+                case ">":
+                    outFilter[1].op = new AttrOperator(AttrOperator.aopGT);
+                    break;
+                case "<":
+                    outFilter[1].op = new AttrOperator(AttrOperator.aopLT);
+                    break;
+                case "<=":
+                    outFilter[1].op = new AttrOperator(AttrOperator.aopLE);
+                    break;
+                case ">=":
+                    outFilter[1].op = new AttrOperator(AttrOperator.aopGE);
+                    break;
+                case "!=":
+                    outFilter[1].op = new AttrOperator(AttrOperator.aopNE);
+                    break;
+                default:
+                    success = false;
+                    break;
+            }
             outFilter[1].next  = null;
             outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
-            outFilter[1].type2 = new AttrType(AttrType.attrInteger);
-            outFilter[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
-            outFilter[1].operand2.integer = valConst_Value;
+            outFilter[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.innerRel), cFile.getIndexByName(valConst_ColName));
+
+            if( isInt )
+            {
+                outFilter[1].type2 = new AttrType(AttrType.attrInteger);
+                outFilter[1].operand2.integer = Integer.parseInt(valConst_Value);
+                /// have to add negative condition for type mismatch
+            }
+            else
+            {
+                outFilter[1].type2 = new AttrType(AttrType.attrString);
+                outFilter[1].operand2.string = valConst_Value;
+                /// have to add negative condition for type mismatch
+            }
 
             Tuple t = new Tuple();
-
             AttrType [] types = cFile.type;
-
             short [] sizes = new short[1];
             sizes[0] = 25; //first elt. is 25
 
-            FldSpec[] projection = new FldSpec[4];
-            projection[0] = new FldSpec(new RelSpec(RelSpec.outer), 1);
-            projection[1] = new FldSpec(new RelSpec(RelSpec.outer), 2);
-            projection[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
-            projection[3] = new FldSpec(new RelSpec(RelSpec.outer), 4);
-
-            CondExpr [] selects = new CondExpr [1];
-            selects = null;
-
-
-            FileScan am = null;
-            try {
-                am  = new FileScan(cfName, types, sizes, (short)4, (short)4, projection, null);
+            FldSpec[] projection = new FldSpec[columnCount];
+            String[] trgtColNamesArr = new String[targetColNames.size()];
+            trgtColNamesArr = targetColNames.toArray(trgtColNamesArr);
+            for (int i = 0 ; i < trgtColNamesArr.length; i++) {
+                projection[i] = new FldSpec(new RelSpec(RelSpec.outer), cFile.getIndexByName(trgtColNamesArr[i]));
             }
-            catch (Exception e) {
-                status = FAIL;
+
+            try {
+                if(fScanNOTcScan) {
+                    fScanObj = new FileScan(cfName, types, sizes, (short)columnCount,
+                            (short)columnCount, projection, outFilter);
+                }else{
+                    cScanObj = new ColumnarFileScan(cfName, types, sizes, (short)columnCount,
+                            (short)columnCount, projection, outFilter);
+                }
+            }catch (Exception e) {
+                //status = FAIL;
                 System.err.println (""+e);
             }
         }
-        else if( accessType == "COLUMNSCAN" )
-        {
-            // Get data from "Headerfile" heapfile of columnar file created above
-            // Call ColumnarFileScan consructor with relevant information
-            // Consider TARGETCOLUMNNAMES here
-        }
-        else if( accessType == "BTREE" )
+        else if( accessType == "BTREE" || accessType == "BITMAP")
         {
             // success = cFile.createBTreeIndex(valConst_ColName.{GETCOLNUM});
             // Need a way of finding the column number given the column name
             KeyClass hiKey, lowKey;
-            if( valConst_Operator == "=" )
-            {
-                hiKey = new IntegerKey(valConst_Value);
-                lowKey = new IntegerKey(valConst_Value);
-            }
-            else if( valConst_Operator == ">" )
-            {
-                hiKey = null;
-                lowKey = new IntegerKey(valConst_Value);
-            }
-            else if( valConst_Operator == "<" )
-            {
-                hiKey = new IntegerKey(valConst_Value);
-                lowKey = null;
+            switch(valConst_Operator) { // todo add <=, >=, != ???
+                case "=":
+                    if(isInt)
+                    {
+                        hiKey = new IntegerKey(Integer.parseInt(valConst_Value));
+                        lowKey = new IntegerKey(Integer.parseInt(valConst_Value));
+                    }
+                    else
+                    {
+                        hiKey = new StringKey(valConst_Value);
+                        lowKey = new StringKey(valConst_Value);
+                    }
+                    break;
+                case ">":
+                    hiKey = null;
+                    if(isInt)
+                    {
+                        lowKey = new IntegerKey(Integer.parseInt(valConst_Value));
+                    }
+                    else
+                    {
+                        lowKey = new StringKey(valConst_Value);
+                    }
+                    break;
+                case "<":
+                    if(isInt)
+                    {
+                        hiKey = new IntegerKey(Integer.parseInt(valConst_Value));
+                    }
+                    else
+                    {
+                        hiKey = new StringKey(valConst_Value);
+                    }
+                    lowKey = null;
+                    break;
+                default:
+                    hiKey = new StringKey(valConst_Value);
+                    lowKey = new StringKey(valConst_Value);
+                    break;
+
             }
             // Consider TARGETCOLUMNNAMES here
             // BTreeFile = ...
@@ -211,18 +282,12 @@ public class query extends TestDriver implements GlobalConst {
             // else
             //  System.out.println("AT THE END OF SCAN!");
         }
-        else if( accessType == "BITMAP" )
-        {
-            // success = cFile.createBitMapIndex(valConst_ColName.{GETCOLNUM},{VALUECLASS});
-            // Need a way of finding the column number given the column name
-            // Consider TARGETCOLUMNNAMES here
-        }
         else
         {
             System.out.println("Error - ACCESSTYPE should be either FILESCAN, COLUMNSCAN, BTREE, or BITMAP!");
         }
 
-        System.out.println("query tests finished!\n");
+        System.out.println("query test finished!\n");
         System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
     }
