@@ -13,6 +13,10 @@ public class TID extends java.lang.Object {
 
     public TID(int numRIDs) {
         this.numRIDs = numRIDs;
+        this.recordIDs = new RID[numRIDs];
+        for (int i = 0; i < numRIDs; i++){
+            this.recordIDs[i] = new RID();
+        }
     }
 
     public TID(int numRIDs, int position) {
