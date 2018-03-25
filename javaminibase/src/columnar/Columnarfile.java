@@ -23,8 +23,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
     public Heapfile   HeaderFile;
     public PageId      _metaPageId;   // page number of header page
     public int         _ftype;
-    public static String[] testNames;
-    private String[] columnNames;
+    public String[] columnNames;
+
 
     private     boolean     _file_deleted;
     private     String 	 _fileName;
@@ -152,6 +152,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         numColumns = totalColumns;
         type = attrType;
         indexType = new IndexType[numColumns];
+        columnNames = new String[numColumns];
         /*
         The way the initialization should work is that for each of the of the
         columns we will have a separate heap file and we will use that heap
@@ -203,7 +204,9 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
         //Initializing heap files for each of the column
         for (int i = 0; i < totalColumns; i++){
+
             String columnName = name + "." + String.valueOf(i);
+            columnNames[i] = columnName;
             columnFile[i] = new Heapfile(columnName);
             /*
                 String[] metaInfo = new String[2];
@@ -235,7 +238,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
             SpaceNotAvailableException,
             IOException{
         numColumns = totalColumns;
-        testNames = colNames;
+        columnNames = colNames;
         type = attrType;
         indexType = new IndexType[numColumns];
 
@@ -258,7 +261,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
         //Initializing heap files for each of the column
         for (int i = 0; i < totalColumns; i++){
-            String columnName = name + "." + String.valueOf(i);
+            String columnName = name + "." + columnNames[i];
             columnFile[i] = new Heapfile(columnName);
             /*
                 String[] metaInfo = new String[2];
@@ -292,6 +295,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     {
         _fileName = name + "." + "hdr";
         HeaderFile = new Heapfile(_fileName);
+        columnNames = new String[numColumns];
         Scan headerFileScan = HeaderFile.openScan();
         RID emptyRID = new RID();
         Tuple colCountTuple = headerFileScan.getNext(emptyRID);
@@ -322,6 +326,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 offsets[i] = colOffset;
                 type[i] = new AttrType(colType);
                 indexType[i] = new IndexType(index);
+                columnNames[i] = colName.split(".")[1];
             }
             columnFile[i] = new Heapfile(colName);
         }
@@ -729,11 +734,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
 //        if(getColumnNames() != null){
 //            return Arrays.asList(getColumnNames()).indexOf(columnName);
 //        }
-        for( int i = 0; i < testNames.length; i++ )
+        for( int i = 0; i < columnNames.length; i++ )
         {
-            if( testNames[i].equals(columnName))
+            if( columnNames[i].equals(columnName))
             {
-                return i+1;
+                return i;
             }
         }
         return -1;
