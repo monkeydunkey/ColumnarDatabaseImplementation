@@ -55,13 +55,10 @@ public class Index extends TestDriver implements GlobalConst {
          * Use INDEX_TYPE to select how column in indexed
          */
 
-        // Open the ColumnDB using the provided string
-        SystemDefs sysdef = new SystemDefs( COLUMN_DB_NAME, NUMBUF+20, NUMBUF, "Clock" );
         Columnarfile cFile = null;
 
         try {
             // Retrieve the Columnarfile using the provided string
-
             cFile = new Columnarfile(COLUMNAR_FILE_NAME);
         }
         catch(IOException e) {
@@ -74,12 +71,13 @@ public class Index extends TestDriver implements GlobalConst {
         {
             // todo convert COLUMN_NAME to int value
         	// success = cFile.createBTreeIndex(COLUMN_NAME);
+            success = true;
 
         }
         else if( INDEX_TYPE.equals("BITMAP") )
         {
             // todo determine the type (ValueClass) to send as parameter 2
-            success = cFile.createBitMapIndex(cFile.getColumnIndexByName(COLUMN_NAME), cFile.getColumnTypeByName(COLUMN_NAME));
+            //success = cFile.createBitMapIndex(cFile.getColumnIndexByName(COLUMN_NAME), cFile.getColumnTypeByName(COLUMN_NAME));
         }
         else
         {
