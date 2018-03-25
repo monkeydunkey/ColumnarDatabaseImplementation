@@ -15,6 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diskmgr.pcounter;
+import iterator.CondExpr;
+import iterator.FileScan;
+import iterator.FldSpec;
+import iterator.RelSpec;
 
 public class query extends TestDriver implements GlobalConst {
     /*
@@ -128,12 +132,49 @@ public class query extends TestDriver implements GlobalConst {
         catch( Exception E ) {
             Runtime.getRuntime().exit(1);
         }
+
         boolean success = false;
+
         if( accessType == "FILESCAN" )
         {
             // Get data from "Headerfile" heapfile of columnar file created above
             // Call FileScan consructor with relevant information
             // Consider TARGETCOLUMNNAMES here
+            CondExpr[] outFilter = new CondExpr[1];
+            outFilter[0] = new CondExpr();
+
+            outFilter[1].op    = new AttrOperator(AttrOperator.aopEQ);
+            outFilter[1].next  = null;
+            outFilter[1].type1 = new AttrType(AttrType.attrSymbol);
+            outFilter[1].type2 = new AttrType(AttrType.attrInteger);
+            outFilter[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
+            outFilter[1].operand2.integer = valConst_Value;
+
+            Tuple t = new Tuple();
+
+            AttrType [] types = cFile.type;
+
+            short [] sizes = new short[1];
+            sizes[0] = 25; //first elt. is 25
+
+            FldSpec[] projection = new FldSpec[4];
+            projection[0] = new FldSpec(new RelSpec(RelSpec.outer), 1);
+            projection[1] = new FldSpec(new RelSpec(RelSpec.outer), 2);
+            projection[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
+            projection[3] = new FldSpec(new RelSpec(RelSpec.outer), 4);
+
+            CondExpr [] selects = new CondExpr [1];
+            selects = null;
+
+
+            FileScan am = null;
+            try {
+                am  = new FileScan(cfName, types, sizes, (short)4, (short)4, projection, null);
+            }
+            catch (Exception e) {
+                status = FAIL;
+                System.err.println (""+e);
+            }
         }
         else if( accessType == "COLUMNSCAN" )
         {
