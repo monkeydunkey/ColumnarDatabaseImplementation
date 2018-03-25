@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 import diskmgr.pcounter;
 
-public class index extends TestDriver implements GlobalConst {
+public class Index extends TestDriver implements GlobalConst {
     /*
      * Command line invocation of:
      * index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE
