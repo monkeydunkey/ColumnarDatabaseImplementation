@@ -95,6 +95,7 @@ public class TestPrompt {
             else if( command.equals("quit") )
             {
                 quit = true;
+                scan.close();
             }
             else
             {
@@ -102,7 +103,6 @@ public class TestPrompt {
             }
         } while( !quit );
         System.out.println("Exiting....\n");
-
         // Done with database operations!
         try {
             SystemDefs.JavabaseBM.flushAllPages();
