@@ -583,6 +583,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                             if (linkedList.isEmpty()) {
                                 linkedList.add(st.value);
                                 hashMap.put(st.value, true);
+                                bitMapFile.setCursorUniqueValue(st);
                             }
                             // does the value, match the current value being iterated on?
                             // if same value as current push 1 and continue
@@ -610,6 +611,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                             if (linkedList.isEmpty()) {
                                 linkedList.add(it.value);
                                 hashMap.put(it.value, true);
+                                bitMapFile.setCursorUniqueValue(it);
                             }
                             // does the value, match the current value being iterated on?
                             // if same value as current push 1 and continue
@@ -640,6 +642,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 // link list maintains ordered list of unique values
                 // hashmap ensures we do not insert duplicate values with O(1) time on the check
             }while(!linkedList.isEmpty());
+            bitMapFile.cursorComplete();
 
 
         }
