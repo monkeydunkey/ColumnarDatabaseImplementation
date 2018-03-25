@@ -1,19 +1,25 @@
 package bitmap;
 
-/*
-Bit Map File Implementation
+import java.io.*;
+import java.lang.*;
+import global.*;
+import diskmgr.*;
+import heap.*;
 
-// columns value
-// rows record
 
-
-(see BT for analogy):
-
- */
 public class BM {
 
-    public void printBitMap(BitMapHeaderPage header){
-        //todo
-        //For debug.
+    private BitMapFile bmFile;
+
+    public BitMapFile getbFile() {
+        return bmFile;
     }
+
+    public void setbFile(BitMapFile bmFile) {
+        this.bmFile = bmFile;
+    }
+
+    public BitMap() { }
+
+
 }
