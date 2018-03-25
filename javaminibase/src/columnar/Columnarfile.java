@@ -1,5 +1,6 @@
 package columnar;
 
+import bitmap.BitMapFile;
 import btree.*;
 import diskmgr.Page;
 import global.*;
@@ -8,6 +9,8 @@ import heap.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 interface  Filetype {
     int TEMP = 0;
@@ -535,8 +538,87 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return true;
     }
 
-    public boolean createBitMapIndex(int columnNo, ValueClass value){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean createBitMapIndex(int column, ValueClass value) throws ConstructPageException, IOException, GetFileEntryException, AddFileEntryException {
+
+
+        // get unique values
+        // create column for each unique value
+        // set each column value for the row
+        //
+        // a cursor begins with the first value it finds, pushes to a value list (head)
+        // pushes 1 and value to bitmap vector 1
+        // if a new value is found
+        // pushes 0 and pushes value to value list queue
+        // if same value as current push 1 and continue
+        // once we have gone through all records
+        // start over, and pop value from value list
+        // continue until all values have been created
+
+        try {
+            String indexFileName = _fileName + "." + String.valueOf(column) + ".BitMap";
+            BitMapFile bitMapFile = new BitMapFile(indexFileName, this, column, value);
+
+            bitMapFile.initCursor();
+            LinkedList<Object> linkedList = new LinkedList<>();
+            HashMap<Object, Object> hashMap = new HashMap<>();
+
+            TupleScan cfs = new TupleScan(this);
+            TID emptyTID = new TID(numColumns);
+            Tuple dataTuple =  cfs.getNext(emptyTID);
+            while (dataTuple != null){
+                int offset = 0;
+                for (int i = 0; i < column; i++) {
+                    offset += offsets[i];
+                }
+                byte[] dataArr = new byte[offsets[column]];
+                System.arraycopy (dataTuple.getTupleByteArray(), offset, dataArr, 0, offsets[column]);
+                switch (type[column].attrType){
+                    case AttrType.attrString:
+                        ValueStrClass st = new ValueStrClass(dataArr);
+                        // st.value
+                        // insert string value here
+                        if(linkedList.isEmpty()){
+                            linkedList.add(st);
+                            hashMap.put(st,true);
+                        }
+                        // does the value, match the current value being iterated on?
+                        // if same value as current push 1 and continue
+                        if(linkedList.peek().equals(st)){
+                            bitMapFile.cursorInsert(true);
+                        }else{
+
+                        }
+                        if(!hashMap.containsKey(st)){
+                            linkedList.add(st);
+                            hashMap.put(st,true);
+                        }
+                        // if value is not the same, see if it is already in the list
+                        // if its already in the list, populate 0
+                        // if it is not already in the list, add to list and populate 0
+
+
+
+
+                        bitMapFile.cursorInsert(true);
+                        break;
+                    case AttrType.attrInteger:
+                        ValueIntClass it = new ValueIntClass(dataArr);
+                        if(linkedList.isEmpty()){
+                            linkedList.add(it);
+                        }
+                        //it.value
+                        // insert int value here
+                        break;
+                    default:
+                        throw new Exception("Unexpected AttrType" + type[column].toString());
+                }
+            }
+        }
+        catch (Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public boolean markTupleDeleted(TID tid)

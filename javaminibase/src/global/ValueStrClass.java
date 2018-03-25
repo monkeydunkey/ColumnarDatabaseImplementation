@@ -1,5 +1,7 @@
 package global;
 
+import java.util.Objects;
+
 public class ValueStrClass extends ValueClass {
 	public String value = "";
 	public ValueStrClass(String val) {
@@ -12,5 +14,19 @@ public class ValueStrClass extends ValueClass {
 
 	public byte[] getByteArr(){
 		return value.getBytes();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ValueStrClass that = (ValueStrClass) o;
+		return Objects.equals(value, that.value);
+	}
+
+	@Override
+	public int hashCode() {
+
+		return Objects.hash(value);
 	}
 }

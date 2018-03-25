@@ -73,7 +73,7 @@ public class Index extends TestDriver implements GlobalConst {
         if( INDEX_TYPE.equals("BTREE"))
         {
             // todo convert COLUMN_NAME to int value
-        	// success = cFile.createBTreeIndex(COLUMN_NAME);
+        	 success = cFile.createBTreeIndex(cFile.getColumnIndexByName(COLUMN_NAME));
 
         }
         else if( INDEX_TYPE.equals("BITMAP") )

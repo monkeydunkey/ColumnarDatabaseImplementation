@@ -8,6 +8,7 @@ import bufmgr.ReplacerException;
 import columnar.Columnarfile;
 import diskmgr.Page;
 import global.*;
+import heap.HFBufMgrException;
 
 import java.io.IOException;
 
@@ -19,6 +20,7 @@ public class BitMapFile implements GlobalConst{
     private String dbname;
     private BitMapHeaderPage headerPage;
     private PageId headerPageId;
+    private BMPage cursorBMPage;
 
     /**
      * BitMapFile class; an index file with given filename should already exist, then this opens it.
@@ -105,15 +107,6 @@ public class BitMapFile implements GlobalConst{
 
     }
 
-    private void unpinPage(PageId pageno, boolean dirty)
-            throws UnpinPageException {
-        try {
-            SystemDefs.JavabaseBM.unpinPage(pageno, dirty);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new UnpinPageException(e, "");
-        }
-    }
 
     private void unpinPage(PageId pageno)
             throws UnpinPageException {
@@ -163,12 +156,12 @@ public class BitMapFile implements GlobalConst{
         return headerPage;
     }
 
-    boolean Delete(int position){
+    public boolean Delete(int position){
         return false;// todo
         //    set the entry at the given position to 0.
     }
 
-    boolean Insert(int position){
+    public boolean Insert(int position){
         return false;//todo
         //    set the entry at the given position to 1.
     }
@@ -192,4 +185,69 @@ public class BitMapFile implements GlobalConst{
             throw new AddFileEntryException(e, "");
         }
     }
+
+    public void initCursor() throws IOException, HFBufMgrException {
+//        headerPage.set_rootId( create new page (first page) )
+        // todo, we need more then just a pointer to the root,
+        // we need a directory
+
+        if(headerPage.getNextPage().pid != INVALID_PAGE){
+
+            // below is allocate a new page
+            // set the next link to null (INVALID PAGE)
+            //
+            BMPage bmPage = getNewBMPage();
+
+            bmPage.setPrevPage(headerPageId);
+            cursorBMPage = bmPage;
+        }
+    }
+
+    public void cursorInsert(boolean bit){
+        // write x number of bits to local buffer
+        // when x number of bits has been exceeded local buffer, create new page and link
+
+        // BitMap header file maintains BitVector To Page Id Mapping
+        // ex:
+        // BitMapHeaderPage:
+        //      Vector1 -> PageId
+        //      Vector2 -> PageId
+        //      Vector3 -> PageId
+        //      Vector4 -> PageId
+        // (Vector for each unique value)
+        // PageId is begining of link list of pages
+
+        //write data to page
+    }
+
+    public void flushCursor(){
+        // write current buffer to page
+
+    }
+
+    private BMPage getNewBMPage() throws HFBufMgrException, IOException {
+        Page apage = new Page();
+        PageId pageId = new PageId();
+        pageId = newPage(apage, 1);
+
+        BMPage bmPage = new BMPage(apage);
+        bmPage.setNextPage(new PageId(INVALID_PAGE));
+        bmPage.setCurPage(pageId);
+    }
+
+    private PageId newPage(Page page, int num)
+            throws HFBufMgrException {
+
+        PageId tmpId = new PageId();
+
+        try {
+            tmpId = SystemDefs.JavabaseBM.newPage(page,num);
+        }
+        catch (Exception e) {
+            throw new HFBufMgrException(e,"Heapfile.java: newPage() failed");
+        }
+
+        return tmpId;
+
+    } // end of newPage
 }

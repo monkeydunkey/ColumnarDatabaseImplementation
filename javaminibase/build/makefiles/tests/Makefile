@@ -76,3 +76,11 @@ SMJoin:SM_JoinTest.java
 
 sortmerge: SMJoin
 	$(JAVA) tests.SM_JoinTest
+
+# test test prompt
+
+TestPrompt:TestPrompt.java
+	$(JAVAC) TestPrompt.java
+
+testprompt: TestPrompt
+	$(JAVA) tests.TestPrompt
