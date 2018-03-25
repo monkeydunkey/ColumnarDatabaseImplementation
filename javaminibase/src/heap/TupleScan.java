@@ -23,7 +23,7 @@ public class TupleScan {
     /**
      * Closes the TupleScan object
      */
-    void closeTupleScan(){
+    public void closeTupleScan(){
         for (int i = 0; i < Columnarfile.numColumns; i++) {
             scanList[i].closescan();
         }
@@ -39,7 +39,8 @@ public class TupleScan {
         Tuple tupleArr;
         int totalLength = 0;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        for (int i = 0; i < Columnarfile.numColumns; i++) {
+        // -2 is to remove the last 2 tuples where we store delete and TID encoding info
+        for (int i = 0; i < Columnarfile.numColumns - 2; i++) {
             tupleArr = scanList[i].getNext(tid.recordIDs[i]);
             totalLength += tupleArr.getLength();
             outputStream.write( tupleArr.getTupleByteArray());
@@ -47,6 +48,18 @@ public class TupleScan {
         return new Tuple(outputStream.toByteArray(), 0, totalLength);
    }
 
+    public Tuple getNextInternal(TID tid) throws InvalidTupleSizeException, IOException
+    {
+        Tuple tupleArr;
+        int totalLength = 0;
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        for (int i = 0; i < Columnarfile.numColumns; i++) {
+            tupleArr = scanList[i].getNext(tid.recordIDs[i]);
+            totalLength += tupleArr.getLength();
+            outputStream.write( tupleArr.getTupleByteArray());
+        }
+        return new Tuple(outputStream.toByteArray(), 0, totalLength);
+    }
     /**
      * Position all scan cursors to the records with the given rids
      * @param tid
