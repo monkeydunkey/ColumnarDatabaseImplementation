@@ -67,12 +67,20 @@ public class Index extends TestDriver implements GlobalConst {
         
         boolean success = false;
 
-        if( INDEX_TYPE.equals("BTREE"))
+        if( INDEX_TYPE.equals("BTREE") )
         {
-            // todo convert COLUMN_NAME to int value
-        	// success = cFile.createBTreeIndex(COLUMN_NAME);
-            success = true;
+        	System.out.println(Columnarfile.numColumns);
+        	String[] columnnames = cFile.testNames;
+            System.out.println("diff: "+columnnames.length);
 
+            if( cFile.getColumnIndexByName(COLUMN_NAME) == -1 )
+            {
+                System.out.println("Error - Column doesn't exist");
+            }
+            else
+                {
+                success = cFile.createBTreeIndex(cFile.getColumnIndexByName(COLUMN_NAME));
+            }
         }
         else if( INDEX_TYPE.equals("BITMAP") )
         {

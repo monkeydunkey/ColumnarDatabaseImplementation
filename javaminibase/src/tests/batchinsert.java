@@ -58,7 +58,9 @@ public class batchinsert {
 				StringTokenizer temp = new StringTokenizer(argToken);
 				
 				String tokenname = temp.nextToken(":");
+				//System.out.println(tokenname);
 				String tokentype = temp.nextToken(":");
+				//System.out.println(tokentype);
 
 				columnnames[i] = tokenname;
 				
@@ -92,8 +94,8 @@ public class batchinsert {
 
 			else setup a new file
 			*/
-			Columnarfile cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type);
-			cf.setColumnNames(columnnames);
+			Columnarfile cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type, columnnames);
+			//cf.setColumnNames(columnnames);
 
 
 			System.out.println("Inserting tuples START");
