@@ -95,10 +95,12 @@ public class TupleScan {
 		for (int i = 0; i < Columnarfile.numColumns + 2; i++) {
 			try {
 				tupleArr = scanList[i].getNext(tid.recordIDs[i]);
+				if (tupleArr == null) break;
 				totalLength += tupleArr.getLength();
 				outputStream.write( tupleArr.getTupleByteArray());
 			}catch(Exception e) {
 				e.printStackTrace();
+				break;
 			}
 		}
 		if (totalLength == 0) {

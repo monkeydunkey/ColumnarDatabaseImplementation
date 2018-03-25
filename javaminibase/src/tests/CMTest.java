@@ -163,7 +163,7 @@ class CMDriver extends TestDriver implements GlobalConst {
             }
         } catch (Exception e) {
             status = FAIL;
-            System.err.println("*** Could not insert values\n");
+            System.err.println("*** Could not read inserted values\n");
             e.printStackTrace();
             return status;
         }
@@ -325,10 +325,54 @@ class CMDriver extends TestDriver implements GlobalConst {
                 System.out.println(v1);
                 status = FAIL;
             }
+            cfscan.close();
 
         } catch (Exception e) {
             status = FAIL;
-            System.err.println("*** Could not read the created columnar file\n");
+            System.err.println("*** Could not apply filter on columnar file \n");
+            e.printStackTrace();
+            return status;
+        }
+        Columnarfile f;
+        TID insertedVal;
+        try {
+            System.out.println("  - Opening the columnar file and adding an entry\n");
+            f = new Columnarfile("test_file");
+            byte[] dataArray = new byte[8];
+            ValueIntClass val1 = new ValueIntClass(3);
+            ValueIntClass val2 = new ValueIntClass(45);
+            System.arraycopy (val1.getByteArr(), 0, dataArray, 0, 4);
+            System.arraycopy (val2.getByteArr(), 0, dataArray, 4, 4);
+            insertedVal = f.insertTuple(dataArray);
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not insert values\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        try {
+            System.out.println(" - Marking the last inserted tuple for deletion\n");
+            f.markTupleDeleted(insertedVal);
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not Mark tuple deleted\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        try {
+            System.out.println(" - purging the deleted record\n");
+            Boolean pass = f.purgeAllDeletedTuples();
+            if (!pass){
+                status = FAIL;
+            }
+            if (f.getTupleCnt() != 1){
+                status = FAIL;
+            }
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not purge tuples marked for deletion\n");
             e.printStackTrace();
             return status;
         }

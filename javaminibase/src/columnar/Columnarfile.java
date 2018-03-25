@@ -7,6 +7,7 @@ import heap.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 interface  Filetype {
@@ -348,7 +349,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         ValueIntClass newRow = new ValueIntClass(0);
         tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
         tid.numRIDs = i;
-        tid.recordIDs[numColumns + 1] = columnFile[numColumns].insertRecord(serializeTuple(tid));
+        tid.recordIDs[numColumns + 1] = columnFile[numColumns + 1].insertRecord(serializeTuple(tid));
         tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
@@ -553,8 +554,38 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns], new Tuple(arr, 0, arr.length));
     }
 
-    public boolean purgeAllDeletedTuples(){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean purgeAllDeletedTuples()
+            throws InvalidTupleSizeException, IOException, Exception
+    {
+        int deletionOffset = 0;
+        for (int i = 0; i < offsets.length; i++){
+            deletionOffset += offsets[i];
+        }
+        TupleScan tsc = new TupleScan(this);
+        Tuple DataTuple;
+        boolean succefullDeletion = true;
+        TID tid = new TID(numColumns + 2);
+        ArrayList<TID> toDelete = new ArrayList<TID>();
+        DataTuple = tsc.getNextInternal(tid);
+
+        while (DataTuple != null){
+            System.out.println("Fecting next row");
+            int deletitionBit = Convert.getIntValue(deletionOffset, DataTuple.getTupleByteArray());
+            if (deletitionBit == 1){
+                for (int j = 0; j < numColumns + 2; j++){
+                    succefullDeletion &= columnFile[j].deleteRecord(tid.recordIDs[j]);
+                }
+                if (!succefullDeletion){
+                    break;
+                }
+            }
+            //Just to ensure that all the object reference don't map to the same last object
+            tid = new TID(numColumns + 2);
+            DataTuple = tsc.getNextInternal(tid);
+        }
+
+        tsc.closeTupleScan();
+        return succefullDeletion;
     }
 
 
