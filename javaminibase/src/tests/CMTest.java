@@ -9,6 +9,7 @@ import diskmgr.*;
 import global.*;
 import columnar.*;
 import chainexception.*;
+import index.ColumnIndexScan;
 import iterator.*;
 
 /**
@@ -25,6 +26,8 @@ class CMDriver extends TestDriver implements GlobalConst {
     private int choice;
     private final static int reclen = 32;
 
+    int[] data_1 = {1, 20, 13, 42, 15, 12, 24, 4};
+    int[] data_2 = {3, 40, 23, 92, 25, 10, 11, 41};
     public CMDriver() {
         super("cmtest");
         choice = 100;      // big enough for file to occupy > 1 data page
@@ -281,15 +284,83 @@ class CMDriver extends TestDriver implements GlobalConst {
     //deal with variable size records.  it's probably easier to re-write
     //one instead of using the ones from C++
     protected boolean test5() {
+        System.out.println("\n  Test 5: Running Column Index scan on the table\n");
+        boolean status = OK;
 
-        return true;
+        Columnarfile f;
+        TID insertedVal;
+        try {
+            System.out.println("  - Opening the columnar file and adding a lot of data entries\n");
+            f = new Columnarfile("test_file");
+            for (int i = 0; i < data_1.length; i++){
+                byte[] dataArray = new byte[8];
+                ValueIntClass val1 = new ValueIntClass(data_1[i]);
+                ValueIntClass val2 = new ValueIntClass(data_2[i]);
+                System.arraycopy (val1.getByteArr(), 0, dataArray, 0, 4);
+                System.arraycopy (val2.getByteArr(), 0, dataArray, 4, 4);
+                insertedVal = f.insertTuple(dataArray);
+            }
+
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not insert values\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        try {
+            System.out.println("  - Trying to created btree index on the 1st column\n");
+            f.createBTreeIndex(1);
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not create b tree index\n");
+            e.printStackTrace();
+            return status;
+        }
+        String indexName = "test_file.hdr." + String.valueOf(1) + ".Btree";
+
+        try {
+            System.out.println("  - Trying to query and get the first record using the index\n");
+            // set up an identity selection
+            CondExpr[] expr = new CondExpr[2];
+            expr[0] = new CondExpr();
+            expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+            expr[0].type1 = new AttrType(AttrType.attrSymbol);
+            expr[0].type2 = new AttrType(AttrType.attrInteger);
+            expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+            expr[0].operand2.integer = 2;
+            expr[0].next = null;
+            expr[1] = null;
+
+            AttrType[] attrTypes = new AttrType[2];
+            attrTypes[0] = new AttrType(1);
+            attrTypes[1] = new AttrType(1);
+            short[] s1_sizes = new short[0];
+            short len_in1 = 2;
+            ColumnIndexScan cfscan = new ColumnIndexScan(new IndexType(1),  "test_file", indexName,
+                                                         attrTypes[0],  (short)0, expr, false);
+
+            Tuple newtuple = cfscan.get_next();
+            if (newtuple == null || newtuple.getIntFld(1) != 11){
+                status = FAIL;
+            }
+
+            cfscan.close();
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not Scan using Btree index\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        return status;
     }
 
 
 
     protected boolean test4() {
 
-        System.out.println("\n  Test 3: Running Columnar File scan on the table\n");
+        System.out.println("\n  Test 4: Running Columnar File scan on the table\n");
         boolean status = OK;
 
         try {
