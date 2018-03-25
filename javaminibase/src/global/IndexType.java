@@ -42,6 +42,8 @@ public class IndexType {
       return "B_Index";
     case Hash:
       return "Hash";
+    case BitMapIndex:
+      return "Bitmap";
     }
     return ("Unexpected IndexType " + indexType);
   }
