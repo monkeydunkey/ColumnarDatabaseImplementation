@@ -69,16 +69,12 @@ public class Index extends TestDriver implements GlobalConst {
 
         if( INDEX_TYPE.equals("BTREE") )
         {
-        	System.out.println(Columnarfile.numColumns);
-        	String[] columnnames = cFile.testNames;
-            System.out.println("diff: "+columnnames.length);
-
             if( cFile.getColumnIndexByName(COLUMN_NAME) == -1 )
             {
                 System.out.println("Error - Column doesn't exist");
             }
             else
-                {
+            {
                 success = cFile.createBTreeIndex(cFile.getColumnIndexByName(COLUMN_NAME));
             }
         }

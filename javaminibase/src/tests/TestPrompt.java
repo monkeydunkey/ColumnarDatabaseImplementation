@@ -54,7 +54,6 @@ public class TestPrompt {
             String invoke = scan.nextLine();
             String[] splitInit = invoke.split("\\s+"); // Whitespace delimiter to split up command line invocation
             String command = splitInit[0]; // Save command before mutating the command array
-            System.out.println(splitInit.length);
             // Remove the program name from the arguments to pass into programs (not simple as arrays are fixed size; arraylist must be used)
             List<String> list = new ArrayList<String>(Arrays.asList(splitInit));
             list.remove(0);
