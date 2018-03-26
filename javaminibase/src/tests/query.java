@@ -198,11 +198,9 @@ public class query implements GlobalConst {
         {
             outFilter[0].type2 = new AttrType(AttrType.attrInteger);
             outFilter[0].operand2.integer = Integer.parseInt(valConst_Value);
-            /// have to add negative condition for type mismatch
         }else{
             outFilter[0].type2 = new AttrType(AttrType.attrString);
             outFilter[0].operand2.string = valConst_Value;
-            /// have to add negative condition for type mismatch
         }
         outFilter[1] = null;
 
@@ -212,7 +210,6 @@ public class query implements GlobalConst {
 
         if( accessType.equals("FILESCAN") || accessType.equals("COLUMNSCAN") )
         {
-            //System.out.println("1");
             boolean fScanNOTcScan = true;
             ColumnarFileScan fScanObj = null;
             FileScan cScanObj = null;
@@ -240,34 +237,25 @@ public class query implements GlobalConst {
             {
                 sizes[i] = (short)25;
             }
-            System.out.println(sizes.length);
-            System.out.println(columnCount);
-            System.out.println(projection.length);
-            System.out.println(outFilter.length);
-            System.out.println(trgtColNamesArr.length);
-            //System.out.println(types[0].attrType + " " + types[1].attrType + " " + types[2].attrType + " " + types[3].attrType);
             try {
-                //System.out.println("2");
                 if(fScanNOTcScan) {
-                    //System.out.println("3");
                     fScanObj  = new ColumnarFileScan(cfName, types, sizes, (short)columnCount,
                             trgtColNamesArr.length, projection, outFilter);
-                    System.out.println("4");
                     t = fScanObj.get_next();
-                    System.out.println("5");
                     while(t != null) {
-                        System.out.println("6");
                         t.print(targetColType);
                         t = fScanObj.get_next();
                     }
+                    fScanObj.close();
                 }else{
-                    cScanObj  = new FileScan(cfName, types, sizes, (short)columnCount,
+                    fScanObj  = new ColumnarFileScan(cfName, types, sizes, (short)columnCount,
                             trgtColNamesArr.length, projection, outFilter);
-                    t = cScanObj.get_next();
+                    t = fScanObj.get_next();
                     while(t != null) {
                         t.print(targetColType);
-                        t = cScanObj.get_next();
+                        t = fScanObj.get_next();
                     }
+                    fScanObj.close();
                 }
             }catch (Exception e) {
                 success = false;
@@ -296,7 +284,7 @@ public class query implements GlobalConst {
             try {
                 if(btScanNOTbmScan) {
                     cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
-                    indexName = cfName + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Btree";
+                    indexName = cfName+".hdr." + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Btree";
                     ciScanObj = new ColumnIndexScan(new IndexType(1), cfName, indexName,
                             colAttrType, bSize, outFilter, false);
                     t = ciScanObj.get_next();
@@ -304,6 +292,7 @@ public class query implements GlobalConst {
                         t.print(targetColType);
                         t = ciScanObj.get_next();
                     }
+                    ciScanObj.close();
                 }else {
 //                    cFile.createBitMapIndex(cFile.getColumnIndexByName(valConst_ColName), colValCls);
 //                    indexName = cfName + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Bitmap";
