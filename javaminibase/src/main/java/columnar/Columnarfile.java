@@ -703,10 +703,10 @@ public class Columnarfile implements Filetype,  GlobalConst {
                         default:
                             throw new Exception("Unexpected AttrType" + type[column].toString());
                     }
+                    dataTuple =  cfs.getNext(emptyTID);
                 }
 
                 Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
-                hashMap.remove(current);
 
                 // iterate through all tuples for each unique value
                 // link list maintains ordered list of unique values
