@@ -81,7 +81,7 @@ public class Index extends TestDriver implements GlobalConst {
         else if( INDEX_TYPE.equals("BITMAP") )
         {
             // todo determine the type (ValueClass) to send as parameter 2
-            //success = cFile.createBitMapIndex(cFile.getColumnIndexByName(COLUMN_NAME), cFile.getColumnTypeByName(COLUMN_NAME));
+            success = cFile.createBitMapIndex(cFile.getColumnIndexByName(COLUMN_NAME), cFile.getColumnTypeByName(COLUMN_NAME));
         }
         else
         {
