@@ -143,6 +143,81 @@ public class BMPage extends Page
 
     }
 
+    /**
+     * @see heap.HFPage#insertRecord(byte[])
+     * @param record
+     * @return true if successful, false otherwise
+     * @throws IOException
+     */
+    public boolean insertRecord(byte[] record)
+            throws IOException {
+        int recLen = record.length;
+        int spaceNeeded = recLen + SIZE_OF_SLOT;
+
+        // Start by checking if sufficient space exists.
+        // This is an upper bound check. May not actually need a slot
+        // if we can find an empty one.
+
+        freeSpace = Convert.getShortValue(FREE_SPACE, data);
+        if (spaceNeeded > freeSpace) {
+            return false;
+
+        } else {
+
+            // look for an empty slot
+            slotCnt = Convert.getShortValue(SLOT_CNT, data);
+            int i;
+            short length;
+            for (i = 0; i < slotCnt; i++) {
+                length = getSlotLength(i);
+                if (length == EMPTY_SLOT)
+                    break;
+            }
+
+            if (i == slotCnt)   //use a new slot
+            {
+                // adjust free space
+                freeSpace -= spaceNeeded;
+                Convert.setShortValue(freeSpace, FREE_SPACE, data);
+
+                slotCnt++;
+                Convert.setShortValue(slotCnt, SLOT_CNT, data);
+
+            } else {
+                // reusing an existing slot
+                freeSpace -= recLen;
+                Convert.setShortValue(freeSpace, FREE_SPACE, data);
+            }
+
+            usedPtr = Convert.getShortValue(USED_PTR, data);
+            usedPtr -= recLen;    // adjust usedPtr
+            Convert.setShortValue(usedPtr, USED_PTR, data);
+
+            //insert the slot info onto the data page
+            setSlot(i, recLen, usedPtr);
+
+            // insert data onto the data page
+            System.arraycopy(record, 0, data, usedPtr, recLen);
+            curPage.pid = Convert.getIntValue(CUR_PAGE, data);
+            return true;
+        }
+    }
+
+    /**
+     * sets slot contents
+     *
+     * @param slotno the slot number
+     * @param length length of record the slot contains
+     * @throws IOException I/O errors
+     * @param    offset offset of record
+     */
+    public void setSlot(int slotno, int length, int offset)
+            throws IOException {
+        int position = DPFIXED + slotno * SIZE_OF_SLOT;
+        Convert.setShortValue((short) length, position, data);
+        Convert.setShortValue((short) offset, position + 2, data);
+    }
+
     /* Constructor of class BMPage open a existed BMPage */
     public void openBMpage(Page apage) {
         data = apage.getpage();

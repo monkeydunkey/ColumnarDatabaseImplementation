@@ -1,5 +1,6 @@
 package columnar;
 
+import bitmap.BitMapFile;
 import btree.*;
 import diskmgr.Page;
 import global.*;
@@ -9,6 +10,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 interface  Filetype {
     int TEMP = 0;
@@ -605,8 +608,119 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return true;
     }
 
-    public boolean createBitMapIndex(int columnNo, ValueClass value){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean createBitMapIndex(int column, ValueClass value) throws ConstructPageException, IOException, GetFileEntryException, AddFileEntryException {
+
+
+        // get unique values
+        // create column for each unique value
+        // set each column value for the row
+        //
+        // a cursor begins with the first value it finds, pushes to a value list (head)
+        // pushes 1 and value to bitmap vector 1
+        // if a new value is found
+        // pushes 0 and pushes value to value list queue
+        // if same value as current push 1 and continue
+        // once we have gone through all records
+        // start over, and pop value from value list
+        // continue until all values have been created
+
+        try {
+            String indexFileName = _fileName + "." + String.valueOf(column) + ".BitMap";
+            BitMapFile bitMapFile = new BitMapFile(indexFileName, this, column, value);
+
+            bitMapFile.initCursor();
+            LinkedList<Object> linkedList = new LinkedList<>();
+            HashMap<Object, Object> hashMap = new HashMap<>();
+
+            do {
+                TupleScan cfs = new TupleScan(this);
+                TID emptyTID = new TID(numColumns);
+                Tuple dataTuple = cfs.getNext(emptyTID);
+                while (dataTuple != null) {
+                    int offset = 0;
+                    for (int i = 0; i < column; i++) {
+                        offset += offsets[i];
+                    }
+                    byte[] dataArr = new byte[offsets[column]];
+                    System.arraycopy(dataTuple.getTupleByteArray(), offset, dataArr, 0, offsets[column]);
+                    switch (type[column].attrType) {
+                        case AttrType.attrString:
+                            ValueStrClass st = new ValueStrClass(dataArr);
+
+
+                            // st.value
+                            // insert string value here
+                            if (linkedList.isEmpty()) {
+                                linkedList.add(st.value);
+                                hashMap.put(st.value, true);
+                                bitMapFile.setCursorUniqueValue(st);
+                            }
+                            // does the value, match the current value being iterated on?
+                            // if same value as current push 1 and continue
+                            if (linkedList.peek().equals(st.value)) {
+                                bitMapFile.cursorInsert(true);
+                            } else {
+                                bitMapFile.cursorInsert(false);
+                            }
+                            if (!hashMap.containsKey(st.value)) {
+                                linkedList.add(st.value);
+                                hashMap.put(st.value, true);
+                            }
+                            // if value is not the same, see if it is already in the list
+                            // if its already in the list, populate 0
+                            // if it is not already in the list, add to list and populate 0
+
+
+                            break;
+                        case AttrType.attrInteger:
+                            ValueIntClass it = new ValueIntClass(dataArr);
+
+
+                            // st.value
+                            // insert string value here
+                            if (linkedList.isEmpty()) {
+                                linkedList.add(it.value);
+                                hashMap.put(it.value, true);
+                                bitMapFile.setCursorUniqueValue(it);
+                            }
+                            // does the value, match the current value being iterated on?
+                            // if same value as current push 1 and continue
+                            if (linkedList.peek().equals(it.value)) {
+                                bitMapFile.cursorInsert(true);
+                            } else {
+                                bitMapFile.cursorInsert(false);
+                            }
+                            if (!hashMap.containsKey(it.value)) {
+                                linkedList.add(it.value);
+                                hashMap.put(it.value, true);
+                            }
+                            // if value is not the same, see if it is already in the list
+                            // if its already in the list, populate 0
+                            // if it is not already in the list, add to list and populate 0
+
+
+                            break;
+                        default:
+                            throw new Exception("Unexpected AttrType" + type[column].toString());
+                    }
+                }
+
+                Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
+                hashMap.remove(current);
+
+                // iterate through all tuples for each unique value
+                // link list maintains ordered list of unique values
+                // hashmap ensures we do not insert duplicate values with O(1) time on the check
+            }while(!linkedList.isEmpty());
+            bitMapFile.cursorComplete();
+
+
+        }
+        catch (Exception ex){
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     public boolean markTupleDeleted(TID tid)
