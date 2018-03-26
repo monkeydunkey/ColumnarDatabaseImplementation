@@ -322,7 +322,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
             byte[] StringArr = new byte[colData.length - 8];
             System.arraycopy (colData, 0, StringArr, 0, StringArr.length);
-            String colName = new String(StringArr);
+            String colName = new String(StringArr).trim();
 
             int colType = Convert.getIntValue(colData.length - 12, colData);
             int colOffset = Convert.getIntValue(colData.length - 8, colData);
