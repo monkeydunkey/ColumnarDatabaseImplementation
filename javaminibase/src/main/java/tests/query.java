@@ -231,7 +231,7 @@ public class query implements GlobalConst {
                     t = new Tuple();
                     t = fScanObj.get_next();
                     while(t != null) {
-                        t.print(targetColType);
+                        //t.print(targetColType);
                         t = fScanObj.get_next();
                     }
                 }else{
@@ -240,7 +240,7 @@ public class query implements GlobalConst {
                     t = new Tuple();
                     t = cScanObj.get_next();
                     while(t != null) {
-                        t.print(targetColType);
+                        //t.print(targetColType);
                         t = cScanObj.get_next();
                     }
                 }
@@ -277,7 +277,7 @@ public class query implements GlobalConst {
                     t = new Tuple();
                     t = ciScanObj.get_next();
                     while(t != null) {
-                        t.print(targetColType);
+                        //t.print(targetColType);
                         t = ciScanObj.get_next();
                     }
                 }else {
