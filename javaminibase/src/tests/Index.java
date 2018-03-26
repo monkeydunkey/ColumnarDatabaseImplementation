@@ -60,6 +60,7 @@ public class Index extends TestDriver implements GlobalConst {
         try {
             // Retrieve the Columnarfile using the provided string
             cFile = new Columnarfile(COLUMNAR_FILE_NAME);
+            //System.out.println(cFile.getTupleCnt());
         }
         catch(IOException e) {
             e.printStackTrace();

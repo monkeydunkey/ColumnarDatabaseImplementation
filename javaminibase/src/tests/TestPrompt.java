@@ -78,9 +78,7 @@ public class TestPrompt {
             }
             else if( command.equals("query") )
             {
-                //Uncomment when query is finished
                 try {
-                    System.out.println(split.length);
                     query.run(split);
                 } catch (Exception e) {
                     e.printStackTrace();
