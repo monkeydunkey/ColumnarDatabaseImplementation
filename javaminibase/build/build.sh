@@ -27,19 +27,19 @@ fi
 copy_all_makefiles(){
 echo "copying all make files"
 
-cp ./makefiles/Makefile ../src
-cp ./makefiles/btree/Makefile ../src/btree
-cp ./makefiles/chainexception/Makefile ../src/chainexception
-cp ./makefiles/bufmgr/Makefile ../src/bufmgr
-cp ./makefiles/bitmap/Makefile ../src/bitmap
-cp ./makefiles/catalog/Makefile ../src/catalog
-cp ./makefiles/columnar/Makefile ../src/columnar
-cp ./makefiles/diskmgr/Makefile ../src/diskmgr
-cp ./makefiles/global/Makefile ../src/global
-cp ./makefiles/heap/Makefile ../src/heap
-cp ./makefiles/index/Makefile ../src/index
-cp ./makefiles/iterator/Makefile ../src/iterator
-cp ./makefiles/tests/Makefile ../src/tests
+cp ./makefiles/Makefile ../src/main/java
+cp ./makefiles/btree/Makefile ../src/main/java/btree
+cp ./makefiles/chainexception/Makefile ../src/main/java/chainexception
+cp ./makefiles/bufmgr/Makefile ../src/main/java/bufmgr
+cp ./makefiles/bitmap/Makefile ../src/main/java/bitmap
+cp ./makefiles/catalog/Makefile ../src/main/java/catalog
+cp ./makefiles/columnar/Makefile ../src/main/java/columnar
+cp ./makefiles/diskmgr/Makefile ../src/main/java/diskmgr
+cp ./makefiles/global/Makefile ../src/main/java/global
+cp ./makefiles/heap/Makefile ../src/main/java/heap
+cp ./makefiles/index/Makefile ../src/main/java/index
+cp ./makefiles/iterator/Makefile ../src/main/java/iterator
+cp ./makefiles/tests/Makefile ../src/main/java/tests
 }
 
 #update jvm location in all files
