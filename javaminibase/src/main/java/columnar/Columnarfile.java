@@ -8,6 +8,7 @@ import heap.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,8 +27,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
     public Heapfile   HeaderFile;
     public PageId      _metaPageId;   // page number of header page
     public int         _ftype;
+    public String[] columnNames;
 
-    private String[] columnNames;
 
     private     boolean     _file_deleted;
     private     String 	 _fileName;
@@ -36,7 +37,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     private static int tempfilecount = 0;
     private     int headerTupleOffset = 12;
     private     RID[] headerRIDs;
-    private     int[] offsets; //store the offset count for each column
+    public     int[] offsets; //store the offset count for each column
     private static String _convertToStrings(byte[] byteStrings) {
         /*
         String[] data = new String[byteStrings.length];
@@ -89,7 +90,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         // 4 + 4 for numRIDs and Position. Then as we have 2 extra RID in each and every tuple. One for marking tuples
         //deleted and the second one for storing the serialized data. But as we are currently serializing the data
         // we don't have the last entry as that is what we are trying to create in this function
-        byte[] serializedTuple = new byte[2*INTSIZE + (tid.numRIDs - 1)*(2*INTSIZE)];
+        byte[] serializedTuple = new byte[2*INTSIZE + (tid.recordIDs.length - 1)*(2*INTSIZE)];
         ValueIntClass numRIDArr = new ValueIntClass(tid.numRIDs);
         ValueIntClass positionArr = new ValueIntClass(tid.position);
         System.arraycopy (numRIDArr.getByteArr(), 0, serializedTuple, 0, INTSIZE);
@@ -98,7 +99,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         RID tempRID;
         ValueIntClass pageArr;
         ValueIntClass slotArr;
-        for (int i = 0; i < tid.numRIDs - 1; i++){
+        for (int i = 0; i < tid.recordIDs.length - 1; i++){
             tempRID = tid.recordIDs[i];
             pageArr = new ValueIntClass(tempRID.pageNo.pid);
             slotArr = new ValueIntClass(tempRID.slotNo);
@@ -124,9 +125,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
         byte[] slotArr;
         ValueIntClass slotNum;
         ValueIntClass pageNum;
-        TID tid = new TID(numRID.value);
+        // For the additional deletion and TID encoding heap files
+        TID tid = new TID(numRID.value + 2);
         tid.position = position.value;
-        for (int i = 0; i < numRID.value - 1; i++){
+        // + 1 as we would not have stored the TID encoding in the encoding itself
+        for (int i = 0; i < numRID.value + 1; i++){
             pageArr = new byte[INTSIZE];
             slotArr = new byte[INTSIZE];
             System.arraycopy (arr, curr_offset, pageArr, 0, INTSIZE);
@@ -135,8 +138,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
             curr_offset += INTSIZE;
             slotNum = new ValueIntClass(slotArr);
             pageNum = new ValueIntClass(pageArr);
-            PageId tempPage = new PageId(pageNum.value);
-            RID tempRID = new RID(tempPage, slotNum.value);
+
+            RID tempRID = new RID(new PageId(pageNum.value), slotNum.value);
             tid.recordIDs[i] = tempRID;
         }
         return tid;
@@ -155,6 +158,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         numColumns = totalColumns;
         type = attrType;
         indexType = new IndexType[numColumns];
+        columnNames = new String[numColumns];
         /*
         The way the initialization should work is that for each of the of the
         columns we will have a separate heap file and we will use that heap
@@ -206,7 +210,64 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
         //Initializing heap files for each of the column
         for (int i = 0; i < totalColumns; i++){
+
             String columnName = name + "." + String.valueOf(i);
+            columnNames[i] = columnName;
+            columnFile[i] = new Heapfile(columnName);
+            /*
+                String[] metaInfo = new String[2];
+                //metaInfo[0] = columnName;
+                metaInfo[1] = ;
+             */
+            int offset = attrType[i].toString() == "attrInteger" ? INTSIZE : STRINGSIZE;
+            headerRIDs[i] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, attrType[i].attrType, offset, 0));
+            offsets[i] = offset;
+            indexType[i] = new IndexType(0);
+        }
+        //Inserting the final entry for delete marking file
+        String columnName = name + ".deletion";
+        columnFile[totalColumns] = new Heapfile(columnName);
+        headerRIDs[totalColumns] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, 1, INTSIZE, 0));
+
+        //Inserting the final entry for tuple tracking file
+        columnName = name + ".tupleTracking";
+        columnFile[totalColumns + 1] = new Heapfile(columnName);
+        headerRIDs[totalColumns + 1] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, 1, INTSIZE, 0));
+    }
+
+    public Columnarfile(String name, int totalColumns, AttrType[] attrType, String[] colNames)
+            throws HFException,
+            HFBufMgrException,
+            HFDiskMgrException,
+            InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            SpaceNotAvailableException,
+            IOException{
+        numColumns = totalColumns;
+        columnNames = colNames;
+        type = attrType;
+        indexType = new IndexType[numColumns];
+
+        _file_deleted = true;
+        _fileName = null;
+
+
+        _fileName = name + "." + "hdr";
+        _ftype = ORDINARY;
+        // +2 for storing the deletion heap file and RID to TID mapping heap file
+        columnFile = new Heapfile[totalColumns + 2];
+        headerRIDs = new RID[totalColumns + 2];
+        offsets = new int[totalColumns];
+
+
+        // try to open the file
+        HeaderFile = new Heapfile(_fileName);
+        ValueIntClass columnCount = new ValueIntClass(totalColumns + 2);
+        HeaderFile.insertRecord(columnCount.getByteArr());
+
+        //Initializing heap files for each of the column
+        for (int i = 0; i < totalColumns; i++){
+            String columnName = name + "." + columnNames[i];
             columnFile[i] = new Heapfile(columnName);
             /*
                 String[] metaInfo = new String[2];
@@ -240,6 +301,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     {
         _fileName = name + "." + "hdr";
         HeaderFile = new Heapfile(_fileName);
+        columnNames = new String[numColumns];
         Scan headerFileScan = HeaderFile.openScan();
         RID emptyRID = new RID();
         Tuple colCountTuple = headerFileScan.getNext(emptyRID);
@@ -270,6 +332,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 offsets[i] = colOffset;
                 type[i] = new AttrType(colType);
                 indexType[i] = new IndexType(index);
+                columnNames[i] = colName.split("\\.")[1];
             }
             columnFile[i] = new Heapfile(colName);
         }
@@ -351,7 +414,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
         ValueIntClass newRow = new ValueIntClass(0);
         tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
         tid.numRIDs = i;
-        tid.recordIDs[numColumns + 1] = columnFile[numColumns].insertRecord(serializeTuple(tid));
+        tid.recordIDs[numColumns + 1] = columnFile[numColumns + 1].insertRecord(serializeTuple(tid));
         tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
@@ -375,7 +438,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
             int totalLength = 0;
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             for (int i = 0; i < numColumns; i++) {
+
                 tupleArr = columnFile[i].getRecord(tid.recordIDs[i]);
+                if (tupleArr == null){
+                    System.out.printf("There is an issue");
+                }
                 totalLength += tupleArr.getLength();
                 outputStream.write(tupleArr.getTupleByteArray());
             }
@@ -503,11 +570,12 @@ public class Columnarfile implements Filetype,  GlobalConst {
     {
         try {
             String indexFileName = _fileName + "." + String.valueOf(column) + ".Btree";
+
             //Setting the delete fashion to 1 which seems to be the default
             BTreeFile btree = new BTreeFile(indexFileName, type[column].attrType, offsets[column], 1);
             TupleScan cfs = new TupleScan(this);
-            TID emptyTID = new TID(numColumns);
-            Tuple dataTuple =  cfs.getNext(emptyTID);
+            TID emptyTID = new TID(numColumns + 2);
+            Tuple dataTuple =  cfs.getNextInternal(emptyTID);
             while (dataTuple != null){
                 int offset = 0;
                 KeyClass key;
@@ -529,6 +597,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
                         throw new Exception("Unexpected AttrType" + type[column].toString());
                 }
                 btree.insert(key, emptyTID.recordIDs[numColumns + 1]);
+                emptyTID = new TID(numColumns + 2);
+                dataTuple =  cfs.getNextInternal(emptyTID);
             }
         }
         catch (Exception ex){
@@ -667,13 +737,75 @@ public class Columnarfile implements Filetype,  GlobalConst {
         return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns], new Tuple(arr, 0, arr.length));
     }
 
-    public boolean purgeAllDeletedTuples(){
-        throw new java.lang.UnsupportedOperationException("Not supported yet.");
+    public boolean purgeAllDeletedTuples()
+            throws InvalidTupleSizeException, IOException, Exception
+    {
+        int deletionOffset = 0;
+        for (int i = 0; i < offsets.length; i++){
+            deletionOffset += offsets[i];
+        }
+        TupleScan tsc = new TupleScan(this);
+        Tuple DataTuple;
+        boolean succefullDeletion = true;
+        TID tid = new TID(numColumns + 2);
+        ArrayList<TID> toDelete = new ArrayList<TID>();
+        DataTuple = tsc.getNextInternal(tid);
+
+        while (DataTuple != null){
+            int deletitionBit = Convert.getIntValue(deletionOffset, DataTuple.getTupleByteArray());
+            if (deletitionBit == 1){
+                int Totaloffset = 0;
+                for (int j = 0; j < numColumns + 2; j++){
+                    if (j < numColumns && indexType[j].indexType != 0) {
+                        //Delete the index
+                        KeyClass key;
+                        switch (indexType[j].indexType) {
+                            case 1:
+                                String indexFileName = _fileName + "." + String.valueOf(j) + ".Btree";
+                                BTreeFile btree = new BTreeFile(indexFileName);
+
+                                byte[] dataArr = new byte[offsets[j]];
+                                System.arraycopy (DataTuple.getTupleByteArray(), Totaloffset, dataArr, 0, offsets[j]);
+                                switch (type[j].attrType){
+                                    case AttrType.attrString:
+                                        ValueStrClass st = new ValueStrClass(dataArr);
+                                        key = new StringKey(st.value);
+                                        break;
+                                    case AttrType.attrInteger:
+                                        ValueIntClass it = new ValueIntClass(dataArr);
+                                        key = new IntegerKey(it.value);
+                                        break;
+                                    default:
+                                        throw new Exception("Unexpected AttrType" + type[j].toString());
+                                }
+
+                                succefullDeletion &= btree.Delete(key, tid.recordIDs[tid.recordIDs.length - 1]);
+                            default:
+                                System.out.println("Index deletion not supported yet");
+                        }
+                    }
+                    succefullDeletion &= columnFile[j].deleteRecord(tid.recordIDs[j]);
+                    if (j < numColumns){
+                        Totaloffset += offsets[j];
+                    }
+
+                }
+                if (!succefullDeletion){
+                    break;
+                }
+            }
+            //Just to ensure that all the object reference don't map to the same last object
+            tid = new TID(numColumns + 2);
+            DataTuple = tsc.getNextInternal(tid);
+        }
+        //TODO: Remove index entries
+        tsc.closeTupleScan();
+        return succefullDeletion;
     }
 
 
-    public void setColumnNames(String[] columnNames) {
-        this.columnNames = columnNames;
+    public void setColumnNames(String[] columnnames) {
+        this.columnNames = columnnames;
     }
 
     public String[] getColumnNames() {
@@ -785,8 +917,15 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
 
     public int getColumnIndexByName(String columnName){
-        if(getColumnNames() != null){
-            return Arrays.asList(getColumnNames()).indexOf(columnName);
+//        if(getColumnNames() != null){
+//            return Arrays.asList(getColumnNames()).indexOf(columnName);
+//        }
+        for( int i = 0; i < columnNames.length; i++ )
+        {
+            if(columnNames[i].trim().equals(columnName.trim()))
+            {
+                return i;
+            }
         }
         return -1;
     }

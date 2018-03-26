@@ -1,5 +1,7 @@
 package heap;
 
+import global.Convert;
+import global.RID;
 import global.TID;
 import columnar.Columnarfile;
 import heap.Scan;
@@ -14,18 +16,27 @@ public class TupleScan {
     public TupleScan(Columnarfile cf) throws InvalidTupleSizeException, IOException
     {
     	tempClmnFile = cf;
-        scanList = new Scan[Columnarfile.numColumns];
-        for (int i=0; i < Columnarfile.numColumns; i++) {
-            scanList[i] = cf.columnFile[i].openScan();
+		//+2 for deletion file and TID Encoding file
+        scanList = new Scan[Columnarfile.numColumns + 2];
+        for (int i=0; i < Columnarfile.numColumns + 2; i++) {
+        	try {
+        		scanList[i] = cf.columnFile[i].openScan();
+        	}catch(Exception e) {
+        		e.printStackTrace();
+        	}
         }
     }
 
     /**
      * Closes the TupleScan object
      */
-    void closeTupleScan(){
-        for (int i = 0; i < Columnarfile.numColumns; i++) {
-            scanList[i].closescan();
+    public void closeTupleScan(){
+        for (int i = 0; i < Columnarfile.numColumns + 2; i++) {
+        	try {
+        		scanList[i].closescan();
+        	}catch(Exception e) {
+        		e.printStackTrace();
+        	}
         }
     }
 
@@ -36,16 +47,69 @@ public class TupleScan {
      */
     public Tuple getNext(TID tid) throws InvalidTupleSizeException, IOException
     {
+    	Tuple recptrtuple = null;
         Tuple tupleArr;
+		Tuple delTupleArr;
         int totalLength = 0;
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        for (int i = 0; i < Columnarfile.numColumns; i++) {
-            tupleArr = scanList[i].getNext(tid.recordIDs[i]);
-            totalLength += tupleArr.getLength();
-            outputStream.write( tupleArr.getTupleByteArray());
+
+		//Rejecting the tuples marked for deletion
+		RID deletionRowID = new RID();
+		delTupleArr = scanList[Columnarfile.numColumns].getNext(deletionRowID);
+		while (delTupleArr != null && Convert.getIntValue(0, delTupleArr.getTupleByteArray()) == 1){
+			for (int i = 0; i < Columnarfile.numColumns; i++) {
+				try {
+					tupleArr = scanList[i].getNext(tid.recordIDs[i]);
+					totalLength += tupleArr.getLength();
+					outputStream.write( tupleArr.getTupleByteArray());
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
+			}
+			delTupleArr = scanList[Columnarfile.numColumns].getNext(deletionRowID);
+		}
+
+		for (int i = 0; i < Columnarfile.numColumns; i++) {
+			try {
+				tupleArr = scanList[i].getNext(tid.recordIDs[i]);
+				totalLength += tupleArr.getLength();
+				outputStream.write(tupleArr.getTupleByteArray());
+			}catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+        if (totalLength == 0) {
+        	return recptrtuple;
+        }else {
+        	return new Tuple(outputStream.toByteArray(), 0, totalLength);
         }
-        return new Tuple(outputStream.toByteArray(), 0, totalLength);
    }
+
+	public Tuple getNextInternal(TID tid) throws InvalidTupleSizeException, IOException
+	{
+		Tuple recptrtuple = null;
+		Tuple tupleArr;
+		int totalLength = 0;
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		for (int i = 0; i < Columnarfile.numColumns + 2; i++) {
+			try {
+				tupleArr = scanList[i].getNext(tid.recordIDs[i]);
+				if (tupleArr == null) break;
+				totalLength += tupleArr.getLength();
+				outputStream.write( tupleArr.getTupleByteArray());
+			}catch(Exception e) {
+				e.printStackTrace();
+				break;
+			}
+		}
+		if (totalLength == 0) {
+			return recptrtuple;
+		}else {
+			return new Tuple(outputStream.toByteArray(), 0, totalLength);
+		}
+
+	}
 
     /**
      * Position all scan cursors to the records with the given rids
