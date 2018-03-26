@@ -13,6 +13,24 @@ class BMHeaderPageDirectoryRecord {
         this.valueClass = valueClass;
     }
 
+    public BMHeaderPageDirectoryRecord(byte[] data){
+        try {
+            int pid = Convert.getIntValue(0, data);
+            bmPageId = new PageId(pid);
+
+            int strIntFlag = Convert.getIntValue(4, data);
+            if(strIntFlag ==1){
+                String strValue = Convert.getStrValue(8, data, data.length - 8);
+                valueClass = new ValueStrClass(strValue);
+            }else{
+                int intValue = Convert.getIntValue(8, data);
+                valueClass = new ValueIntClass(intValue);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public PageId getBmPageId() {
         return bmPageId;
     }
@@ -34,6 +52,7 @@ class BMHeaderPageDirectoryRecord {
         byte[] valueClassByteArr = valueClass.getByteArr();
         recordLength+= valueClassByteArr.length;
         recordLength+= 4; // bmPageId.pid size == 4
+        recordLength+= 4; // bmPageId.pid size == 4
 
         byte[] data = new byte[recordLength];
 
@@ -41,16 +60,15 @@ class BMHeaderPageDirectoryRecord {
         Convert.setIntValue(bmPageId.pid, offset, data);
 
         if(valueClass instanceof ValueStrClass){
-            Convert.setStrValue(((ValueStrClass) valueClass).value, offset+4, data);
+            Convert.setIntValue(1, offset+4, data);
+            Convert.setStrValue(((ValueStrClass) valueClass).value, offset+8, data);
         }else if (valueClass instanceof ValueIntClass){
-            Convert.setIntValue(((ValueIntClass) valueClass).value, offset+4, data);
+            Convert.setIntValue(0, offset+4, data);
+            Convert.setIntValue(((ValueIntClass) valueClass).value, offset+8, data);
         }else{
             throw new RuntimeException("Value class was expected to be of type ValueStrClass, or ValueIntClass, but was not either");
         }
 
-
-
-
-        return new byte[0];
+        return data;
     }
 }

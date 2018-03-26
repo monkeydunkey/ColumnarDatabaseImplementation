@@ -29,4 +29,9 @@ public class ValueStrClass extends ValueClass {
 
 		return Objects.hash(value);
 	}
+
+	@Override
+	public String toString() {
+		return String.valueOf(value);
+	}
 }

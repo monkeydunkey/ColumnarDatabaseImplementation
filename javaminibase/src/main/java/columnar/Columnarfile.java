@@ -1,5 +1,6 @@
 package columnar;
 
+import bitmap.BM;
 import bitmap.BitMapFile;
 import btree.*;
 import diskmgr.Page;
@@ -624,9 +625,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
         // start over, and pop value from value list
         // continue until all values have been created
 
+        BitMapFile bitMapFile = null;
+
         try {
             String indexFileName = _fileName + "." + String.valueOf(column) + ".BitMap";
-            BitMapFile bitMapFile = new BitMapFile(indexFileName, this, column, value);
+            bitMapFile = new BitMapFile(indexFileName, this, column, value);
 
             bitMapFile.initCursor();
             LinkedList<Object> linkedList = new LinkedList<>();
@@ -724,6 +727,10 @@ public class Columnarfile implements Filetype,  GlobalConst {
             ex.printStackTrace();
             return false;
         }
+
+        BM bm = new BM();
+        bm.printBitMap(bitMapFile.getHeaderPage());
+
         return true;
     }
 

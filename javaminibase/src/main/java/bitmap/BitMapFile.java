@@ -11,6 +11,7 @@ import global.*;
 import heap.HFBufMgrException;
 
 import java.io.IOException;
+import java.util.BitSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -156,7 +157,7 @@ public class BitMapFile implements GlobalConst{
         }
     }
 
-    BitMapHeaderPage getHeaderPage(){
+    public BitMapHeaderPage getHeaderPage(){
         return headerPage;
     }
 
@@ -214,17 +215,22 @@ public class BitMapFile implements GlobalConst{
         //write data to page
     }
 
-    public byte[] toBytes(boolean[] input) {
-        byte[] toReturn = new byte[input.length / 8];
-        for (int entry = 0; entry < toReturn.length; entry++) {
-            for (int bit = 0; bit < 8; bit++) {
-                if (input[entry * 8 + bit]) {
-                    toReturn[entry] |= (128 >> bit);
-                }
-            }
+    public static byte[] toBytes(boolean[] input) {
+        BitSet bitSet = new BitSet(input.length);
+        for (int i = 0; i < input.length; i++) {
+            boolean value = input[i];
+            bitSet.set(i, value);
         }
+        return bitSet.toByteArray();
+    }
 
-        return toReturn;
+    public static boolean[] fromBytes(byte[] bytes){
+        BitSet bits = BitSet.valueOf(bytes);
+        boolean[] booleans = new boolean[bits.length()];
+        for (int i = 0; i < bits.length(); i++) {
+            booleans[i] = bits.get(i);
+        }
+        return booleans;
     }
     
     public boolean[] toBooleanArray(List list){
@@ -310,4 +316,9 @@ public class BitMapFile implements GlobalConst{
     public void initCursor() {
         cursorBuffer = new LinkedList<>();
     }
+
+    public IndexFileScan scan(ValueClass columnValue){
+        return null;
+    }
+
 }

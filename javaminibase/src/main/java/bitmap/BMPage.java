@@ -6,6 +6,8 @@ import java.lang.*;
 import global.*;
 import diskmgr.*;
 import heap.ConstSlot;
+import heap.InvalidSlotNumberException;
+import heap.Tuple;
 
 public class BMPage extends Page
         implements ConstSlot, GlobalConst{
@@ -262,6 +264,67 @@ public class BMPage extends Page
     public byte[] getBMpageArray() {
         return data;
     }
+
+    /**
+     * @return slotCnt used in this page
+     * @throws IOException I/O errors
+     */
+    public short getSlotCnt()
+            throws IOException {
+        slotCnt = Convert.getShortValue(SLOT_CNT, data);
+        return slotCnt;
+    }
+    /**
+     * copies out record with RID rid into record pointer.
+     * <br>
+     * Status getRecord(RID rid, char *recPtr, int& recLen)
+     *
+     * @return a tuple contains the record
+     * @throws InvalidSlotNumberException Invalid slot number
+     * @throws IOException                I/O errors
+     * @param    rid the record ID
+     * @see Tuple
+     */
+    public Tuple getRecord(RID rid)
+            throws IOException,
+            InvalidSlotNumberException {
+        short recLen;
+        short offset;
+        byte[] record;
+        PageId pageNo = new PageId();
+        pageNo.pid = rid.pageNo.pid;
+        curPage.pid = Convert.getIntValue(CUR_PAGE, data);
+        int slotNo = rid.slotNo;
+
+        // length of record being returned
+        recLen = getSlotLength(slotNo);
+        slotCnt = Convert.getShortValue(SLOT_CNT, data);
+        if ((slotNo >= 0) && (slotNo < slotCnt) && (recLen > 0)
+                && (pageNo.pid == curPage.pid)) {
+            offset = getSlotOffset(slotNo);
+            record = new byte[recLen];
+            System.arraycopy(data, offset, record, 0, recLen);
+            Tuple tuple = new Tuple(record, 0, recLen);
+            return tuple;
+        } else {
+            throw new InvalidSlotNumberException(null, "HEAPFILE: INVALID_SLOTNO");
+        }
+
+
+    }
+
+    /**
+     * @param slotno slot number
+     * @return the offset of record the given slot contains
+     * @throws IOException I/O errors
+     */
+    public short getSlotOffset(int slotno)
+            throws IOException {
+        int position = DPFIXED + slotno * SIZE_OF_SLOT;
+        short val = Convert.getShortValue(position + 2, data);
+        return val;
+    }
+
 
     public void writeBMPageArray(byte[] data) throws IOException, FileIOException, InvalidPageNumberException {
         SystemDefs.JavabaseDB.write_page(new PageId(getCurPage().pid), new Page(data));
