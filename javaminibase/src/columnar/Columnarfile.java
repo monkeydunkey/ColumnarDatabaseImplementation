@@ -640,8 +640,41 @@ public class Columnarfile implements Filetype,  GlobalConst {
         while (DataTuple != null){
             int deletitionBit = Convert.getIntValue(deletionOffset, DataTuple.getTupleByteArray());
             if (deletitionBit == 1){
+                int Totaloffset = 0;
                 for (int j = 0; j < numColumns + 2; j++){
+                    if (j < numColumns && indexType[j].indexType != 0) {
+                        //Delete the index
+                        KeyClass key;
+                        switch (indexType[j].indexType) {
+                            case 1:
+                                String indexFileName = _fileName + "." + String.valueOf(j) + ".Btree";
+                                BTreeFile btree = new BTreeFile(indexFileName);
+
+                                byte[] dataArr = new byte[offsets[j]];
+                                System.arraycopy (DataTuple.getTupleByteArray(), Totaloffset, dataArr, 0, offsets[j]);
+                                switch (type[j].attrType){
+                                    case AttrType.attrString:
+                                        ValueStrClass st = new ValueStrClass(dataArr);
+                                        key = new StringKey(st.value);
+                                        break;
+                                    case AttrType.attrInteger:
+                                        ValueIntClass it = new ValueIntClass(dataArr);
+                                        key = new IntegerKey(it.value);
+                                        break;
+                                    default:
+                                        throw new Exception("Unexpected AttrType" + type[j].toString());
+                                }
+
+                                succefullDeletion &= btree.Delete(key, tid.recordIDs[tid.recordIDs.length - 1]);
+                            default:
+                                System.out.println("Index deletion not supported yet");
+                        }
+                    }
                     succefullDeletion &= columnFile[j].deleteRecord(tid.recordIDs[j]);
+                    if (j < numColumns){
+                        Totaloffset += offsets[j];
+                    }
+
                 }
                 if (!succefullDeletion){
                     break;
