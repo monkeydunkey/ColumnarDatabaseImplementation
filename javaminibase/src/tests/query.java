@@ -9,6 +9,7 @@ import global.GlobalConst;
 import global.IndexType;
 import global.ValueClass;
 import global.ValueIntClass;
+import global.ValueStrClass;
 import heap.Heapfile;
 import heap.Scan;
 import heap.Tuple;
@@ -190,8 +191,8 @@ public class query implements GlobalConst {
         }
         outFilter[0].next  = null;
         outFilter[0].type1 = new AttrType(AttrType.attrSymbol);
-        outFilter[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),
-                cFile.getColumnIndexByName(valConst_ColName));
+        outFilter[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),
+                cFile.getColumnIndexByName(valConst_ColName)+1);
 
         if( isInt )
         {
@@ -205,39 +206,63 @@ public class query implements GlobalConst {
         }
         outFilter[1] = null;
 
-        Tuple t = new Tuple();
+        Tuple t;
         AttrType [] types = cFile.type;
-        short [] sizes = new short[1];
-        sizes[0] = 25;
+        int strCount = 0;
+
         if( accessType.equals("FILESCAN") || accessType.equals("COLUMNSCAN") )
         {
+            //System.out.println("1");
             boolean fScanNOTcScan = true;
-            ColumnarFileScan cScanObj = null;
-            FileScan fScanObj = null;
+            ColumnarFileScan fScanObj = null;
+            FileScan cScanObj = null;
 
             if(!accessType.equals("FILESCAN")) { fScanNOTcScan = false; }
 
-            FldSpec[] projection = new FldSpec[columnCount];
             String[] trgtColNamesArr = new String[targetColNames.size()];
             trgtColNamesArr = targetColNames.toArray(trgtColNamesArr);
+
+            FldSpec[] projection = new FldSpec[targetColNames.size()];
             for (int i = 0 ; i < trgtColNamesArr.length; i++) {
                 projection[i] = new FldSpec(new RelSpec(RelSpec.outer),
-                        cFile.getColumnIndexByName(trgtColNamesArr[i]));
+                        cFile.getColumnIndexByName(trgtColNamesArr[i])+1);
             }
+
+            for (int i = 0 ; i < columnCount; i++) {
+                ValueClass colValCls = cFile.getColumnTypeByName(cFile.columnNames[i]);
+                if (colValCls instanceof ValueStrClass) {
+                    strCount += 1;
+                }
+            }
+
+            short[] sizes = new short[strCount];
+            for( int i = 0; i < sizes.length; i++ )
+            {
+                sizes[i] = (short)25;
+            }
+            System.out.println(sizes.length);
+            System.out.println(columnCount);
+            System.out.println(projection.length);
+            System.out.println(outFilter.length);
+            System.out.println(trgtColNamesArr.length);
+            //System.out.println(types[0].attrType + " " + types[1].attrType + " " + types[2].attrType + " " + types[3].attrType);
             try {
+                //System.out.println("2");
                 if(fScanNOTcScan) {
-                    fScanObj  = new FileScan(cfName, types, sizes, (short)columnCount,
-                            (short)columnCount, projection, outFilter);
-                    t = new Tuple();
+                    //System.out.println("3");
+                    fScanObj  = new ColumnarFileScan(cfName, types, sizes, (short)columnCount,
+                            trgtColNamesArr.length, projection, outFilter);
+                    System.out.println("4");
                     t = fScanObj.get_next();
+                    System.out.println("5");
                     while(t != null) {
+                        System.out.println("6");
                         t.print(targetColType);
                         t = fScanObj.get_next();
                     }
                 }else{
-                    cScanObj  = new ColumnarFileScan(cfName, types, sizes, (short)columnCount,
-                            (short)columnCount, projection, outFilter);
-                    t = new Tuple();
+                    cScanObj  = new FileScan(cfName, types, sizes, (short)columnCount,
+                            trgtColNamesArr.length, projection, outFilter);
                     t = cScanObj.get_next();
                     while(t != null) {
                         t.print(targetColType);
@@ -247,6 +272,7 @@ public class query implements GlobalConst {
             }catch (Exception e) {
                 success = false;
                 System.err.println (""+e);
+                e.printStackTrace();
             }
         }
         else if( accessType.equals("BTREE") || accessType.equals("BITMAP") )
@@ -273,8 +299,6 @@ public class query implements GlobalConst {
                     indexName = cfName + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Btree";
                     ciScanObj = new ColumnIndexScan(new IndexType(1), cfName, indexName,
                             colAttrType, bSize, outFilter, false);
-
-                    t = new Tuple();
                     t = ciScanObj.get_next();
                     while(t != null) {
                         t.print(targetColType);
