@@ -48,8 +48,12 @@ public class ColumnIndexScan extends Iterator {
         //_fldNum = fldNum;
         //_noInFlds = noInFlds;
         //_types = types;
-        _s_sizes = str_sizes;
 
+        //Tuple needs array as an argument, so added 'str_sizes' variable as an array element
+        _s_sizes = new short[1];
+        _s_sizes[0] = str_sizes;
+
+        //PredEval needs array as an argument, so added 'type' variable as an array element
         _types = new AttrType[1];
         _types[0] = type;
         //AttrType[] Jtypes = new AttrType[noOutFlds];
@@ -173,6 +177,60 @@ public class ColumnIndexScan extends Iterator {
         }
 
         while(nextentry != null) {
+            // If index only return just the key
+            if (index_only) {
+                AttrType[] attrType = new AttrType[1];
+                short[] s_sizes = new short[1];
+
+                if (_types[_fldNum -1].attrType == AttrType.attrInteger) {
+                    attrType[0] = new AttrType(AttrType.attrInteger);
+                    try {
+                        Jtuple.setHdr((short) 1, attrType, s_sizes);
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+
+                    try {
+                        Jtuple.setIntFld(1, ((IntegerKey)nextentry.key).getKey().intValue());
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+                }
+                else if (_types[_fldNum -1].attrType == AttrType.attrString) {
+
+                    attrType[0] = new AttrType(AttrType.attrString);
+                    // calculate string size of _fldNum
+                    int count = 0;
+                    for (int i=0; i<_fldNum; i++) {
+                        if (_types[i].attrType == AttrType.attrString)
+                            count ++;
+                    }
+                    s_sizes[0] = _s_sizes[count-1];
+
+                    try {
+                        Jtuple.setHdr((short) 1, attrType, s_sizes);
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+
+                    try {
+                        Jtuple.setStrFld(1, ((StringKey)nextentry.key).getKey());
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+                }
+                else {
+                    // attrReal not supported for now
+                    throw new UnknownKeyTypeException("Only Integer and String keys are supported so far");
+                }
+                return Jtuple;
+            }
+
+
             // not index_only, need to return the whole tuple
             rid = ((LeafData)nextentry.data).getData();
             try {
@@ -247,7 +305,7 @@ public class ColumnIndexScan extends Iterator {
     private IndexFile     indFile;
     private IndexFileScan indScan;
     private AttrType[]    _types;
-    private short        _s_sizes;
+    private short[]        _s_sizes;
     private CondExpr[]    _selects;
     private int           _noInFlds;
     private int           _noOutFlds;
