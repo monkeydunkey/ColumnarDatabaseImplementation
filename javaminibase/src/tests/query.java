@@ -291,5 +291,6 @@ public class query implements GlobalConst {
         System.out.println("query tests finished!\n");
         System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
+        
     }
 }
