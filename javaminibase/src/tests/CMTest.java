@@ -338,7 +338,7 @@ class CMDriver extends TestDriver implements GlobalConst {
             short[] s1_sizes = new short[0];
             short len_in1 = 2;
             ColumnIndexScan cfscan = new ColumnIndexScan(new IndexType(1),  "test_file", indexName,
-                                                         attrTypes[0],  (short)0, expr, true);
+                                                         attrTypes[0],  (short)0, expr, false);
 
             Tuple newtuple = cfscan.get_next();
             if (newtuple == null || newtuple.getIntFld(1) != 11){

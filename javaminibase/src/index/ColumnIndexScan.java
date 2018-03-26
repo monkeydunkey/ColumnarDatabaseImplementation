@@ -177,12 +177,13 @@ public class ColumnIndexScan extends Iterator {
         }
 
         while(nextentry != null) {
+
             // If index only return just the key
             if (index_only) {
                 AttrType[] attrType = new AttrType[1];
                 short[] s_sizes = new short[1];
 
-                if (_types[_fldNum -1].attrType == AttrType.attrInteger) {
+                if (_types[_fldNum].attrType == AttrType.attrInteger) {
                     attrType[0] = new AttrType(AttrType.attrInteger);
                     try {
                         Jtuple.setHdr((short) 1, attrType, s_sizes);
@@ -198,7 +199,7 @@ public class ColumnIndexScan extends Iterator {
                         throw new IndexException(e, "IndexScan.java: Heapfile error");
                     }
                 }
-                else if (_types[_fldNum -1].attrType == AttrType.attrString) {
+                else if (_types[_fldNum].attrType == AttrType.attrString) {
 
                     attrType[0] = new AttrType(AttrType.attrString);
                     // calculate string size of _fldNum
@@ -234,9 +235,16 @@ public class ColumnIndexScan extends Iterator {
             // not index_only, need to return the whole tuple
             rid = ((LeafData)nextentry.data).getData();
             try {
-                //TODO: skip the ones which are marked for deletion
+
                 TID tid = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(rid).getTupleByteArray());
                 tuple1 = f.getTuple(tid);
+
+                //Checking if tuple is marked for Deletion and skip it if so
+                if(!f.markTupleDeleted(tid))
+                {
+                    System.out.println("This is marked for deletion");
+                }
+
                 //As we have to pass it to eval we need to add space for header information
                 int TotalSpaceNeeded = (f.numColumns + 2) * 2 + tuple1.getLength();
                 int headerOffset = (f.numColumns + 2) * 2;
