@@ -1,3 +1,4 @@
+javaminibase/target
 javaminibase/src/**/Makefile
 # Windows image file caches
 Thumbs.db
