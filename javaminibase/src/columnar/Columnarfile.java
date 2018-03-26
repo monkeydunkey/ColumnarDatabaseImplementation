@@ -605,7 +605,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                                         throw new Exception("Unexpected AttrType" + type[j].toString());
                                 }
 
-                                btree.Delete(key, tid.recordIDs[tid.recordIDs.length - 1]);
+                                succefullDeletion &= btree.Delete(key, tid.recordIDs[tid.recordIDs.length - 1]);
                             default:
                                 System.out.println("Index deletion not supported yet");
                         }
