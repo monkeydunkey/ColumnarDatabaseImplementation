@@ -630,7 +630,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
 
             bitMapFile.initCursor();
             LinkedList<Object> linkedList = new LinkedList<>();
-            HashMap<Object, Object> hashMap = new HashMap<>();
+            HashMap<Object, ValueClass> hashMap = new HashMap<>();
+            int count = 0;
 
             do {
                 TupleScan cfs = new TupleScan(this);
@@ -652,7 +653,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                             // insert string value here
                             if (linkedList.isEmpty()) {
                                 linkedList.add(st.value);
-                                hashMap.put(st.value, true);
+                                hashMap.put(st.value, st);
                                 bitMapFile.setCursorUniqueValue(st);
                             }
                             // does the value, match the current value being iterated on?
@@ -664,7 +665,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                             }
                             if (!hashMap.containsKey(st.value)) {
                                 linkedList.add(st.value);
-                                hashMap.put(st.value, true);
+                                hashMap.put(st.value, st);
                             }
                             // if value is not the same, see if it is already in the list
                             // if its already in the list, populate 0
@@ -680,7 +681,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                             // insert string value here
                             if (linkedList.isEmpty()) {
                                 linkedList.add(it.value);
-                                hashMap.put(it.value, true);
+                                hashMap.put(it.value, it);
                                 bitMapFile.setCursorUniqueValue(it);
                             }
                             // does the value, match the current value being iterated on?
@@ -692,7 +693,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
                             }
                             if (!hashMap.containsKey(it.value)) {
                                 linkedList.add(it.value);
-                                hashMap.put(it.value, true);
+                                hashMap.put(it.value, it);
                             }
                             // if value is not the same, see if it is already in the list
                             // if its already in the list, populate 0
@@ -707,6 +708,9 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 }
 
                 Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
+                if(linkedList.size() != 0){
+                    bitMapFile.setCursorUniqueValue(hashMap.get(linkedList.peek()));
+                }
 
                 // iterate through all tuples for each unique value
                 // link list maintains ordered list of unique values

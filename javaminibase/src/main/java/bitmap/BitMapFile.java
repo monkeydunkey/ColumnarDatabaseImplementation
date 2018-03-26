@@ -243,6 +243,7 @@ public class BitMapFile implements GlobalConst{
     public void flushCursor() throws IOException {
         // write current buffer to page
         cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
+        cursorBuffer = new LinkedList<>();
     }
 
     private BMPage getNewBMPage() throws HFBufMgrException, IOException {
@@ -278,6 +279,10 @@ public class BitMapFile implements GlobalConst{
     public void setCursorUniqueValue(ValueClass value) throws IOException, HFBufMgrException {
         // at this point BMPage should be pointing to the first page of that Unique value
         // update the header file to contain the unique values mapping to the link list of pages
+
+        if(cursorBuffer.size() != 0 ){
+            flushCursor();
+        }
 
         createNewHeadPage();
         BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, value);
