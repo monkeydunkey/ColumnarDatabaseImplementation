@@ -45,44 +45,17 @@ public class ColumnIndexScan extends Iterator {
             UnknownIndexTypeException,
             IOException
     {
-        //_fldNum = fldNum;
-        //_noInFlds = noInFlds;
-        //_types = types;
-
         //Tuple needs array as an argument, so added 'str_sizes' variable as an array element
         _s_sizes = new short[1];
         _s_sizes[0] = str_sizes;
 
         //PredEval needs array as an argument, so added 'type' variable as an array element
         _types = new AttrType[1];
-        _types[0] = type;
-        //AttrType[] Jtypes = new AttrType[noOutFlds];
-        short[] ts_sizes;
+        _types[0] = type;short[] ts_sizes;
         Jtuple = new Tuple();
 
-        /*
-        try {
-            ts_sizes = TupleUtils.setup_op_tuple(Jtuple, Jtypes, types, noInFlds, str_sizes, outFlds, noOutFlds);
-        }
-        catch (TupleUtilsException e) {
-            throw new IndexException(e, "ColumnIndexScan.java: TupleUtilsException caught from TupleUtils.setup_op_tuple()");
-        }
-        catch (InvalidRelation e) {
-            throw new IndexException(e, "ColumnIndexScan.java: InvalidRelation caught from TupleUtils.setup_op_tuple()");
-        }*/
-
         _selects = selects;
-        //perm_mat = outFlds;
-        //_noOutFlds = noOutFlds;
         tuple1 = new Tuple();
-        /*try {
-            tuple1.setHdr((short) str_sizes);
-        }
-        catch (Exception e) {
-            throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
-        }*/
-
-        //t1_size = tuple1.size();
         index_only = indexOnly;  // added by bingjie miao
 
         try {
@@ -234,16 +207,16 @@ public class ColumnIndexScan extends Iterator {
 
             // not index_only, need to return the whole tuple
             rid = ((LeafData)nextentry.data).getData();
+            int markedForDelete = 0;
             try {
 
                 TID tid = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(rid).getTupleByteArray());
                 tuple1 = f.getTuple(tid);
 
                 //Checking if tuple is marked for Deletion and skip it if so
-                if(!f.markTupleDeleted(tid))
-                {
-                    System.out.println("This is marked for deletion");
-                }
+                byte[] test = f.columnFile[tid.recordIDs.length -2].getRecord(tid.recordIDs[tid.recordIDs.length -2]).getTupleByteArray();
+                ValueIntClass n1 = new ValueIntClass(test);
+                markedForDelete = n1.value;
 
                 //As we have to pass it to eval we need to add space for header information
                 int TotalSpaceNeeded = (f.numColumns + 2) * 2 + tuple1.getLength();
@@ -271,7 +244,7 @@ public class ColumnIndexScan extends Iterator {
                 throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
             }
 
-            if (eval) {
+            if (eval && markedForDelete == 0) {
                 // There is no need for projection here so returning the tuple
                 return tuple1;
             }
