@@ -125,18 +125,11 @@ public class delete_query extends TestDriver implements GlobalConst {
          * System.out.println("PURGED: " + purged);
          */
 
-        System.out.println( "Running delete_query tests..." );
-
-        try {
-            SystemDefs sysdef = new SystemDefs( dbName, NUMBUF+20, NUMBUF, "Clock" );
-        }
-        catch( Exception E ) {
-            Runtime.getRuntime().exit(1);
-        }
+        System.out.println( "Running delete_query test..." );
 
         // TODO - Implement rest of program
 
-        System.out.println("delete_query tests finished!");
+        System.out.println("delete_query test finished!");
         System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
     }
