@@ -405,7 +405,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
             String strAttr = Convert.getStrValue(offset,tupleptr,offsets[i]);
             offset = offset + offsets[i];
 
-            byte[] strValue = new byte[offsets[i]];
+            byte[] strValue = new byte[offsets[i] + 2];
             Convert.setStrValue(strAttr, 0, strValue);
             tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
           }
@@ -520,21 +520,25 @@ public class Columnarfile implements Filetype,  GlobalConst {
         int totalOffset = 0;
         for (int i = 0; i < numColumns; i++) {
             AttrType attr = type[i];
-            data = new byte[offsets[i]];
-            System.arraycopy (newtuple.getTupleByteArray(), totalOffset, data, 0, offsets[i]);
-            totalOffset += offsets[i];
             switch (attr.attrType){
                 case AttrType.attrString:
-                    updateValue = new ValueStrClass(data);
+                    data = new byte[offsets[i] + 2];
+                    System.arraycopy (newtuple.getTupleByteArray(), totalOffset, data, 0, offsets[i]);
+                    totalOffset += (offsets[i] + 2);
+                    //updateValue = new ValueStrClass(data);
                     break;
                 case AttrType.attrInteger:
-                    updateValue = new ValueIntClass(data);
+                    data = new byte[offsets[i]];
+                    System.arraycopy (newtuple.getTupleByteArray(), totalOffset, data, 0, offsets[i]);
+                    totalOffset += offsets[i];
+                    //updateValue = new ValueIntClass(data);
                     break;
                 default:
                     throw new Exception("Unexpected AttrType" + type[i].toString());
             }
-            arr = updateValue.getByteArr();
-            retValue &= updateColumnofTuple(tid, new Tuple(arr, 0, arr.length), i);
+
+            //arr = updateValue.getByteArr();
+            retValue &= updateColumnofTuple(tid, new Tuple(data, 0, data.length), i);
         }
         return retValue;
     }
@@ -581,10 +585,11 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 int offset = 0;
                 KeyClass key;
                 for (int i = 0; i < column; i++) {
-                    offset += offsets[i];
+                    offset += (type[i].attrType == AttrType.attrString) ? offsets[i] + 2 : offsets[i];
                 }
-                byte[] dataArr = new byte[offsets[column]];
-                System.arraycopy (dataTuple.getTupleByteArray(), offset, dataArr, 0, offsets[column]);
+                int tempOffset = (type[column].attrType == AttrType.attrString) ? offsets[column] + 2 : offsets[column];
+                byte[] dataArr = new byte[tempOffset];
+                System.arraycopy (dataTuple.getTupleByteArray(), offset, dataArr, 0, tempOffset);
                 switch (type[column].attrType){
                     case AttrType.attrString:
                         ValueStrClass st = new ValueStrClass(dataArr);
@@ -753,7 +758,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
     {
         int deletionOffset = 0;
         for (int i = 0; i < offsets.length; i++){
-            deletionOffset += offsets[i];
+            deletionOffset += (type[i].attrType == AttrType.attrString) ? offsets[i] + 2 : offsets[i];
         }
         TupleScan tsc = new TupleScan(this);
         Tuple DataTuple;
@@ -761,28 +766,30 @@ public class Columnarfile implements Filetype,  GlobalConst {
         TID tid = new TID(numColumns + 2);
         ArrayList<TID> toDelete = new ArrayList<TID>();
         DataTuple = tsc.getNextInternal(tid);
-
         while (DataTuple != null){
             int deletitionBit = Convert.getIntValue(deletionOffset, DataTuple.getTupleByteArray());
             if (deletitionBit == 1){
                 int Totaloffset = 0;
                 for (int j = 0; j < numColumns + 2; j++){
                     if (j < numColumns && indexType[j].indexType != 0) {
+                        System.out.println("Col Del " + j + " " + succefullDeletion);
                         //Delete the index
                         KeyClass key;
                         switch (indexType[j].indexType) {
                             case 1:
                                 String indexFileName = _fileName + "." + String.valueOf(j) + ".Btree";
                                 BTreeFile btree = new BTreeFile(indexFileName);
-
-                                byte[] dataArr = new byte[offsets[j]];
-                                System.arraycopy (DataTuple.getTupleByteArray(), Totaloffset, dataArr, 0, offsets[j]);
+                                byte[] dataArr;
                                 switch (type[j].attrType){
                                     case AttrType.attrString:
+                                        dataArr = new byte[offsets[j] + 2];
+                                        System.arraycopy (DataTuple.getTupleByteArray(), Totaloffset, dataArr, 0, offsets[j]);
                                         ValueStrClass st = new ValueStrClass(dataArr);
                                         key = new StringKey(st.value);
                                         break;
                                     case AttrType.attrInteger:
+                                        dataArr = new byte[offsets[j]];
+                                        System.arraycopy (DataTuple.getTupleByteArray(), Totaloffset, dataArr, 0, offsets[j]);
                                         ValueIntClass it = new ValueIntClass(dataArr);
                                         key = new IntegerKey(it.value);
                                         break;
@@ -797,11 +804,12 @@ public class Columnarfile implements Filetype,  GlobalConst {
                     }
                     succefullDeletion &= columnFile[j].deleteRecord(tid.recordIDs[j]);
                     if (j < numColumns){
-                        Totaloffset += offsets[j];
+                        Totaloffset += (type[j].attrType == AttrType.attrString) ? offsets[j] + 2 : offsets[j];
                     }
 
                 }
                 if (!succefullDeletion){
+                    System.out.println("Hello again from purge");
                     break;
                 }
             }
