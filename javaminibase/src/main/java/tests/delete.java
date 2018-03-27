@@ -10,9 +10,7 @@ import global.IndexType;
 import global.ValueClass;
 import global.ValueIntClass;
 import global.ValueStrClass;
-import heap.Heapfile;
-import heap.Scan;
-import heap.Tuple;
+import heap.*;
 import btree.BT;
 import btree.BTreeFile;
 import columnar.*;
@@ -29,15 +27,16 @@ import index.ColumnIndexScan;
 import iterator.FldSpec;
 import iterator.RelSpec;
 
-public class query implements GlobalConst {
+public class delete implements GlobalConst {
     /*
      * Command line invocation of:
-     * query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE
+     * delete_query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE PURGED
      * COLUMNDBNAME and COLUMNARFILENAME are strings
      * TARGETCOLUMNNAMES is an list of column names of the form "[TC1 TC2 ... TCN]"
      * VALUECONSTRAINT is of the form "{COLUMNNAME OPERATOR VALUE}"
      * NUMBUF is an integer (MiniBase will use at most NUMBUF buffer pages to run the query)
      * ACCESSTYPE is a string; valid inputs are "FILESCAN", "COLUMNSCAN", "BTREE", or "BITMAP"
+     * PURGED is a boolean flag; 0 -> deleted tuples will not be purged from DB, 1 -> deleted tuples will be purged from DB
      */
 
     private int TRUE  = 1;
@@ -62,6 +61,7 @@ public class query implements GlobalConst {
         boolean colNamesDone = false;
         Columnarfile cFile = null;
         int newIndex = 0;
+        boolean purgeFlag = false;
 
         for( int i = 0; i < args.length; i++ )
         {
@@ -112,9 +112,15 @@ public class query implements GlobalConst {
             {
                 numBuf = Integer.parseInt(args[i]);
             }
-            else // ACCESSTYPE
+            else if( i == newIndex + 4 ) // ACCESSTYPE
             {
                 accessType = args[i];
+            }
+            else // PURGED
+            {
+                if (args[i].equals("1")) {
+                    purgeFlag = true;
+                }
             }
         }
 
@@ -133,7 +139,7 @@ public class query implements GlobalConst {
          * System.out.println("ACCESSTYPE: " + accessType);
          */
 
-        System.out.println( "Running query test...\n" );
+        System.out.println( "Running delete_query test...\n" );
 
         try {
             cFile = new Columnarfile(cfName);
@@ -231,7 +237,7 @@ public class query implements GlobalConst {
                     strCount += 1;
                 }
             }
-
+            boolean setDelFlag = false;
             short[] sizes = new short[strCount];
             for( int i = 0; i < sizes.length; i++ )
             {
@@ -241,20 +247,31 @@ public class query implements GlobalConst {
                 if(fScanNOTcScan) {
                     fScanObj  = new ColumnarFileScan(cfName, types, sizes, (short)columnCount,
                             trgtColNamesArr.length, projection, outFilter);
-                    t = fScanObj.get_next();
+
+                    t = fScanObj.get_next(true);
                     while(t != null) {
-                        //t.print(targetColType);
-                        t = fScanObj.get_next();
+                        t = fScanObj.get_next(true);
+                    }
+                    if(purgeFlag){
+                        if(!cFile.purgeAllDeletedTuples()){
+                            success = false;
+                        }
                     }
                     fScanObj.close();
                 }else{
                     fScanObj  = new ColumnarFileScan(cfName, types, sizes, (short)columnCount,
                             trgtColNamesArr.length, projection, outFilter);
-                    t = fScanObj.get_next();
+
+                    t = fScanObj.get_next(true);
                     while(t != null) {
-                        //t.print(targetColType);
-                        t = fScanObj.get_next();
+                        t = fScanObj.get_next(true);
                     }
+                    if(purgeFlag){
+                        if(!cFile.purgeAllDeletedTuples()){
+                            success = false;
+                        }
+                    }
+
                     fScanObj.close();
                 }
             }catch (Exception e) {
@@ -287,10 +304,15 @@ public class query implements GlobalConst {
                     indexName = cfName+".hdr." + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Btree";
                     ciScanObj = new ColumnIndexScan(new IndexType(1), cfName, indexName,
                             colAttrType, bSize, outFilter, false);
-                    t = ciScanObj.get_next();
+
+                    t = ciScanObj.get_next(true);
                     while(t != null) {
-                        //t.print(targetColType);
-                        t = ciScanObj.get_next();
+                        t = ciScanObj.get_next(true);
+                    }
+                    if(purgeFlag){
+                        if(!cFile.purgeAllDeletedTuples()){
+                            success = false;
+                        }
                     }
                     ciScanObj.close();
                 }else {
@@ -307,10 +329,40 @@ public class query implements GlobalConst {
         {
             System.out.println("Error - ACCESSTYPE should be either FILESCAN, COLUMNSCAN, BTREE, or BITMAP!");
         }
-
-        System.out.println("query test finished!\n");
+        System.out.println("delete_query test finished!\n");
         System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);
 
     }
+//    public static boolean markTupleDel(Tuple t) throws InvalidUpdateException,
+//            InvalidTupleSizeException,
+//            HFException,
+//            HFDiskMgrException,
+//            HFBufMgrException,
+//            Exception {
+//        try{
+//            System.out.println("marking Tuple Deletions");
+//            if (!cFile.markTupleDeleted(cFile.deserializeTuple(t.getTupleByteArray()))){
+//                return false;
+//            }
+//        }catch(Exception e){
+//            e.printStackTrace();
+//            return false;
+//        }
+//        return true;
+//    }
+//    public static boolean purgeTuples() throws InvalidTupleSizeException, IOException, Exception {
+//        System.out.println("Purging Tuples: " + purgeFlag);
+//        if(purgeFlag){
+//            try{
+//                if(!cFile.purgeAllDeletedTuples()){
+//                    return false;
+//                }
+//            }catch(Exception e){
+//                e.printStackTrace();
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 }

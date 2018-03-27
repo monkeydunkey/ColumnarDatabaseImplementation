@@ -75,7 +75,7 @@ public class ColumnarFileScan extends Iterator{
         try {
             f = new Columnarfile(file_name);
             if (f == null){
-                System.out.println("Columnar FIle is null");
+                System.out.println("Columnar File is null");
             }
         }
         catch(Exception e) {
@@ -138,6 +138,46 @@ public class ColumnarFileScan extends Iterator{
                 return  Jtuple;
             }
         }
+    }
+
+    public Tuple get_next(boolean delFlag)
+            throws JoinsException,
+            IOException,
+            InvalidTupleSizeException,
+            InvalidTypeException,
+            PageNotReadException,
+            PredEvalException,
+            UnknowAttrType,
+            FieldNumberOutOfBoundException,
+            WrongPermat
+    {
+        TID tid = new TID(f.numColumns);
+        //System.out.println("numColumns: "+f.numColumns);
+        try{
+            while(true) {
+                if((tuple1 =  scan.getNext(tid)) == null) {
+                    return null;
+                }
+                int TotalSpaceNeeded = (in1_len + 2) * 2 + tuple1.getLength();
+                int headerOffset = (in1_len + 2) * 2;
+                byte[] arr = new byte[TotalSpaceNeeded];
+                System.arraycopy (tuple1.getTupleByteArray(), 0, arr, headerOffset, tuple1.getLength());
+                tuple1 = new Tuple(arr, 0, arr.length);
+                tuple1.setHdr(in1_len, _in1, s_sizes);
+                if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true){
+                    Projection.Project(tuple1, _in1,  Jtuple, perm_mat, nOutFlds);
+                    if (delFlag){
+                        if (!f.markTupleDeleted(tid)){
+                            return null;
+                        }
+                    }
+                    return  Jtuple;
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return Jtuple;
     }
 
     /**
