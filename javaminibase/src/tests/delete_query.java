@@ -14,7 +14,7 @@ import java.util.List;
 
 import diskmgr.pcounter;
 
-public class delete_query extends TestDriver implements GlobalConst {
+public class delete_query implements GlobalConst {
     /*
      * Command line invocation of:
      * delete_query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE PURGED
