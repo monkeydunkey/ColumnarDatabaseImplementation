@@ -1,12 +1,14 @@
 package tests;
 
 
+import bitmap.BitMapFile;
 import btree.AddFileEntryException;
 import btree.ConstructPageException;
 import btree.GetFileEntryException;
 import columnar.Columnarfile;
 import global.SystemDefs;
 import heap.*;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,5 +33,13 @@ public class BitMapTests {
 
         Columnarfile columnarfile = new Columnarfile(columnDbName);
 //        columnarfile.createBitMapIndex()
+    }
+
+    @Test
+    public void test2() throws Exception{
+        boolean[] booleans = {true, true, false, false, true, true};
+        byte[] bytes = BitMapFile.toBytes(booleans);
+        boolean[] booleans1 = BitMapFile.fromBytes(bytes);
+        Assert.assertArrayEquals(booleans, booleans1);
     }
 }
