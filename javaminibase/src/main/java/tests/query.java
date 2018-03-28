@@ -243,7 +243,7 @@ public class query implements GlobalConst {
                             trgtColNamesArr.length, projection, outFilter);
                     t = fScanObj.get_next();
                     while(t != null) {
-                        //t.print(targetColType);
+                        t.print(targetColType);
                         t = fScanObj.get_next();
                     }
                     fScanObj.close();
@@ -252,7 +252,7 @@ public class query implements GlobalConst {
                             trgtColNamesArr.length, projection, outFilter);
                     t = fScanObj.get_next();
                     while(t != null) {
-                        //t.print(targetColType);
+                        t.print(targetColType);
                         t = fScanObj.get_next();
                     }
                     fScanObj.close();
@@ -289,7 +289,7 @@ public class query implements GlobalConst {
                             colAttrType, bSize, outFilter, false);
                     t = ciScanObj.get_next();
                     while(t != null) {
-                        //t.print(targetColType);
+                        t.print(targetColType);
                         t = ciScanObj.get_next();
                     }
                     ciScanObj.close();
