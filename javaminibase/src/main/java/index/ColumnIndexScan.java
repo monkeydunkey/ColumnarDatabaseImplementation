@@ -10,9 +10,9 @@ import java.io.*;
 import bitmap.*;
 
 /*
-* This class works on a single column and tells us the
-* rows that are satisified on the given condition.
-* */
+ * This class works on a single column and tells us the
+ * rows that are satisified on the given condition.
+ * */
 
 public class ColumnIndexScan extends Iterator {
 
@@ -133,6 +133,141 @@ public class ColumnIndexScan extends Iterator {
      * @exception UnknownKeyTypeException key type unknown
      * @exception IOException from the lower layer
      */
+    public Tuple get_next(boolean purgeFlag)
+            throws IndexException,
+            UnknownKeyTypeException,
+            IOException
+    {
+        RID rid;
+        int unused;
+        KeyDataEntry nextentry = null;
+
+        try {
+            nextentry = indScan.get_next();
+        }
+        catch (Exception e) {
+            throw new IndexException(e, "ColumnIndexScan.java: BTree error");
+        }
+
+        while(nextentry != null) {
+
+            // If index only return just the key
+            if (index_only) {
+                AttrType[] attrType = new AttrType[1];
+                short[] s_sizes = new short[1];
+
+                if (_types[_fldNum].attrType == AttrType.attrInteger) {
+                    attrType[0] = new AttrType(AttrType.attrInteger);
+                    try {
+                        Jtuple.setHdr((short) 1, attrType, s_sizes);
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+
+                    try {
+                        Jtuple.setIntFld(1, ((IntegerKey)nextentry.key).getKey().intValue());
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+                }
+                else if (_types[_fldNum].attrType == AttrType.attrString) {
+
+                    attrType[0] = new AttrType(AttrType.attrString);
+                    // calculate string size of _fldNum
+                    int count = 0;
+                    for (int i=0; i<_fldNum; i++) {
+                        if (_types[i].attrType == AttrType.attrString)
+                            count ++;
+                    }
+                    s_sizes[0] = _s_sizes[count-1];
+
+                    try {
+                        Jtuple.setHdr((short) 1, attrType, s_sizes);
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+
+                    try {
+                        Jtuple.setStrFld(1, ((StringKey)nextentry.key).getKey());
+                    }
+                    catch (Exception e) {
+                        throw new IndexException(e, "IndexScan.java: Heapfile error");
+                    }
+                }
+                else {
+                    // attrReal not supported for now
+                    throw new UnknownKeyTypeException("Only Integer and String keys are supported so far");
+                }
+                return Jtuple;
+            }
+
+
+            // not index_only, need to return the whole tuple
+            rid = ((LeafData)nextentry.data).getData();
+            int markedForDelete = 0;
+            try {
+
+                TID tid = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(rid).getTupleByteArray());
+                tuple1 = f.getTuple(tid);
+
+                //Checking if tuple is marked for Deletion and skip it if so
+                byte[] test = f.columnFile[tid.recordIDs.length -2].getRecord(tid.recordIDs[tid.recordIDs.length -2]).getTupleByteArray();
+                ValueIntClass n1 = new ValueIntClass(test);
+                markedForDelete = n1.value;
+
+                //As we have to pass it to eval we need to add space for header information
+                int TotalSpaceNeeded = (f.numColumns + 2) * 2 + tuple1.getLength();
+                int headerOffset = (f.numColumns + 2) * 2;
+                byte[] arr = new byte[TotalSpaceNeeded];
+                System.arraycopy (tuple1.getTupleByteArray(), 0, arr, headerOffset, tuple1.getLength());
+                tuple1 = new Tuple(arr, 0, arr.length);
+
+                if (purgeFlag){
+                    if (!f.markTupleDeleted(tid)){
+                        return null;
+                    }
+                }
+            }
+            catch (Exception e) {
+                throw new IndexException(e, "ColumnIndexScan.java: getRecord failed");
+            }
+
+            try {
+                tuple1.setHdr((short) f.numColumns, f.type, _string_sizes);
+            }
+            catch (Exception e) {
+                throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
+            }
+
+            boolean eval;
+            try {
+                eval = PredEval.Eval(_selects, tuple1, null, f.type, null);
+            }
+            catch (Exception e) {
+                throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
+            }
+
+            if (eval && markedForDelete == 0) {
+                // There is no need for projection here so returning the tuple
+
+                return tuple1;
+            }
+
+            try {
+                nextentry = indScan.get_next();
+            }
+            catch (Exception e) {
+                throw new IndexException(e, "ColumnIndexScan.java: BTree error");
+            }
+        }
+
+        return null;
+    }
+
+
     public Tuple get_next()
             throws IndexException,
             UnknownKeyTypeException,

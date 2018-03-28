@@ -78,7 +78,6 @@ public class TestPrompt {
             }
             else if( command.equals("query") )
             {
-                //Uncomment when query is finished
                 try {
                     System.out.println(split.length);
                     query.run(split);
@@ -88,12 +87,11 @@ public class TestPrompt {
             }
             else if( command.equals("delete_query") )
             {
-                //Uncomment when delete_query is finished
-//                try {
-//                    delete_query.run(split);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
+                try {
+                    delete.run(split);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             else if( command.equals("quit") )
             {
@@ -108,7 +106,7 @@ public class TestPrompt {
         System.out.println("Exiting....\n");
         // Done with database operations!
         try {
-            SystemDefs.JavabaseBM.flushAllPages();
+            //SystemDefs.JavabaseBM.flushAllPages();
             SystemDefs.JavabaseDB.closeDB();
         }
         catch(Exception e) {

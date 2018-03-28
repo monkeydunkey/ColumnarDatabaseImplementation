@@ -9,7 +9,7 @@ public class ValueStrClass extends ValueClass {
 	}
 
 	public ValueStrClass(byte[] arr){
-		value = new String(arr);
+		value = new String(arr).trim();
 	}
 
 	public byte[] getByteArr(){
