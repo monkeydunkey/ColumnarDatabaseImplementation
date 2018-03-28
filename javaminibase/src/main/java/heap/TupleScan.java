@@ -60,15 +60,12 @@ public class TupleScan {
 			for (int i = 0; i < Columnarfile.numColumns; i++) {
 				try {
 					tupleArr = scanList[i].getNext(tid.recordIDs[i]);
-					totalLength += tupleArr.getLength();
-					outputStream.write( tupleArr.getTupleByteArray());
 				}catch(Exception e) {
 					e.printStackTrace();
 				}
 			}
 			delTupleArr = scanList[Columnarfile.numColumns].getNext(deletionRowID);
 		}
-
 		for (int i = 0; i < Columnarfile.numColumns; i++) {
 			try {
 				tupleArr = scanList[i].getNext(tid.recordIDs[i]);

@@ -415,6 +415,32 @@ class CMDriver extends TestDriver implements GlobalConst {
             e.printStackTrace();
             return status;
         }
+        try{
+            TupleScan tpScan = new TupleScan(f);
+            for (int i = 0; i < f.getTupleCnt() - 1; i++) {
+                byte[] storedDataArray  = tpScan.getNext(insertedVal).getTupleByteArray();
+                byte[] val11 = new byte[4];
+                byte[] val12 = new byte[4];
+                byte[] val3 = new byte[25];
+                System.arraycopy (storedDataArray, 0, val11, 0, 4);
+                System.arraycopy (storedDataArray, 4, val12, 0, 4);
+                String st = Convert.getStrValue(8, storedDataArray, 25).trim();
+
+                ValueIntClass val1Class = new ValueIntClass(val11);
+                ValueIntClass val2Class = new ValueIntClass(val12);
+                System.out.println("val1Class.value: "+val1Class.value+", val2Class.value: "+val2Class.value + ", 3rd Col: " + st);
+            }
+            Tuple nextData = tpScan.getNext(insertedVal);
+            if (nextData != null){
+                status = FAIL;
+            }
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not read all the tuples\n");
+            e.printStackTrace();
+            return status;
+        }
+
 
         try {
             System.out.println(" - purging the deleted record\n");
