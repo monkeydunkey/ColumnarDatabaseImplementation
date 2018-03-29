@@ -464,28 +464,10 @@ class CMDriver extends TestDriver implements GlobalConst {
     protected boolean test5() {
         System.out.println("\n  Test 5: Running Column Index scan on the table using Int keys\n");
         boolean status = OK;
-
         Columnarfile f;
         TID insertedVal = new TID(5);
         try {
-            System.out.println("  - Opening the columnar file and adding an entry");
             f = new Columnarfile("test_file");
-            byte[] dataArray = new byte[8 + 25];
-            ValueIntClass val1 = new ValueIntClass(3);
-            ValueIntClass val2 = new ValueIntClass(45);
-            System.arraycopy (val1.getByteArr(), 0, dataArray, 0, 4);
-            System.arraycopy (val2.getByteArr(), 0, dataArray, 4, 4);
-            Convert.setStrValue("Shashank", 8, dataArray);
-            insertedVal = f.insertTuple(dataArray);
-
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("*** Could not open the columnar file\n");
-            e.printStackTrace();
-            return status;
-        }
-
-        try {
             System.out.println("  - Trying to created btree index on the 2nd column\n");
             f.createBTreeIndex(1);
         } catch (Exception e) {
@@ -530,6 +512,61 @@ class CMDriver extends TestDriver implements GlobalConst {
             e.printStackTrace();
             return status;
         }
+
+
+        try {
+            System.out.println("  - Opening the columnar file and adding an entry");
+
+            byte[] dataArray = new byte[8 + 25];
+            ValueIntClass val1 = new ValueIntClass(3);
+            ValueIntClass val2 = new ValueIntClass(45);
+            System.arraycopy (val1.getByteArr(), 0, dataArray, 0, 4);
+            System.arraycopy (val2.getByteArr(), 0, dataArray, 4, 4);
+            Convert.setStrValue("Shashank", 8, dataArray);
+            insertedVal = f.insertTuple(dataArray);
+
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not open the columnar file\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        try {
+            System.out.println("  - Trying to query and search for the last inserted tuples using index\n");
+            // set up an identity selection
+            CondExpr[] expr = new CondExpr[2];
+            expr[0] = new CondExpr();
+            expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+            expr[0].type1 = new AttrType(AttrType.attrSymbol);
+            expr[0].type2 = new AttrType(AttrType.attrInteger);
+            expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
+            expr[0].operand2.integer = 45;
+            expr[0].next = null;
+            expr[1] = null;
+
+            AttrType[] attrTypes = new AttrType[3];
+            attrTypes[0] = new AttrType(1);
+            attrTypes[1] = new AttrType(1);
+            attrTypes[2] = new AttrType(0);
+            short[] s1_sizes = new short[25];
+            short len_in1 = 3;
+            ColumnIndexScan cfscan = new ColumnIndexScan(new IndexType(1),  "test_file", indexName,
+                    attrTypes[0],  (short)0, expr, false);
+
+            Tuple newtuple = cfscan.get_next();
+            if (newtuple != null || newtuple.getIntFld(1) != 3 || !newtuple.getStrFld(3).equals("Shashank")){
+                status = FAIL;
+            }
+
+            cfscan.close();
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not Scan using Btree index for newly inserted tuple\n");
+            e.printStackTrace();
+            return status;
+        }
+
 
         try {
             System.out.println(" - Marking the last inserted tuple for deletion\n");
