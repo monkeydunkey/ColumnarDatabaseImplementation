@@ -106,7 +106,15 @@ public class batchinsert {
 
 			else setup a new file
 			*/
-			Columnarfile cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type, columnnames);
+			Columnarfile cf;
+			try {
+				//checking if the file exists
+				cf = new Columnarfile (COLUMNAR_FILE_NAME);
+			} catch (NullPointerException ex){
+				// null pointer exception the file does not exists so creating a new one
+				cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type, columnnames);
+			}
+
 			//cf.setColumnNames(columnnames);
 
 
