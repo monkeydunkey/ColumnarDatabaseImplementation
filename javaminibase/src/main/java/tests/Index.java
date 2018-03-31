@@ -91,7 +91,12 @@ public class Index extends TestDriver implements GlobalConst {
             System.out.println("Error - Could not create index!");
         else
             System.out.println("SUCCESS - Index created!");
-
+        try {
+            SystemDefs.JavabaseBM.flushAllPages();
+        } catch (Exception ex){
+            System.out.println("could not flush the pages");
+            ex.printStackTrace();
+        }
         System.out.println("Index test finished!\n");
         System.out.println("Disk read count: " + pcounter.rcounter);
         System.out.println("Disk write count: " + pcounter.wcounter);

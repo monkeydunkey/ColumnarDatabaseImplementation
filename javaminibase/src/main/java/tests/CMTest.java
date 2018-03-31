@@ -153,7 +153,12 @@ class CMDriver extends TestDriver implements GlobalConst {
             e.printStackTrace();
             return status;
         }
-
+        if (status == OK && SystemDefs.JavabaseBM.getNumUnpinnedBuffers()
+                != SystemDefs.JavabaseBM.getNumBuffers()) {
+            System.err.println("*** Opening columnar file has left pinned pages\n");
+            status = FAIL;
+            return status;
+        }
         try {
             System.out.println("  - Adding some entries to the columnar file\n");
             byte[] dataArray = new byte[8 + 25];
@@ -170,6 +175,14 @@ class CMDriver extends TestDriver implements GlobalConst {
             e.printStackTrace();
             return status;
         }
+
+        if (status == OK && SystemDefs.JavabaseBM.getNumUnpinnedBuffers()
+                != SystemDefs.JavabaseBM.getNumBuffers()) {
+            System.err.println("*** The heap file has left pages pinned\n");
+            status = FAIL;
+            return status;
+        }
+
         System.out.println("Test 2 Status " + status );
         try{
             System.out.println("  - Reading the inserted Value\n");
@@ -301,7 +314,7 @@ class CMDriver extends TestDriver implements GlobalConst {
                 ValueIntClass val2Class = new ValueIntClass(val12);
                 System.out.println("val1Class.value: "+val1Class.value+", val2Class.value: "+val2Class.value + ", 3rd Col: " + st);
             }
-
+            tpScan.closeTupleScan();
         } catch (Exception e) {
             status = FAIL;
             System.err.println("*** Error values\n");

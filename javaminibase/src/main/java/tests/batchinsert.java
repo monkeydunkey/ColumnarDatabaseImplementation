@@ -110,11 +110,13 @@ public class batchinsert {
 			try {
 				//checking if the file exists
 				cf = new Columnarfile (COLUMNAR_FILE_NAME);
-			} catch (NullPointerException ex){
+			} catch (Exception ex){
 				// null pointer exception the file does not exists so creating a new one
 				cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type, columnnames);
 			}
-
+			if (SystemDefs.JavabaseBM.getNumUnpinnedBuffers() != SystemDefs.JavabaseBM.getNumBuffers()) {
+				System.out.println("*** Columnar File initialization left unpinned pages\n");
+			}
 			//cf.setColumnNames(columnnames);
 
 
@@ -147,7 +149,10 @@ public class batchinsert {
 			
 				Arrays.fill(tupledata, (byte)0);
 			}
-
+			if (SystemDefs.JavabaseBM.getNumUnpinnedBuffers() != SystemDefs.JavabaseBM.getNumBuffers()) {
+				System.out.println("*** Insert left unpinned pages\n");
+			}
+			SystemDefs.JavabaseBM.flushAllPages();
 			System.out.println("Insertion done!");
 			System.out.println("Disk read count: "+ pcounter.rcounter);
 			System.out.println("Disk write count: "+ pcounter.wcounter );

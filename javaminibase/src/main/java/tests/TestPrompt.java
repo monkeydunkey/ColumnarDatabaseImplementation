@@ -68,7 +68,6 @@ public class TestPrompt {
             {
                 try {
                     batchinsert.run(split);
-                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -77,7 +76,6 @@ public class TestPrompt {
             {
                 try {
                     Index.run(split);
-                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -86,7 +84,6 @@ public class TestPrompt {
             {
                 try {
                     query.run(split);
-                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -95,7 +92,6 @@ public class TestPrompt {
             {
                 try {
                     delete.run(split);
-                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -104,6 +100,12 @@ public class TestPrompt {
             {
                 quit = true;
                 scan.close();
+                try{
+                    SystemDefs.JavabaseDB.DBDestroy();
+                } catch (IOException ex){
+                    System.out.println("could not destroy the db");
+                }
+
             }
             else
             {

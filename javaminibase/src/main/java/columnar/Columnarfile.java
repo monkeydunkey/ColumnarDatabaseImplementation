@@ -627,6 +627,8 @@ public class Columnarfile implements Filetype,  GlobalConst {
                 dataTuple =  cfs.getNextInternal(emptyTID);
             }
             updateIndexType(column, 1);
+            cfs.closeTupleScan();
+            btree.close();
         }
         catch (Exception ex){
             ex.printStackTrace();
