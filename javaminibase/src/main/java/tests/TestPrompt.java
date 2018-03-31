@@ -68,6 +68,7 @@ public class TestPrompt {
             {
                 try {
                     batchinsert.run(split);
+                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -76,6 +77,7 @@ public class TestPrompt {
             {
                 try {
                     Index.run(split);
+                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -83,8 +85,8 @@ public class TestPrompt {
             else if( command.equals("query") )
             {
                 try {
-                    System.out.println(split.length);
                     query.run(split);
+                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -93,6 +95,7 @@ public class TestPrompt {
             {
                 try {
                     delete.run(split);
+                    SystemDefs.JavabaseBM.flushAllPages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -110,7 +113,7 @@ public class TestPrompt {
         System.out.println("Exiting....\n");
         // Done with database operations!
         try {
-            //SystemDefs.JavabaseBM.flushAllPages();
+            SystemDefs.JavabaseBM.flushAllPages();
             SystemDefs.JavabaseDB.closeDB();
         }
         catch(Exception e) {
