@@ -9,12 +9,10 @@ import columnar.Columnarfile;
 import diskmgr.Page;
 import global.*;
 import heap.HFBufMgrException;
+import heap.InvalidSlotNumberException;
 
 import java.io.IOException;
-import java.util.BitSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Create a class called BitMapFile with the following specifications (see BTreeFile for analogy):
@@ -26,6 +24,7 @@ public class BitMapFile implements GlobalConst{
     private PageId headerPageId;
     private BMPage cursorBMPage;
     private LinkedList<Boolean> cursorBuffer;
+    private ValueClass cursorValueClass;
 
     /**
      * BitMapFile class; an index file with given filename should already exist, then this opens it.
@@ -224,9 +223,9 @@ public class BitMapFile implements GlobalConst{
         return bitSet.toByteArray();
     }
 
-    public static boolean[] fromBytes(byte[] bytes){
+    public static boolean[] fromBytes(byte[] bytes, int length){
         BitSet bits = BitSet.valueOf(bytes);
-        boolean[] booleans = new boolean[bits.length()];
+        boolean[] booleans = new boolean[length];
         for (int i = 0; i < bits.length(); i++) {
             booleans[i] = bits.get(i);
         }
@@ -248,8 +247,21 @@ public class BitMapFile implements GlobalConst{
 
     public void flushCursor() throws IOException {
         // write current buffer to page
+        System.out.println("Flush");
+        boolean[] booleans = toBooleanArray(cursorBuffer);
+        System.out.println("insert: "+Arrays.toString(booleans));
         cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
+        try {
+            boolean[] booleans1 = fromBytes(cursorBMPage.getRecord(new RID(cursorBMPage.curPage, 0)).getTupleByteArray(), booleans.length);
+            System.out.println("in out: "+ Arrays.toString(booleans1));
+        } catch (InvalidSlotNumberException e) {
+            e.printStackTrace();
+        }
+
+        BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
+        headerPage.insertRecord(directoryRecord.getByteArray());
         cursorBuffer = new LinkedList<>();
+        cursorValueClass = null;
     }
 
     private BMPage getNewBMPage() throws HFBufMgrException, IOException {
@@ -291,8 +303,7 @@ public class BitMapFile implements GlobalConst{
         }
 
         createNewHeadPage();
-        BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, value);
-        headerPage.insertRecord(directoryRecord.getByteArray());
+        cursorValueClass = value;
 
         // insert a directory page with the following info
         // UniqueValue (string or int) -> FirstPage of that
