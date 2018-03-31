@@ -337,6 +337,7 @@ public class Columnarfile implements Filetype,  GlobalConst {
             }
             columnFile[i] = new Heapfile(colName);
         }
+        headerFileScan.closescan();
     }
 
     public void deleteColumnarFile()
@@ -387,7 +388,6 @@ public class Columnarfile implements Filetype,  GlobalConst {
         int offset = 0; //The starting location of each column
         TID tid = new TID(numColumns + 2);
         tid.recordIDs = new RID[numColumns + 2];
-
         for (AttrType attr: type) {
           tid.recordIDs[i] = new RID();
           //scan each column type
@@ -417,7 +417,6 @@ public class Columnarfile implements Filetype,  GlobalConst {
                   keyArr[i] = new StringKey(strAttr);
               }
           }
-
           i++;
         }
         ValueIntClass newRow = new ValueIntClass(0);
