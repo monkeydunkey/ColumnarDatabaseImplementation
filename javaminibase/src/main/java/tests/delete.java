@@ -300,8 +300,13 @@ public class delete implements GlobalConst {
 
             try {
                 if(btScanNOTbmScan) {
-                    cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
                     indexName = cfName+".hdr." + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Btree";
+                    try{
+                    	BTreeFile btree = new BTreeFile(indexName);
+                    }
+                    catch (Exception e) {
+                    	cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
+                    }
                     ciScanObj = new ColumnIndexScan(new IndexType(1), cfName, indexName,
                             colAttrType, bSize, outFilter, false);
 
@@ -334,35 +339,4 @@ public class delete implements GlobalConst {
         System.out.println("Disk write count: " + pcounter.wcounter);
 
     }
-//    public static boolean markTupleDel(Tuple t) throws InvalidUpdateException,
-//            InvalidTupleSizeException,
-//            HFException,
-//            HFDiskMgrException,
-//            HFBufMgrException,
-//            Exception {
-//        try{
-//            System.out.println("marking Tuple Deletions");
-//            if (!cFile.markTupleDeleted(cFile.deserializeTuple(t.getTupleByteArray()))){
-//                return false;
-//            }
-//        }catch(Exception e){
-//            e.printStackTrace();
-//            return false;
-//        }
-//        return true;
-//    }
-//    public static boolean purgeTuples() throws InvalidTupleSizeException, IOException, Exception {
-//        System.out.println("Purging Tuples: " + purgeFlag);
-//        if(purgeFlag){
-//            try{
-//                if(!cFile.purgeAllDeletedTuples()){
-//                    return false;
-//                }
-//            }catch(Exception e){
-//                e.printStackTrace();
-//                return false;
-//            }
-//        }
-//        return true;
-//    }
 }

@@ -204,7 +204,7 @@ public class query implements GlobalConst {
         }
         outFilter[1] = null;
 
-        Tuple t;
+        Tuple t = null;
         AttrType [] types = cFile.type;
         int strCount = 0;
 
@@ -283,8 +283,15 @@ public class query implements GlobalConst {
 
             try {
                 if(btScanNOTbmScan) {
-                    cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
+                	
                     indexName = cfName+".hdr." + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Btree";
+                    try{
+                    	BTreeFile btree = new BTreeFile(indexName);
+                    }
+                    catch (Exception e) {
+                    	cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
+                    }
+                    //cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
                     ciScanObj = new ColumnIndexScan(new IndexType(1), cfName, indexName,
                             colAttrType, bSize, outFilter, false);
                     t = ciScanObj.get_next();

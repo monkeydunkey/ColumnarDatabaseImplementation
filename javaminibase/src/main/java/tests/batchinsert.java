@@ -12,6 +12,7 @@ import columnar.*;
 import java.io.*;
 import java.util.Arrays;
 import java.util.StringTokenizer;
+import java.nio.file.*;
 
 import diskmgr.pcounter;
 
@@ -39,7 +40,18 @@ public class batchinsert {
 
     
 	    try {
-			SystemDefs sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
+			//SystemDefs sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
+			Path dbpath = Paths.get(filepath + COLUMN_DB_NAME);
+
+			if (Files.exists(dbpath)) {
+				System.out.println("Opening existing DB: " + COLUMN_DB_NAME);
+				SystemDefs.JavabaseDB.openDB(COLUMN_DB_NAME);
+			}
+			else
+			{
+				System.out.println("Opening new DB: " + COLUMN_DB_NAME);
+				SystemDefs sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
+			}
 
 			//Borrowed tokenizer
 			FileInputStream fin = new FileInputStream(filepath+ DATA_FILE_NAME);
@@ -94,7 +106,15 @@ public class batchinsert {
 
 			else setup a new file
 			*/
-			Columnarfile cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type, columnnames);
+			Columnarfile cf;
+			try {
+				//checking if the file exists
+				cf = new Columnarfile (COLUMNAR_FILE_NAME);
+			} catch (NullPointerException ex){
+				// null pointer exception the file does not exists so creating a new one
+				cf = new Columnarfile (COLUMNAR_FILE_NAME, numcolumns, type, columnnames);
+			}
+
 			//cf.setColumnNames(columnnames);
 
 

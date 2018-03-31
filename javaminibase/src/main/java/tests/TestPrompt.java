@@ -47,6 +47,8 @@ public class TestPrompt {
     public static void main( String[] args )
     {
         boolean quit = false;
+        SystemDefs sysdef = new SystemDefs("db1",100000,100,"Clock");
+        System.out.println("Setting up temporary DB: db1");
         do
         {
             menu();
@@ -59,6 +61,8 @@ public class TestPrompt {
             list.remove(0);
             String[] split = new String[list.size()];
             split = list.toArray(split);
+
+
 
             if( command.equals("batchinsert") )
             {

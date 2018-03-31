@@ -314,11 +314,11 @@ public class Columnarfile implements Filetype, GlobalConst {
         offsets = new int[numColumns];
         type = new AttrType[numColumns];
 
-        for (int i = 0; i < columnCount.value; i++) {
-            emptyRID = new RID();
-            colCountTuple = headerFileScan.getNext(emptyRID);
+        for (int i = 0; i < columnCount.value; i++){
+            RID tupleRID = new RID();
+            colCountTuple = headerFileScan.getNext(tupleRID);
             //Storing the RID that was filled in by getNext
-            headerRIDs[i] = emptyRID;
+            headerRIDs[i] = tupleRID;
             byte[] colData = colCountTuple.getTupleByteArray();
 
             byte[] StringArr = new byte[colData.length - 8];
@@ -337,6 +337,7 @@ public class Columnarfile implements Filetype, GlobalConst {
             }
             columnFile[i] = new Heapfile(colName);
         }
+        headerFileScan.closescan();
     }
 
     public void deleteColumnarFile()
@@ -379,40 +380,59 @@ public class Columnarfile implements Filetype, GlobalConst {
         if (tupleptr.length >= MAX_SPACE) {
             throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
         }
-
+        KeyClass[] keyArr = new KeyClass[numColumns];
         int i = 0;
         int offset = 0; //The starting location of each column
         TID tid = new TID(numColumns + 2);
         tid.recordIDs = new RID[numColumns + 2];
+        for (AttrType attr: type) {
+          tid.recordIDs[i] = new RID();
+          //scan each column type
+          if (attr.attrType == AttrType.attrInteger) {
+            //insert type int
+            int intAttr = Convert.getIntValue(offset,tupleptr);
+            offset = offset + offsets[i];
 
-        for (AttrType attr : type) {
-            tid.recordIDs[i] = new RID();
-            //scan each column type
-            if (attr.attrType == AttrType.attrInteger) {
-                //insert type int
-                int intAttr = Convert.getIntValue(offset, tupleptr);
-                offset = offset + offsets[i];
+            byte[] intValue = new byte[offsets[i]];
+            Convert.setIntValue(intAttr, 0, intValue);
+            tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
+              if (indexType[i].indexType == 1){
+                  //Btree Index
+                  keyArr[i] = new IntegerKey(intAttr);
+              }
+          }
+          if (attr.attrType == AttrType.attrString) {
+            //insert type String
+            String strAttr = Convert.getStrValue(offset,tupleptr,offsets[i]);
+            offset = offset + offsets[i];
 
-                byte[] intValue = new byte[offsets[i]];
-                Convert.setIntValue(intAttr, 0, intValue);
-                tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
-            }
-            if (attr.attrType == AttrType.attrString) {
-                //insert type String
-                String strAttr = Convert.getStrValue(offset, tupleptr, offsets[i]);
-                offset = offset + offsets[i];
-
-                byte[] strValue = new byte[offsets[i] + 2];
-                Convert.setStrValue(strAttr, 0, strValue);
-                tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
-            }
-
-            i++;
+            byte[] strValue = new byte[offsets[i] + 2];
+            Convert.setStrValue(strAttr, 0, strValue);
+            tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
+              if (indexType[i].indexType == 1){
+                  //Btree Index
+                  keyArr[i] = new StringKey(strAttr);
+              }
+          }
+          i++;
         }
         ValueIntClass newRow = new ValueIntClass(0);
         tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
         tid.numRIDs = i;
         tid.recordIDs[numColumns + 1] = columnFile[numColumns + 1].insertRecord(serializeTuple(tid));
+        for (int j = 0; j < numColumns; j++){
+            if (indexType[j].indexType == 1){
+                try {
+                    String indexFileName = _fileName + "." + String.valueOf(j) + ".Btree";
+                    //Setting the delete fashion to 1 which seems to be the default
+                    BTreeFile btree = new BTreeFile(indexFileName);
+                    btree.insert(keyArr[j], tid.recordIDs[numColumns + 1]);
+                }
+                catch (Exception ex){
+                    ex.printStackTrace();
+                }
+            }
+        }
         tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
         return tid;
     }
@@ -549,7 +569,7 @@ public class Columnarfile implements Filetype, GlobalConst {
     public void updateIndexType(int column, int index)
             throws Exception {
         indexType[column] = new IndexType(index);
-        String columnName = _fileName + "." + String.valueOf(column);
+        String columnName = _fileName.replace(".hdr", "") + "." + columnNames[column]; //_fileName + "." + String.valueOf(column);
         byte[] headerUpdateArr = _getColumnHeaderInsertTuple(columnName, type[column].attrType, offsets[column], index);
         HeaderFile.updateRecord(headerRIDs[column], new Tuple(headerUpdateArr, 0, headerUpdateArr.length));
     }
@@ -592,7 +612,9 @@ public class Columnarfile implements Filetype, GlobalConst {
                 emptyTID = new TID(numColumns + 2);
                 dataTuple = cfs.getNextInternal(emptyTID);
             }
-        } catch (Exception ex) {
+            updateIndexType(column, 1);
+        }
+        catch (Exception ex){
             ex.printStackTrace();
             return false;
         }
@@ -759,7 +781,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                 int Totaloffset = 0;
                 for (int j = 0; j < numColumns + 2; j++) {
                     if (j < numColumns && indexType[j].indexType != 0) {
-                        System.out.println("Col Del " + j + " " + succefullDeletion);
                         //Delete the index
                         KeyClass key;
                         switch (indexType[j].indexType) {
@@ -785,8 +806,9 @@ public class Columnarfile implements Filetype, GlobalConst {
                                 }
 
                                 succefullDeletion &= btree.Delete(key, tid.recordIDs[tid.recordIDs.length - 1]);
+                                break;
                             default:
-                                System.out.println("Index deletion not supported yet");
+                                System.out.println("Index deletion not supported yet" + " " + indexType[j].indexType);
                         }
                     }
                     succefullDeletion &= columnFile[j].deleteRecord(tid.recordIDs[j]);

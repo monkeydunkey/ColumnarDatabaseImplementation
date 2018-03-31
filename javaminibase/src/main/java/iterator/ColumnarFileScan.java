@@ -151,21 +151,28 @@ public class ColumnarFileScan extends Iterator{
             FieldNumberOutOfBoundException,
             WrongPermat
     {
-        TID tid = new TID(f.numColumns);
+        TID tid = new TID(f.numColumns + 2);
         //System.out.println("numColumns: "+f.numColumns);
         try{
             while(true) {
-                if((tuple1 =  scan.getNext(tid)) == null) {
+                if((tuple1 =  scan.getNextInternal(tid)) == null) {
                     return null;
                 }
-                int TotalSpaceNeeded = (in1_len + 2) * 2 + tuple1.getLength();
-                int headerOffset = (in1_len + 2) * 2;
+                int TotalSpaceNeeded = (in1_len + 4) * 2 + tuple1.getLength();
+                int headerOffset = (in1_len + 4) * 2;
                 byte[] arr = new byte[TotalSpaceNeeded];
                 System.arraycopy (tuple1.getTupleByteArray(), 0, arr, headerOffset, tuple1.getLength());
                 tuple1 = new Tuple(arr, 0, arr.length);
-                tuple1.setHdr(in1_len, _in1, s_sizes);
+
+                AttrType[] tempAttrArr = new AttrType[in1_len + 2];
+                for (int i = 0; i < in1_len + 2; i++){
+                    tempAttrArr[i] = (i < in1_len) ? _in1[i] : new AttrType(1);
+                }
+
+                tuple1.setHdr((short)(in1_len + 2), tempAttrArr, s_sizes);
                 if (PredEval.Eval(OutputFilter, tuple1, null, _in1, null) == true){
-                    Projection.Project(tuple1, _in1,  Jtuple, perm_mat, nOutFlds);
+                    //removing as projecting here is useless
+                    //Projection.Project(tuple1, _in1,  Jtuple, perm_mat, nOutFlds);
                     if (delFlag){
                         if (!f.markTupleDeleted(tid)){
                             return null;
