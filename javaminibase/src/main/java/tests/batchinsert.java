@@ -152,6 +152,7 @@ public class batchinsert {
 			if (SystemDefs.JavabaseBM.getNumUnpinnedBuffers() != SystemDefs.JavabaseBM.getNumBuffers()) {
 				System.out.println("*** Insert left unpinned pages\n");
 			}
+			SystemDefs.JavabaseBM.resetAllPins();
 			SystemDefs.JavabaseBM.flushAllPages();
 			System.out.println("Insertion done!");
 			System.out.println("Disk read count: "+ pcounter.rcounter);
