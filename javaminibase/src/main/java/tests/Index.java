@@ -92,6 +92,7 @@ public class Index extends TestDriver implements GlobalConst {
         else
             System.out.println("SUCCESS - Index created!");
         try {
+            SystemDefs.JavabaseBM.resetAllPins();
             SystemDefs.JavabaseBM.flushAllPages();
         } catch (Exception ex){
             System.out.println("could not flush the pages");

@@ -287,6 +287,7 @@ public class query implements GlobalConst {
                     indexName = cfName+".hdr." + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Btree";
                     try{
                     	BTreeFile btree = new BTreeFile(indexName);
+
                     }
                     catch (Exception e) {
                     	cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
@@ -315,6 +316,7 @@ public class query implements GlobalConst {
             System.out.println("Error - ACCESSTYPE should be either FILESCAN, COLUMNSCAN, BTREE, or BITMAP!");
         }
         try {
+            SystemDefs.JavabaseBM.resetAllPins();
             SystemDefs.JavabaseBM.flushAllPages();
         } catch (Exception ex){
             System.out.println("could not flush the pages");

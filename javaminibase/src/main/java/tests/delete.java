@@ -335,6 +335,7 @@ public class delete implements GlobalConst {
             System.out.println("Error - ACCESSTYPE should be either FILESCAN, COLUMNSCAN, BTREE, or BITMAP!");
         }
         try {
+            SystemDefs.JavabaseBM.resetAllPins();
             SystemDefs.JavabaseBM.flushAllPages();
         } catch (Exception ex){
             System.out.println("could not flush the pages");

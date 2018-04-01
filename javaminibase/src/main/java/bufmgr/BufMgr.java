@@ -859,7 +859,13 @@ public class BufMgr implements GlobalConst{
     }
     
   } // end of deallocate_page 
-
+    public void resetAllPins()
+    {
+        for(int i=0;i<numBuffers;i++)
+        {
+            frmeTable[i].pin_cnt = 0;
+        }
+    }
 }
 
 
