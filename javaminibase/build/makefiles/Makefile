@@ -49,6 +49,9 @@ test:
 test-noniterative:
 	cd tests; make bmtest dbtest; whoami; make hftest indextest jointest sorttest sortmerge cmtest
 
+test-prompt:
+	cd tests; make testprompt
+
 clean:
 	\rm -f $(CLASSPATH)/*.class *~ \#* core $(JARFILES) TRACE
 

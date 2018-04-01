@@ -1,0 +1,2 @@
+batchinsert smalltest.txt column_db_name columnar_file_name 4
+query column_db_name columnar_file_name [C D] {C = 8} 50 FILESCAN
