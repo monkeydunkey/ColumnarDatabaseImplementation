@@ -1,6 +1,9 @@
 package tests;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +14,16 @@ import static org.junit.Assert.*;
  * Created by shashankbhushan on 3/25/18.
  */
 public class TestPromptTest {
+
+    @Rule
+    public TestName name = new TestName();
+
+    @Before
+    public void setup(){
+        System.out.println("=================================================");
+        System.out.println("currently executing test: "+ name.getMethodName());
+        System.out.println("=================================================");
+    }
 
     @Test
     public void test_insert_then_query_integer_btree() throws IOException {
