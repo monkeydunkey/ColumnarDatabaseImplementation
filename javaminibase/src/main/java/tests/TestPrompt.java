@@ -49,11 +49,31 @@ public class TestPrompt {
         boolean quit = false;
         SystemDefs sysdef = new SystemDefs("db1",100000,100,"Clock");
         System.out.println("Setting up temporary DB: db1");
+        boolean testMode = false;
+
+        Scanner scan;
+        if(args.length == 0){
+            scan = new Scanner(System.in);
+        }else{
+            // the below is for testing purposes (instead of type each command from the commandline, we can convienclty read it from a file
+            // this allows us to put different sample inputs into many files and quickly iterate through them to test
+            // while keeping the behavior of the program the same
+            try {
+                testMode = true;
+                scan = new Scanner(new File(args[0]));
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found: "+args[0]);
+                return;
+            }
+        }
+
         do
         {
-            menu();
-            Scanner scan = new Scanner(System.in);
+            if(!testMode) {
+                menu();
+            }
             String invoke = scan.nextLine();
+            System.out.println("input: "+invoke);
             String[] splitInit = invoke.split("\\s+"); // Whitespace delimiter to split up command line invocation
             String command = splitInit[0]; // Save command before mutating the command array
             // Remove the program name from the arguments to pass into programs (not simple as arrays are fixed size; arraylist must be used)
