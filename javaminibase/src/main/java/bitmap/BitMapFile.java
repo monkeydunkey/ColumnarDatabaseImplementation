@@ -247,13 +247,10 @@ public class BitMapFile implements GlobalConst{
 
     public void flushCursor() throws IOException {
         // write current buffer to page
-        System.out.println("Flush");
         boolean[] booleans = toBooleanArray(cursorBuffer);
-        System.out.println("insert: "+Arrays.toString(booleans));
         cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
         try {
             boolean[] booleans1 = fromBytes(cursorBMPage.getRecord(new RID(cursorBMPage.curPage, 0)).getTupleByteArray(), booleans.length);
-            System.out.println("in out: "+ Arrays.toString(booleans1));
         } catch (InvalidSlotNumberException e) {
             e.printStackTrace();
         }

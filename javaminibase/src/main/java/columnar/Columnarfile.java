@@ -666,7 +666,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                         case AttrType.attrString:
                             ValueStrClass st = new ValueStrClass(dataArr);
                             key = new StringKey(st.value);
-                            System.out.println("ValueStrClass: " + st.value);
 
                             if (linkedList.isEmpty()) {
                                 linkedList.add(st.value);
@@ -693,24 +692,19 @@ public class Columnarfile implements Filetype, GlobalConst {
                         case AttrType.attrInteger:
                             ValueIntClass it = new ValueIntClass(dataArr);
                             key = new IntegerKey(it.value);
-                            System.out.print("ValueStrClass: " + it.value);
 
                             // st.value
                             // insert string value here
                             if (linkedList.isEmpty()) {
-                                System.out.print(", Empty add: " + it.value);
                                 linkedList.add(it.value);
                                 hashMap.put(it.value, it);
                                 bitMapFile.setCursorUniqueValue(it);
                             }
                             // does the value, match the current value being iterated on?
                             // if same value as current push 1 and continue
-                            System.out.print(", linkedList.peek(): " + String.valueOf(linkedList.peek()));
                             if (linkedList.peek().equals(it.value)) {
-                                System.out.print(", Set Bit Value: 1");
                                 bitMapFile.cursorInsert(true);
                             } else {
-                                System.out.print(", Set Bit Value: 0");
                                 bitMapFile.cursorInsert(false);
                             }
                             if (!hashMap.containsKey(it.value)) {
@@ -720,7 +714,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                             // if value is not the same, see if it is already in the list
                             // if its already in the list, populate 0
                             // if it is not already in the list, add to list and populate 0
-                            System.out.println("");
                             break;
                         default:
                             throw new Exception("Unexpected AttrType" + type[column].toString());
@@ -731,7 +724,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                 Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
                 if (linkedList.size() != 0) {
                     bitMapFile.setCursorUniqueValue(hashMap.get(linkedList.peek()));
-                    System.out.println("setCursorUniqueValue: "+String.valueOf(linkedList.peek()));
                 }
 
                 // iterate through all tuples for each unique value
