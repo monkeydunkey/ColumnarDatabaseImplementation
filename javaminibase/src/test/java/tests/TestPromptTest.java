@@ -1,6 +1,7 @@
 package tests;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -51,4 +52,20 @@ public class TestPromptTest {
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_string_filescan.txt"});
     }
 
+    @Test
+    public void test_insert_then_query_string_bitmap() {
+        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_string_bitmap.txt"});
+    }
+
+    @Test
+    @Ignore
+    public void test_insert_then_index_then_bitmapjoin() {
+        //todo
+        // batch insert
+        // create bitmap index
+        // create second columnar file (batch insert)
+        // create bitmap index
+        // join
+//        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_index_then_bitmapjoin.txt"});
+    }
 }

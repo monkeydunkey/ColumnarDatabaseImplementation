@@ -55,7 +55,7 @@ public class TestPrompt {
         if(args.length == 0){
             scan = new Scanner(System.in);
         }else{
-            // the below is for testing purposes (instead of type each command from the commandline, we can convienclty read it from a file
+            // the below is for testing purposes (instead of type each command from the commandline, we can conveniently read it from a file
             // this allows us to put different sample inputs into many files and quickly iterate through them to test
             // while keeping the behavior of the program the same
             try {
@@ -112,6 +112,14 @@ public class TestPrompt {
             {
                 try {
                     delete.run(split);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            else if( command.equals("bmj") )
+            {
+                try {
+                    BitMapJoinCommand.run(split);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
