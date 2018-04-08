@@ -1,6 +1,8 @@
 package index;
+import bitmap.BitMapFile;
 import global.*;
 import btree.*;
+import heap.InvalidSlotNumberException;
 import iterator.*;
 import java.io.*;
 
@@ -25,7 +27,7 @@ public class IndexUtils {
    * @exception IteratorException iterator exception
    * @exception ConstructPageException failed to construct a header page
    */
-  public static IndexFileScan BTree_scan(CondExpr[] selects, IndexFile indFile) 
+  public static IndexFileScan BTree_scan(CondExpr[] selects, IndexFile indFile)
     throws IOException, 
 	   UnknownKeyTypeException, 
 	   InvalidSelectionException,
@@ -194,5 +196,58 @@ public class IndexUtils {
     }
     
   }
-  
+
+	public static IndexFileScan BitMap_scan(CondExpr[] selects, IndexFile indFile) throws PinPageException, KeyNotMatchException, IteratorException, IOException, ConstructPageException, UnpinPageException, UnknownKeyTypeException, InvalidSlotNumberException {
+		IndexFileScan indScan;
+
+		if (selects == null || selects[0] == null) {
+			indScan = ((BTreeFile)indFile).new_scan(null, null);
+			return indScan;
+		}
+
+
+
+		// symbol = value
+		ValueClass key;
+		if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
+			if (selects[0].type1.attrType != AttrType.attrSymbol) {
+				key = getValueClass(selects[0], selects[0].type1, 1);
+				indScan = ((BitMapFile)indFile).new_scan(key);
+			}
+			else {
+				key = getValueClass(selects[0], selects[0].type2, 2);
+				indScan = ((BitMapFile)indFile).new_scan(key);
+			}
+			return indScan;
+		}
+
+		return null;
+	}
+
+	private static ValueClass getValueClass(CondExpr cd, AttrType type, int choice) throws UnknownKeyTypeException {
+		// error checking
+		if (cd == null) {
+			return null;
+		}
+		if (choice < 1 || choice > 2) {
+			return null;
+		}
+
+		switch (type.attrType) {
+			case AttrType.attrString:
+				if (choice == 1) return new ValueStrClass(cd.operand1.string);
+				else return new ValueStrClass(cd.operand2.string);
+			case AttrType.attrInteger:
+				if (choice == 1) return new ValueIntClass(new Integer(cd.operand1.integer));
+				else return new ValueIntClass(new Integer(cd.operand2.integer));
+			case AttrType.attrReal:
+			  /*
+			  // need FloatKey class in bt.java
+			  if (choice == 1) return new FloatKey(new Float(cd.operand.real));
+			  else return new FloatKey(new Float(cd.operand.real));
+			  */
+			default:
+				throw new UnknownKeyTypeException("IndexUtils.java: Only Integer and String keys are supported so far");
+		}
+	}
 }

@@ -642,7 +642,8 @@ public class Columnarfile implements Filetype, GlobalConst {
         BitMapFile bitMapFile = null;
 
         try {
-            String indexFileName = _fileName + "." + String.valueOf(column) + ".BitMap";
+            String indexFileName = getBitMapIndexFileName(_fileName, column);
+            System.out.println("index File name: "+indexFileName);
             bitMapFile = new BitMapFile(indexFileName, this, column, value);
 
             bitMapFile.initCursor();
@@ -742,6 +743,10 @@ public class Columnarfile implements Filetype, GlobalConst {
 
 
         return true;
+    }
+
+    public static String getBitMapIndexFileName(String columnarFileName, int column) {
+        return columnarFileName + "." + String.valueOf(column) + ".BitMap";
     }
 
     public boolean markTupleDeleted(TID tid)

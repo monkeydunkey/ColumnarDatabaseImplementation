@@ -82,14 +82,15 @@ public class ColumnIndexScan extends Iterator {
         switch(index.indexType) {
             case IndexType.BitMapIndex:
                 try{
-                    indFile = new BTreeFile(indName);
+                    indFile = new BitMapFile(indName);
+                    System.out.println("Bit Map file Name: "+indName);
                 }
                 catch (Exception e) {
                     throw new IndexException(e, "ColumnIndexScan.java: BitMap exceptions caught from BitMap constructor");
                 }
 
                 try {
-                    indScan = (BTFileScan) IndexUtils.BTree_scan(selects, indFile);
+                    indScan = IndexUtils.BitMap_scan(selects, indFile);
                 }
                 catch (Exception e) {
                     throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");

@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * Create a class called BitMapFile with the following specifications (see BTreeFile for analogy):
  */
-public class BitMapFile implements GlobalConst{
+public class BitMapFile extends IndexFile implements GlobalConst {
 
     private String dbname;
     private BitMapHeaderPage headerPage;
@@ -329,4 +329,23 @@ public class BitMapFile implements GlobalConst{
         return null;
     }
 
+    @Override
+    public void insert(KeyClass data, RID rid) throws KeyTooLongException, KeyNotMatchException, LeafInsertRecException, IndexInsertRecException, ConstructPageException, UnpinPageException, PinPageException, NodeNotMatchException, ConvertException, DeleteRecException, IndexSearchException, IteratorException, LeafDeleteException, InsertException, IOException {
+        // just so we can extend indexFile
+    }
+
+    @Override
+    public boolean Delete(KeyClass data, RID rid) throws DeleteFashionException, LeafRedistributeException, RedistributeException, InsertRecException, KeyNotMatchException, UnpinPageException, IndexInsertRecException, FreePageException, RecordNotFoundException, PinPageException, IndexFullDeleteException, LeafDeleteException, IteratorException, ConstructPageException, DeleteRecException, IndexSearchException, IOException {
+        // just so we can extend indexFile
+        return false;
+    }
+
+    public IndexFileScan new_scan(ValueClass valueClass) throws InvalidSlotNumberException, PinPageException, IOException {
+        // go through directory pages
+        // get the linklist that matches the given key
+        BMHeaderPageDirectoryRecord directoryForValue = BM.getDirectoryForValue(valueClass, headerPage);
+
+        // pass that linked list to bitMap file scan
+        return new BitMapFileScan(directoryForValue);
+    }
 }

@@ -1,3 +1,4 @@
 batchinsert ./tests/data/smalltest.txt column_db_name columnar_file_name 4
+index column_db_name columnar_file_name C BITMAP
 query column_db_name columnar_file_name [A B C D] {B = District_of_Columbia} 50 BITMAP
 quit

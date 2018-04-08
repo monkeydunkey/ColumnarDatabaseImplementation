@@ -2,11 +2,11 @@ package bitmap;
 
 import btree.PinPageException;
 import diskmgr.Page;
-import global.PageId;
-import global.RID;
-import global.SystemDefs;
+import global.*;
+import heap.InvalidSlotNumberException;
 import heap.Tuple;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -29,11 +29,7 @@ public class BM {
             System.out.println("BitVector "+String.valueOf(i)+": for value: "+directoryRecord.getValueClass().toString());
 
             try {
-                PageId pageno = directoryRecord.getBmPageId();
-                BMPage bmPage = new BMPage(pinPage(pageno));
-                System.out.println("bmPage.getSlotCnt(): "+bmPage.getSlotCnt());
-                Tuple record = bmPage.getRecord(new RID(pageno, 0));
-                boolean[] booleans = BitMapFile.fromBytes(record.getTupleByteArray(), directoryRecord.arraySize);
+                boolean[] booleans = givenDirectoryPageGetBitMap(directoryRecord);
                 System.out.println("Values: "+ Arrays.toString(booleans));
                 // record.getTupleByteArray() byte array to boolean array
             } catch (Exception e) {
@@ -42,7 +38,15 @@ public class BM {
         }
     }
 
-    private ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
+    public static boolean[] givenDirectoryPageGetBitMap(BMHeaderPageDirectoryRecord directoryRecord) throws PinPageException, IOException, InvalidSlotNumberException {
+        PageId pageno = directoryRecord.getBmPageId();
+        BMPage bmPage = new BMPage(pinPage(pageno));
+        Tuple record = bmPage.getRecord(new RID(pageno, 0));
+        boolean[] booleans = BitMapFile.fromBytes(record.getTupleByteArray(), directoryRecord.arraySize);
+        return booleans;
+    }
+
+    private static ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
         try{
             short slotCnt = header.getSlotCnt();
             System.out.println("header slot count: "+slotCnt);
@@ -74,7 +78,7 @@ public class BM {
         return new ArrayList<>();
     }
 
-    private Page pinPage(PageId pageno)
+    private static Page pinPage(PageId pageno)
             throws PinPageException {
         try {
             Page page = new Page();
@@ -85,4 +89,27 @@ public class BM {
             throw new PinPageException(e, "");
         }
     }
+
+    public static BMHeaderPageDirectoryRecord getDirectoryForValue(ValueClass valueClass, BitMapHeaderPage header) {
+        ArrayList<BMHeaderPageDirectoryRecord> directoryRecords = getDirectoryRecords(header);
+        for (int i = 0; i < directoryRecords.size(); i++) {
+            BMHeaderPageDirectoryRecord directoryRecord = directoryRecords.get(i);
+            ValueClass directoryRecordValueClass = directoryRecord.getValueClass();
+            if(valueClass instanceof ValueStrClass){
+                if(directoryRecordValueClass instanceof ValueStrClass){
+                    ValueStrClass directoryRecordValueClassValue = (ValueStrClass) directoryRecordValueClass;
+                    ValueStrClass valueClassValue = (ValueStrClass) valueClass;
+                    if(valueClassValue.equals(directoryRecordValueClassValue)){
+                        return directoryRecord;
+                    }
+                }
+            }else if(valueClass instanceof ValueIntClass){
+
+            }else{
+                throw new RuntimeException("Unknown Value Class type");
+            }
+        }
+        return null;
+    }
+
 }

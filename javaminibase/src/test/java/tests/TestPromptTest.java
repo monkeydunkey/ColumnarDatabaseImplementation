@@ -68,4 +68,7 @@ public class TestPromptTest {
         // join
 //        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_index_then_bitmapjoin.txt"});
     }
+
+    // todo test bitmap directory pages overflow
+    // todo test bitmap data pages overflow
 }
