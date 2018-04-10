@@ -83,7 +83,6 @@ public class ColumnIndexScan extends Iterator {
             case IndexType.BitMapIndex:
                 try{
                     indFile = new BitMapFile(indName);
-                    System.out.println("Bit Map file Name: "+indName);
                 }
                 catch (Exception e) {
                     throw new IndexException(e, "ColumnIndexScan.java: BitMap exceptions caught from BitMap constructor");

@@ -33,6 +33,9 @@ public class BitMapFile extends IndexFile implements GlobalConst {
      */
     public BitMapFile(java.lang.String filename) throws GetFileEntryException, ConstructPageException {
         headerPageId=get_file_entry(filename);
+        if(headerPageId == null){
+            throw new RuntimeException("file not found: "+filename);
+        }
         headerPage= new BitMapHeaderPage(headerPageId);
         dbname = filename;
     }

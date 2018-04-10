@@ -192,7 +192,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         // We are assuming that the table name will be provided we will not be creating
         // temporary tables right now. Maybe later we can add a clause for it as well
         // if it is required for running queries
-        _fileName = name + "." + "hdr";
+        _fileName = getHeapFileName(name);
         _ftype = ORDINARY;
         // +2 for storing the deletion heap file and RID to TID mapping heap file
         columnFile = new Heapfile[totalColumns + 2];
@@ -237,6 +237,10 @@ public class Columnarfile implements Filetype, GlobalConst {
         headerRIDs[totalColumns + 1] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, 1, INTSIZE, 0));
     }
 
+    public static String getHeapFileName(String name) {
+        return name + "." + "hdr";
+    }
+
     public Columnarfile(String name, int totalColumns, AttrType[] attrType, String[] colNames)
             throws HFException,
             HFBufMgrException,
@@ -254,7 +258,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         _fileName = null;
 
 
-        _fileName = name + "." + "hdr";
+        _fileName = getHeapFileName(name);
         _ftype = ORDINARY;
         // +2 for storing the deletion heap file and RID to TID mapping heap file
         columnFile = new Heapfile[totalColumns + 2];
@@ -300,7 +304,7 @@ public class Columnarfile implements Filetype, GlobalConst {
             InvalidTupleSizeException,
             SpaceNotAvailableException,
             IOException {
-        _fileName = name + "." + "hdr";
+        _fileName = getHeapFileName(name);
         HeaderFile = new Heapfile(_fileName);
         columnNames = new String[numColumns];
         Scan headerFileScan = HeaderFile.openScan();
@@ -643,7 +647,6 @@ public class Columnarfile implements Filetype, GlobalConst {
 
         try {
             String indexFileName = getBitMapIndexFileName(_fileName, column);
-            System.out.println("index File name: "+indexFileName);
             bitMapFile = new BitMapFile(indexFileName, this, column, value);
 
             bitMapFile.initCursor();
@@ -738,15 +741,20 @@ public class Columnarfile implements Filetype, GlobalConst {
             return false;
         }
 
-        BM bm = new BM();
-        bm.printBitMap(bitMapFile.getHeaderPage());
+//        BM bm = new BM();
+//        bm.printBitMap(bitMapFile.getHeaderPage());
 
 
         return true;
     }
 
     public static String getBitMapIndexFileName(String columnarFileName, int column) {
-        return columnarFileName + "." + String.valueOf(column) + ".BitMap";
+        System.out.println("getBitMapIndexFileName");
+        System.out.println("input: "+columnarFileName);
+        System.out.println("input: "+column);
+        String fileName = columnarFileName + "." + String.valueOf(column) + ".BitMap";
+        System.out.println("filename: "+fileName);
+        return fileName;
     }
 
     public boolean markTupleDeleted(TID tid)

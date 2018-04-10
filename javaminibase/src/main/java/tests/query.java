@@ -302,7 +302,8 @@ public class query implements GlobalConst {
                     ciScanObj.close();
                 }else {
 //                    cFile.createBitMapIndex(cFile.getColumnIndexByName(valConst_ColName), colValCls);
-                    indexName = Columnarfile.getBitMapIndexFileName(cfName, cFile.getColumnIndexByName(valConst_ColName));
+                    int columnIndexByName = cFile.getColumnIndexByName(valConst_ColName);
+                    indexName = Columnarfile.getBitMapIndexFileName(Columnarfile.getHeapFileName(cfName), columnIndexByName);
                     ciScanObj = new ColumnIndexScan(new IndexType(IndexType.BitMapIndex), cfName, indexName, colAttrType, bSize, outFilter, false);
                     t = ciScanObj.get_next();
                     while(t != null) {
