@@ -92,9 +92,11 @@ public class BM {
 
     public static BMHeaderPageDirectoryRecord getDirectoryForValue(ValueClass valueClass, BitMapHeaderPage header) {
         ArrayList<BMHeaderPageDirectoryRecord> directoryRecords = getDirectoryRecords(header);
+        System.out.println("************************************************==");
         for (int i = 0; i < directoryRecords.size(); i++) {
             BMHeaderPageDirectoryRecord directoryRecord = directoryRecords.get(i);
             ValueClass directoryRecordValueClass = directoryRecord.getValueClass();
+            System.out.println("directoryRecordValueClass: "+directoryRecordValueClass.toString());
             if(valueClass instanceof ValueStrClass){
                 if(directoryRecordValueClass instanceof ValueStrClass){
                     ValueStrClass directoryRecordValueClassValue = (ValueStrClass) directoryRecordValueClass;

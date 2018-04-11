@@ -741,19 +741,15 @@ public class Columnarfile implements Filetype, GlobalConst {
             return false;
         }
 
-//        BM bm = new BM();
-//        bm.printBitMap(bitMapFile.getHeaderPage());
+        BM bm = new BM();
+        bm.printBitMap(bitMapFile.getHeaderPage());
 
 
         return true;
     }
 
     public static String getBitMapIndexFileName(String columnarFileName, int column) {
-        System.out.println("getBitMapIndexFileName");
-        System.out.println("input: "+columnarFileName);
-        System.out.println("input: "+column);
         String fileName = columnarFileName + "." + String.valueOf(column) + ".BitMap";
-        System.out.println("filename: "+fileName);
         return fileName;
     }
 
