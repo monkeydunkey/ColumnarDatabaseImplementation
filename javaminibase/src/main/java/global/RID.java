@@ -66,5 +66,12 @@ public class RID{
     else
       return false;
   }
-  
+
+  @Override
+  public String toString() {
+    return "RID{" +
+            "slotNo=" + slotNo +
+            ", pageNo=" + pageNo +
+            '}';
+  }
 }

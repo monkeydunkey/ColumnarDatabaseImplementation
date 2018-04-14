@@ -48,6 +48,8 @@ public class BitMapFileScan extends IndexFileScan {
                 }
 
 //                new RID()// todo: need page number and slot number by position
+
+                //columnarFile.getRIDByPosition(currentPosition);
 //                KeyDataEntry keyDataEntry = new KeyDataEntry(keyClass, );
 
 
