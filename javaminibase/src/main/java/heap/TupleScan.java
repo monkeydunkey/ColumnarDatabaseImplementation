@@ -27,6 +27,10 @@ public class TupleScan {
         }
     }
 
+    public int getCurrentPosition(){
+    	return scanList[0].getRecordPosition();
+	}
+
     /**
      * Closes the TupleScan object
      */
@@ -95,7 +99,7 @@ public class TupleScan {
 				RID recordID = tid.recordIDs[i];
 				int recordPosition = scanList[i].getRecordPosition();
 				tupleArr = scanList[i].getNext(recordID);
-				System.out.println("recordId: "+recordID.toString() + " " + recordPosition);
+				//System.out.println("recordId: "+recordID.toString() + " " + recordPosition);
 				if (tupleArr == null) break;
 				totalLength += tupleArr.getLength();
 				outputStream.write( tupleArr.getTupleByteArray());

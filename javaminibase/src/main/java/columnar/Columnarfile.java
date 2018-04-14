@@ -972,79 +972,22 @@ public class Columnarfile implements Filetype, GlobalConst {
      * todo get shashank to help optimize this using HFPage.setCurPage_forGivenPosition
      *
      * @see heap.HFPage#setCurPage_forGivenPosition(int)
-     * @param currentPosition
+     * @param position
      */
-    public RID getRIDByPosition(int currentPosition) throws InvalidTupleSizeException, IOException {
+    public RID getRIDByPosition(int position) throws InvalidTupleSizeException, IOException {
+        TupleScan cfs = new TupleScan(this);
+        TID emptyTID = new TID(numColumns + 2);
+        Tuple dataTuple = cfs.getNextInternal(emptyTID);
+        while (dataTuple != null) {
+            //System.out.println("cfs.getCurrentPosition(): "+cfs.getCurrentPosition());
+            if(cfs.getCurrentPosition() == position){
+                System.out.println("returning: "+ position);
+                return emptyTID.recordIDs[emptyTID.recordIDs.length-1];
+            }
+
+            emptyTID = new TID(numColumns + 2);
+            dataTuple = cfs.getNextInternal(emptyTID);
+        }
         return null;
-//        TupleScan cfs = new TupleScan(this);
-//        TID emptyTID = new TID(numColumns + 2);
-//        Tuple dataTuple = cfs.getNextInternal(emptyTID);
-//        while (dataTuple != null) {
-//            int offset = 0;
-//            KeyClass key;
-//            for (int i = 0; i < column; i++) {
-//                offset += (type[i].attrType == AttrType.attrString) ? offsets[i] + 2 : offsets[i];
-//            }
-//            int tempOffset = (type[column].attrType == AttrType.attrString) ? offsets[column] + 2 : offsets[column];
-//            byte[] dataArr = new byte[tempOffset];
-//            System.arraycopy(dataTuple.getTupleByteArray(), offset, dataArr, 0, tempOffset);
-//            switch (type[column].attrType) {
-//                case AttrType.attrString:
-//                    ValueStrClass st = new ValueStrClass(dataArr);
-//                    key = new StringKey(st.value);
-//
-//                    if (linkedList.isEmpty()) {
-//                        linkedList.add(st.value);
-//                        hashMap.put(st.value, st);
-//                        bitMapFile.setCursorUniqueValue(st);
-//                    }
-//                    // does the value, match the current value being iterated on?
-//                    // if same value as current push 1 and continue
-//                    if (linkedList.peek().equals(st.value)) {
-//                        bitMapFile.cursorInsert(true);
-//                    } else {
-//                        bitMapFile.cursorInsert(false);
-//                    }
-//                    if (!hashMap.containsKey(st.value)) {
-//                        linkedList.add(st.value);
-//                        hashMap.put(st.value, st);
-//                    }
-//                    // if value is not the same, see if it is already in the list
-//                    // if its already in the list, populate 0
-//                    // if it is not already in the list, add to list and populate 0
-//
-//
-//                    break;
-//                case AttrType.attrInteger:
-//                    ValueIntClass it = new ValueIntClass(dataArr);
-//                    key = new IntegerKey(it.value);
-//
-//                    // st.value
-//                    // insert string value here
-//                    if (linkedList.isEmpty()) {
-//                        linkedList.add(it.value);
-//                        hashMap.put(it.value, it);
-//                        bitMapFile.setCursorUniqueValue(it);
-//                    }
-//                    // does the value, match the current value being iterated on?
-//                    // if same value as current push 1 and continue
-//                    if (linkedList.peek().equals(it.value)) {
-//                        bitMapFile.cursorInsert(true);
-//                    } else {
-//                        bitMapFile.cursorInsert(false);
-//                    }
-//                    if (!hashMap.containsKey(it.value)) {
-//                        linkedList.add(it.value);
-//                        hashMap.put(it.value, it);
-//                    }
-//                    // if value is not the same, see if it is already in the list
-//                    // if its already in the list, populate 0
-//                    // if it is not already in the list, add to list and populate 0
-//                    break;
-//                default:
-//                    throw new Exception("Unexpected AttrType" + type[column].toString());
-//            }
-//            emptyTID = new TID(numColumns + 2);
-//            dataTuple = cfs.getNextInternal(emptyTID);
     }
 }
