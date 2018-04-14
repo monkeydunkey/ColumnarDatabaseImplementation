@@ -741,8 +741,8 @@ public class Columnarfile implements Filetype, GlobalConst {
             return false;
         }
 
-        BM bm = new BM();
-        bm.printBitMap(bitMapFile.getHeaderPage());
+//        BM bm = new BM();
+//        bm.printBitMap(bitMapFile.getHeaderPage());
 
 
         return true;

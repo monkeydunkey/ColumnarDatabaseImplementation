@@ -343,12 +343,12 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return false;
     }
 
-    public IndexFileScan new_scan(ValueClass valueClass) throws InvalidSlotNumberException, PinPageException, IOException {
+    public IndexFileScan new_scan(ValueClass valueClass, Columnarfile f) throws InvalidSlotNumberException, PinPageException, IOException {
         // go through directory pages
         // get the linklist that matches the given key
         BMHeaderPageDirectoryRecord directoryForValue = BM.getDirectoryForValue(valueClass, headerPage);
 
         // pass that linked list to bitMap file scan
-        return new BitMapFileScan(directoryForValue);
+        return new BitMapFileScan(directoryForValue, f);
     }
 }

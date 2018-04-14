@@ -1,5 +1,6 @@
 package index;
 import bitmap.BitMapFile;
+import columnar.Columnarfile;
 import global.*;
 import btree.*;
 import heap.InvalidSlotNumberException;
@@ -197,7 +198,7 @@ public class IndexUtils {
     
   }
 
-	public static IndexFileScan BitMap_scan(CondExpr[] selects, IndexFile indFile) throws PinPageException, KeyNotMatchException, IteratorException, IOException, ConstructPageException, UnpinPageException, UnknownKeyTypeException, InvalidSlotNumberException {
+	public static IndexFileScan BitMap_scan(CondExpr[] selects, IndexFile indFile, Columnarfile f) throws PinPageException, KeyNotMatchException, IteratorException, IOException, ConstructPageException, UnpinPageException, UnknownKeyTypeException, InvalidSlotNumberException {
 		IndexFileScan indScan;
 
 		if (selects == null || selects[0] == null) {
@@ -212,11 +213,11 @@ public class IndexUtils {
 		if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
 			if (selects[0].type1.attrType != AttrType.attrSymbol) {
 				key = getValueClass(selects[0], selects[0].type1, 1);
-				indScan = ((BitMapFile)indFile).new_scan(key);
+				indScan = ((BitMapFile)indFile).new_scan(key, f);
 			}
 			else {
 				key = getValueClass(selects[0], selects[0].type2, 2);
-				indScan = ((BitMapFile)indFile).new_scan(key);
+				indScan = ((BitMapFile)indFile).new_scan(key, f);
 			}
 			return indScan;
 		}

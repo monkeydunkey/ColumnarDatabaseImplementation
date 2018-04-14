@@ -89,7 +89,7 @@ public class ColumnIndexScan extends Iterator {
                 }
 
                 try {
-                    indScan = IndexUtils.BitMap_scan(selects, indFile);
+                    indScan = IndexUtils.BitMap_scan(selects, indFile, f);
                 }
                 catch (Exception e) {
                     throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");

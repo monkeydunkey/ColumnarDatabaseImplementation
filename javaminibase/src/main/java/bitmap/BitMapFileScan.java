@@ -1,6 +1,10 @@
 package bitmap;
 
 import btree.*;
+import columnar.Columnarfile;
+import global.RID;
+import global.ValueIntClass;
+import global.ValueStrClass;
 import heap.InvalidSlotNumberException;
 import heap.Tuple;
 
@@ -10,13 +14,15 @@ public class BitMapFileScan extends IndexFileScan {
 
     private final BMHeaderPageDirectoryRecord directoryForValue;
     private final boolean[] booleans;
+    private final Columnarfile columnarFile;
     private int currentPosition = 0;
 
 
-    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue) throws InvalidSlotNumberException, IOException, PinPageException {
+    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile) throws InvalidSlotNumberException, IOException, PinPageException {
         this.directoryForValue = directoryForValue;
         boolean[] booleans = BM.givenDirectoryPageGetBitMap(directoryForValue);
         this.booleans = booleans;
+        this.columnarFile = columnarfile;
     }
 
     @Override
@@ -30,10 +36,22 @@ public class BitMapFileScan extends IndexFileScan {
         Tuple tuple = null;
         while(tuple == null){
             if(booleans[currentPosition]){
-                //return tuple for this position
                 System.out.println("position matches bitmap index and condition! "+currentPosition);
                 currentPosition++;
-                return null;
+
+                KeyClass keyClass;
+
+                if(directoryForValue.getValueClass() instanceof ValueStrClass){
+                   keyClass = new StringKey(((ValueStrClass) directoryForValue.getValueClass()).value);
+                }else if(directoryForValue.getValueClass() instanceof ValueIntClass){
+                   keyClass = new IntegerKey(((ValueIntClass) directoryForValue.getValueClass()).value);
+                }
+
+//                new RID()// todo: need page number and slot number by position
+//                KeyDataEntry keyDataEntry = new KeyDataEntry(keyClass, );
+
+
+                return null; //return tuple for this position
             }else{
                 currentPosition++;
             }

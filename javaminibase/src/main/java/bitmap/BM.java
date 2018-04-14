@@ -49,7 +49,6 @@ public class BM {
     private static ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
         try{
             short slotCnt = header.getSlotCnt();
-            System.out.println("header slot count: "+slotCnt);
             RID[] rids = new RID[slotCnt];
             ArrayList<BMHeaderPageDirectoryRecord> bmHeaderPageDirectoryRecords = new ArrayList<>();
 
@@ -61,14 +60,11 @@ public class BM {
                 try{
                     Tuple record = header.getRecord(rids[i]);
                     BMHeaderPageDirectoryRecord record1 = new BMHeaderPageDirectoryRecord(record.getTupleByteArray());
-                    System.out.println("record1: "+ record1.bmPageId + " : "+record.getTupleByteArray().length);
                     bmHeaderPageDirectoryRecords.add(record1);
                 }catch(Exception e){
                     e.printStackTrace();
                 }
             }
-
-            System.out.println("bmHeaderPageDirectoryRecords.size(): "+bmHeaderPageDirectoryRecords.size());
 
             return bmHeaderPageDirectoryRecords;
 
@@ -92,11 +88,9 @@ public class BM {
 
     public static BMHeaderPageDirectoryRecord getDirectoryForValue(ValueClass valueClass, BitMapHeaderPage header) {
         ArrayList<BMHeaderPageDirectoryRecord> directoryRecords = getDirectoryRecords(header);
-        System.out.println("************************************************==");
         for (int i = 0; i < directoryRecords.size(); i++) {
             BMHeaderPageDirectoryRecord directoryRecord = directoryRecords.get(i);
             ValueClass directoryRecordValueClass = directoryRecord.getValueClass();
-            System.out.println("directoryRecordValueClass: "+directoryRecordValueClass.toString());
             if(valueClass instanceof ValueStrClass){
                 if(directoryRecordValueClass instanceof ValueStrClass){
                     ValueStrClass directoryRecordValueClassValue = (ValueStrClass) directoryRecordValueClass;
