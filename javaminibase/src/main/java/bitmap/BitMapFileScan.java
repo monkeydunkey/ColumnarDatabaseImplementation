@@ -41,11 +41,11 @@ public class BitMapFileScan extends IndexFileScan {
 
         // find next value that matches boolean == 1
         Tuple tuple = null;
-        System.out.println(Arrays.toString(booleans));
+        //System.out.println(Arrays.toString(booleans));
         while(tuple == null){
             if(booleans[currentPosition]){
-                System.out.println("position matches bitmap index and condition! "+currentPosition);
-
+//                System.out.println("position matches bitmap index and condition! "+currentPosition);
+//
 
                 KeyClass keyClass = null;
                 RID ridByPosition = null;
@@ -56,10 +56,8 @@ public class BitMapFileScan extends IndexFileScan {
                    keyClass = new IntegerKey(((ValueIntClass) directoryForValue.getValueClass()).value);
                 }
 
-//                new RID()// todo: need page number and slot number by position
-
                 try {
-                    System.out.println("calling getRIDByPosition for the position: "+currentPosition);
+//                    System.out.println("calling getRIDByPosition for the position: "+currentPosition);
                     ridByPosition = columnarFile.getRIDByPosition(currentPosition);
                 } catch (Exception e) {
                     e.printStackTrace();

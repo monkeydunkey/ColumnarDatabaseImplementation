@@ -6,6 +6,7 @@ import btree.*;
 import diskmgr.Page;
 import global.*;
 import heap.*;
+import iterator.ColumnarFileScan;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -975,19 +976,48 @@ public class Columnarfile implements Filetype, GlobalConst {
      * @param position
      */
     public RID getRIDByPosition(int position) throws InvalidTupleSizeException, IOException {
+
+        int column = 1;// todo remove column references here, remove this entire function
+        int positionCur =0;
+
+
         TupleScan cfs = new TupleScan(this);
         TID emptyTID = new TID(numColumns + 2);
         Tuple dataTuple = cfs.getNextInternal(emptyTID);
         while (dataTuple != null) {
-            //System.out.println("cfs.getCurrentPosition(): "+cfs.getCurrentPosition());
-            if(cfs.getCurrentPosition() == position){
-                System.out.println("returning: "+ position);
-                return emptyTID.recordIDs[emptyTID.recordIDs.length-1];
+            int offset = 0;
+            KeyClass key;
+            for (int i = 0; i < column; i++) {
+                offset += (type[i].attrType == AttrType.attrString) ? offsets[i] + 2 : offsets[i];
             }
+            int tempOffset = (type[column].attrType == AttrType.attrString) ? offsets[column] + 2 : offsets[column];
+            byte[] dataArr = new byte[tempOffset];
+            System.arraycopy(dataTuple.getTupleByteArray(), offset, dataArr, 0, tempOffset);
+            switch (type[column].attrType) {
+                case AttrType.attrString:
+                    ValueStrClass st = new ValueStrClass(dataArr);
+                    key = new StringKey(st.value);
 
+                    RID recordID = emptyTID.recordIDs[emptyTID.recordIDs.length - 1];
+                    //System.out.println("position: " + positionCur + ", value: " + key+" RID: "+recordID);
+
+                    if(position == positionCur){
+                        return recordID;
+                    }
+
+
+                    break;
+                default:
+                    throw new RuntimeException("Unexpected AttrType" + type[column].toString());
+            }
             emptyTID = new TID(numColumns + 2);
             dataTuple = cfs.getNextInternal(emptyTID);
+            positionCur++;
         }
+
+
+
+
         return null;
     }
 }
