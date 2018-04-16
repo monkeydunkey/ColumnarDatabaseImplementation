@@ -203,7 +203,125 @@ public class Heapfile implements Filetype,  GlobalConst {
       
       
     } // end of _findDatapage		     
-  
+
+	private boolean  _findDataPage( int Position,
+									PageId dirPageId, HFPage dirpage,
+									PageId dataPageId, HFPage datapage,
+									RID rpDataPageRid, RID retRID)
+			throws InvalidSlotNumberException,
+			InvalidTupleSizeException,
+			HFException,
+			HFBufMgrException,
+			HFDiskMgrException,
+			Exception
+	{
+		PageId currentDirPageId = new PageId(_firstDirPageId.pid);
+		int totalRecords = 0;
+		HFPage currentDirPage = new HFPage();
+		HFPage currentDataPage = new HFPage();
+		RID currentDataPageRid = new RID();
+		PageId nextDirPageId = new PageId();
+		// datapageId is stored in dpinfo.pageId
+
+
+		pinPage(currentDirPageId, currentDirPage, false/*read disk*/);
+
+		Tuple atuple = new Tuple();
+
+		while (currentDirPageId.pid != INVALID_PAGE)
+		{// Start While01
+			// ASSERTIONS:
+			//  currentDirPage, currentDirPageId valid and pinned and Locked.
+
+			for( currentDataPageRid = currentDirPage.firstRecord();
+				 currentDataPageRid != null;
+				 currentDataPageRid = currentDirPage.nextRecord(currentDataPageRid))
+			{
+				try{
+					atuple = currentDirPage.getRecord(currentDataPageRid);
+				}
+				catch (InvalidSlotNumberException e)// check error! return false(done)
+				{
+					return false;
+				}
+
+				DataPageInfo dpinfo = new DataPageInfo(atuple);
+				try{
+					pinPage(dpinfo.pageId, currentDataPage, false/*Rddisk*/);
+					//check error;need unpin currentDirPage
+				}	catch (Exception e)
+				{
+					unpinPage(currentDirPageId, false/*undirty*/);
+					dirpage = null;
+					datapage = null;
+					throw e;
+				}
+
+				// ASSERTIONS:
+				// - currentDataPage, currentDataPageRid, dpinfo valid
+				// - currentDataPage pinned
+
+				if(totalRecords + dpinfo.recct >= Position)
+				{
+					retRID = new RID(dpinfo.pageId, Position - totalRecords - 1);
+
+					atuple = currentDataPage.returnRecord(retRID);
+					// found user's record on the current datapage which itself
+					// is indexed on the current dirpage.  Return both of these.
+
+					dirpage.setpage(currentDirPage.getpage());
+					dirPageId.pid = currentDirPageId.pid;
+
+					datapage.setpage(currentDataPage.getpage());
+					dataPageId.pid = dpinfo.pageId.pid;
+
+					rpDataPageRid.pageNo.pid = currentDataPageRid.pageNo.pid;
+					rpDataPageRid.slotNo = currentDataPageRid.slotNo;
+					return true;
+				}
+				else
+				{
+					// user record not found on this datapage; unpin it
+					// and try the next one
+					totalRecords += dpinfo.recct;
+					unpinPage(dpinfo.pageId, false /*undirty*/);
+
+				}
+
+			}
+
+			// if we would have found the correct datapage on the current
+			// directory page we would have already returned.
+			// therefore:
+			// read in next directory page:
+
+			nextDirPageId = currentDirPage.getNextPage();
+			try{
+				unpinPage(currentDirPageId, false /*undirty*/);
+			}
+			catch(Exception e) {
+				throw new HFException (e, "heapfile,_find,unpinpage failed");
+			}
+
+			currentDirPageId.pid = nextDirPageId.pid;
+			if(currentDirPageId.pid != INVALID_PAGE)
+			{
+				pinPage(currentDirPageId, currentDirPage, false/*Rdisk*/);
+				if(currentDirPage == null)
+					throw new HFException(null, "pinPage return null page");
+			}
+
+
+		} // end of While01
+		// checked all dir pages and all data pages; user record not found:(
+
+		dirPageId.pid = dataPageId.pid = INVALID_PAGE;
+
+		return false;
+
+
+	} // end of _findDatapage
+
   /** Initialize.  A null name produces a temporary heapfile which will be
    * deleted by the destructor.  If the name already denotes a file, the
    * file is opened; otherwise, a new empty file is created.
@@ -860,7 +978,45 @@ public class Heapfile implements Filetype,  GlobalConst {
       
     }
   
-  
+  public Tuple getRecord(int Position)
+		  throws InvalidSlotNumberException,
+		  InvalidTupleSizeException,
+		  HFException,
+		  HFDiskMgrException,
+		  HFBufMgrException,
+		  Exception
+  {
+	  boolean status;
+	  HFPage dirPage = new HFPage();
+	  PageId currentDirPageId = new PageId();
+	  HFPage dataPage = new HFPage();
+	  PageId currentDataPageId = new PageId();
+	  RID currentDataPageRid = new RID();
+	  RID retRID = new RID();
+	  status = _findDataPage(Position,
+			  currentDirPageId, dirPage,
+			  currentDataPageId, dataPage,
+			  currentDataPageRid, retRID);
+
+	  if(status != true) return null; // record not found
+
+	  Tuple atuple = new Tuple();
+	  atuple = dataPage.getRecord(retRID);
+
+      /*
+       * getRecord has copied the contents of rid into recPtr and fixed up
+       * recLen also.  We simply have to unpin dirpage and datapage which
+       * were originally pinned by _findDataPage.
+       */
+
+	  unpinPage(currentDataPageId,false /*undirty*/);
+
+	  unpinPage(currentDirPageId,false /*undirty*/);
+
+
+	  return  atuple;  //(true?)OK, but the caller need check if atuple==NULL
+  }
+
   /** Initiate a sequential scan.
    * @exception InvalidTupleSizeException Invalid tuple size
    * @exception IOException I/O errors
