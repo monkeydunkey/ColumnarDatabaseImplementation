@@ -33,7 +33,7 @@ public class Columnarfile implements Filetype, GlobalConst {
 
     private boolean _file_deleted;
     private String _fileName;
-    private int INTSIZE = 4;
+    private static int INTSIZE = 4;
     private int STRINGSIZE = 25; //The default string size
     private static int tempfilecount = 0;
     private int headerTupleOffset = 12;
@@ -113,7 +113,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         return serializedTuple;
     }
 
-    public TID deserializeTuple(byte[] arr) {
+    public static TID deserializeTuple(byte[] arr) {
         byte[] numRIDArr = new byte[INTSIZE];
         byte[] posArr = new byte[INTSIZE];
         int curr_offset = 0;
@@ -376,7 +376,8 @@ public class Columnarfile implements Filetype, GlobalConst {
             HFException,
             HFBufMgrException,
             HFDiskMgrException,
-            IOException {
+            IOException,
+            Exception{
         if (tupleptr.length >= MAX_SPACE) {
             throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
         }
@@ -419,6 +420,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         ValueIntClass newRow = new ValueIntClass(0);
         tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
         tid.numRIDs = i;
+
         tid.recordIDs[numColumns + 1] = columnFile[numColumns + 1].insertRecord(serializeTuple(tid));
         for (int j = 0; j < numColumns; j++){
             if (indexType[j].indexType == 1){
@@ -433,7 +435,9 @@ public class Columnarfile implements Filetype, GlobalConst {
                 }
             }
         }
-        tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
+        tid.position = columnFile[numColumns + 1].RidToPos(tid.recordIDs[numColumns + 1], this);
+        byte[] arr = serializeTuple(tid);
+        updateColumnofTuple(tid, new Tuple(arr, 0, arr.length), numColumns + 1);
         return tid;
     }
 
@@ -964,5 +968,36 @@ public class Columnarfile implements Filetype, GlobalConst {
         return null;
     }
 
+    public RID getRIDByPosition(int position, int column) throws InvalidTupleSizeException, IOException {
+        int positionCur =0;
 
+        Scan cfs = new Scan(columnFile[numColumns + 1]);
+        TID emptyTID = new TID(numColumns + 2);
+        RID emptyRID = new RID();
+        Tuple dataTuple = cfs.getNext(emptyRID);
+        while (dataTuple != null) {
+            emptyTID = deserializeTuple(dataTuple.getTupleByteArray());
+            if(position == emptyTID.position){
+                return emptyTID.recordIDs[column];
+            }
+            dataTuple = cfs.getNext(emptyRID);
+            positionCur++;
+        }
+        return null;
+    }
+
+    public TID getTIDByPosition(int position) throws InvalidTupleSizeException, IOException {
+        Scan cfs = new Scan(columnFile[numColumns + 1]);
+        TID emptyTID = new TID(numColumns + 2);
+        RID emptyRID = new RID();
+        Tuple dataTuple = cfs.getNext(emptyRID);
+        while (dataTuple != null) {
+            emptyTID = deserializeTuple(dataTuple.getTupleByteArray());
+            if(position == emptyTID.position){
+                return emptyTID;
+            }
+            dataTuple = cfs.getNext(emptyRID);
+        }
+        return null;
+    }
 }
