@@ -63,6 +63,15 @@ public class TID extends java.lang.Object {
 
     }
 
+    @Override
+    public String toString() {
+        return "TID{" +
+                "numRIDs=" + numRIDs +
+                ", position=" + position +
+                ", recordIDs=" + Arrays.toString(recordIDs) +
+                '}';
+    }
+
     public void setPosition(int position) {
         this.position = position;
     }

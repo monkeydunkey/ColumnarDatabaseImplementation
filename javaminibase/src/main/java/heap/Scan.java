@@ -53,6 +53,8 @@ public class Scan implements GlobalConst{
 
     /** Status of next user status */
     private boolean nextUserStatus;
+
+    int recordPosition = 0;
     
      
     /** The constructor pins the first directory page in the file
@@ -104,8 +106,9 @@ public class Scan implements GlobalConst{
     catch (Exception e) {
   //    System.err.println("SCAN: Error in Scan" + e);
       e.printStackTrace();
-    }   
-    
+    }
+
+    recordPosition++;
     userrid = datapage.nextRecord(rid);
     if(userrid == null) nextUserStatus = false;
     else nextUserStatus = true;
@@ -113,6 +116,9 @@ public class Scan implements GlobalConst{
     return recptrtuple;
   }
 
+    public int getRecordPosition() {
+        return recordPosition;
+    }
 
     /** Position the scan cursor to the record with the given rid.
      * 

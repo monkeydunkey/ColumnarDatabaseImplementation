@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * Create a class called BitMapFile with the following specifications (see BTreeFile for analogy):
  */
-public class BitMapFile implements GlobalConst{
+public class BitMapFile extends IndexFile implements GlobalConst {
 
     private String dbname;
     private BitMapHeaderPage headerPage;
@@ -33,6 +33,9 @@ public class BitMapFile implements GlobalConst{
      */
     public BitMapFile(java.lang.String filename) throws GetFileEntryException, ConstructPageException {
         headerPageId=get_file_entry(filename);
+        if(headerPageId == null){
+            throw new RuntimeException("file not found: "+filename);
+        }
         headerPage= new BitMapHeaderPage(headerPageId);
         dbname = filename;
     }
@@ -247,13 +250,10 @@ public class BitMapFile implements GlobalConst{
 
     public void flushCursor() throws IOException {
         // write current buffer to page
-        System.out.println("Flush");
         boolean[] booleans = toBooleanArray(cursorBuffer);
-        System.out.println("insert: "+Arrays.toString(booleans));
         cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
         try {
             boolean[] booleans1 = fromBytes(cursorBMPage.getRecord(new RID(cursorBMPage.curPage, 0)).getTupleByteArray(), booleans.length);
-            System.out.println("in out: "+ Arrays.toString(booleans1));
         } catch (InvalidSlotNumberException e) {
             e.printStackTrace();
         }
@@ -332,4 +332,23 @@ public class BitMapFile implements GlobalConst{
         return null;
     }
 
+    @Override
+    public void insert(KeyClass data, RID rid) throws KeyTooLongException, KeyNotMatchException, LeafInsertRecException, IndexInsertRecException, ConstructPageException, UnpinPageException, PinPageException, NodeNotMatchException, ConvertException, DeleteRecException, IndexSearchException, IteratorException, LeafDeleteException, InsertException, IOException {
+        // just so we can extend indexFile
+    }
+
+    @Override
+    public boolean Delete(KeyClass data, RID rid) throws DeleteFashionException, LeafRedistributeException, RedistributeException, InsertRecException, KeyNotMatchException, UnpinPageException, IndexInsertRecException, FreePageException, RecordNotFoundException, PinPageException, IndexFullDeleteException, LeafDeleteException, IteratorException, ConstructPageException, DeleteRecException, IndexSearchException, IOException {
+        // just so we can extend indexFile
+        return false;
+    }
+
+    public IndexFileScan new_scan(ValueClass valueClass, Columnarfile f) throws InvalidSlotNumberException, PinPageException, IOException {
+        // go through directory pages
+        // get the linklist that matches the given key
+        BMHeaderPageDirectoryRecord directoryForValue = BM.getDirectoryForValue(valueClass, headerPage);
+
+        // pass that linked list to bitMap file scan
+        return new BitMapFileScan(directoryForValue, f);
+    }
 }

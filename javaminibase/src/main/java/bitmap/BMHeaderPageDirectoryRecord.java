@@ -53,10 +53,18 @@ class BMHeaderPageDirectoryRecord {
     public byte[] getByteArray() throws IOException {
         int recordLength = 0;
         byte[] valueClassByteArr = valueClass.getByteArr();
-        recordLength+= valueClassByteArr.length;
+        recordLength+= valueClassByteArr.length; // could be string of variable length
+
+        if(valueClass instanceof ValueStrClass){
+            recordLength+= Convert.getStringByteLength(((ValueStrClass) valueClass).value);
+        }else if(valueClass instanceof ValueIntClass){
+            recordLength+=4;
+        }
+
+
         recordLength+= 4; // bmPageId.pid size == 4
-        recordLength+= 4; //
-        recordLength+= 4; //
+        recordLength+= 4; // arraySize (int)
+        recordLength+= 4; // set value type var (int)
 
         byte[] data = new byte[recordLength];
 

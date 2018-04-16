@@ -17,7 +17,7 @@ public class LeafData extends DataClass {
   /** Class constructor
    *  @param    rid  the data rid
    */
-  LeafData(RID rid) {myRid= new RID(rid.pageNo, rid.slotNo);};  
+  public LeafData(RID rid) {myRid= new RID(rid.pageNo, rid.slotNo);};
 
   /** get a copy of the rid
   *  @return the reference of the copy 
