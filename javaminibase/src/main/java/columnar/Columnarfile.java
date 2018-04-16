@@ -981,7 +981,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                 return emptyTID.recordIDs[column];
             }
             dataTuple = cfs.getNext(emptyRID);
-            positionCur++;
         }
         return null;
     }
