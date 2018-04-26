@@ -33,7 +33,7 @@ public class Columnarfile implements Filetype, GlobalConst {
 
     private boolean _file_deleted;
     private String _fileName;
-    private static int INTSIZE = 4;
+    private int INTSIZE = 4;
     private int STRINGSIZE = 25; //The default string size
     private static int tempfilecount = 0;
     private int headerTupleOffset = 12;
@@ -113,7 +113,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         return serializedTuple;
     }
 
-    public static TID deserializeTuple(byte[] arr) {
+    public TID deserializeTuple(byte[] arr) {
         byte[] numRIDArr = new byte[INTSIZE];
         byte[] posArr = new byte[INTSIZE];
         int curr_offset = 0;

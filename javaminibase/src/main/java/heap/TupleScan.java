@@ -12,7 +12,7 @@ public class TupleScan {
     
 	Scan[] scanList;
 	Columnarfile tempClmnFile;
-	
+	int currScanPos = 0;
     public TupleScan(Columnarfile cf) throws InvalidTupleSizeException, IOException
     {
     	tempClmnFile = cf;
@@ -108,6 +108,7 @@ public class TupleScan {
 		}
 
 	}
+
 
     /**
      * Position all scan cursors to the records with the given rids
