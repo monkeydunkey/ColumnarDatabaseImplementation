@@ -6,6 +6,13 @@ BINPATH = $(JDKPATH)/bin
 JAVAC = $(JDKPATH)/bin/javac -classpath $(CLASSPATH)
 JAVA  = $(JDKPATH)/bin/java  -classpath $(CLASSPATH)
 
+# test columnar index scan
+CMIndexTest:CMTest.java
+	$(JAVAC) TestDriver.java CMIndexTest.java
+
+cmindextest: CMIndexTest
+	$(JAVA) tests.CMIndexTest
+
 # test columnar file
 CMTest:CMTest.java
         $(JAVAC) TestDriver.java CMTest.java
