@@ -9,7 +9,7 @@ import global.ValueStrClass;
 import heap.InvalidSlotNumberException;
 import heap.InvalidTupleSizeException;
 import heap.Tuple;
-
+import heap.SerializedScan;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -19,13 +19,17 @@ public class BitMapFileScan extends IndexFileScan {
     private final boolean[] booleans;
     private final Columnarfile columnarFile;
     private int currentPosition = 0;
+    public SerializedScan internalScan;
 
 
-    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile) throws InvalidSlotNumberException, IOException, PinPageException {
+    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile)
+            throws InvalidSlotNumberException, IOException, PinPageException, InvalidTupleSizeException
+    {
         this.directoryForValue = directoryForValue;
         boolean[] booleans = BM.givenDirectoryPageGetBitMap(directoryForValue);
         this.booleans = booleans;
         this.columnarFile = columnarfile;
+        this.internalScan = new SerializedScan(columnarfile);
     }
 
     @Override

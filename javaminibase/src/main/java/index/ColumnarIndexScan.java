@@ -95,7 +95,7 @@ public class ColumnarIndexScan {
             switch (index[i].indexType) {
                 case IndexType.BitMapIndex:
                     try {
-                        indFile = new BTreeFile(indName[indexFileName]);
+                        indFile = new BitMapFile(indName[indexFileName]);
                     } catch (Exception e) {
                         throw new IndexException(e, "ColumnIndexScan.java: BitMap exceptions caught from BitMap constructor");
                     }
@@ -109,7 +109,7 @@ public class ColumnarIndexScan {
                         tempExpr[0].type2 = selects[i].type2;
                         tempExpr[0].operand1 = selects[i].operand1;
                         tempExpr[0].operand2 = selects[i].operand2;
-                        indScan[i] = IndexUtils.BTree_scan(tempExpr, indFile);
+                        indScan[i] = IndexUtils.BitMap_scan(tempExpr, indFile, f);
                     } catch (Exception e) {
                         throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
                     }
@@ -228,11 +228,15 @@ public class ColumnarIndexScan {
             switch (indexTypes[roundRobinInd].indexType) {
                 case IndexType.BitMapIndex:
                     try {
-                        nextentry = ((BTFileScan)indScan[roundRobinInd]).get_next();
+                        nextentry = ((BitMapFileScan)indScan[roundRobinInd]).get_next();
                         if (nextentry != null){
                             RID keyRID = ((LeafData)((KeyDataEntry)nextentry).data).getData();
-                            TID keyTID = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(keyRID).getTupleByteArray());
-                            position = keyTID.position;
+                            //The Slot number will be used to store the position
+                            tempTID = ((BitMapFileScan)indScan[roundRobinInd]).internalScan.getNextSerialized(keyRID.slotNo);
+                            if (tempTID != null){
+                                position = tempTID.position;
+                            }
+
                         }
                     } catch (Exception e){
                         throw new ScanIteratorException(e, "ColumnarIndexScan.java:  Btree Scan error");
