@@ -3,11 +3,10 @@ package iterator;
 import bufmgr.PageNotReadException;
 import columnar.Columnarfile;
 import global.AttrType;
-import global.RID;
+import global.*;
 import heap.InvalidTupleSizeException;
 import heap.InvalidTypeException;
-import heap.Scan;
-import heap.Tuple;
+import heap.*;
 import index.IndexException;
 
 import java.io.*;
@@ -40,7 +39,9 @@ public class ColumnarNestedLoopJoins extends Iterator {
     private   FldSpec       perm_mat[];
     private   int           nOutFlds;
     private   Columnarfile  cf;
-    private   Scan          inner;
+    private   ColumnarFileScan     inner;
+    private   String        relName;
+    private   FldSpec[]     inner_rel_proj_list;
 
     /** Constructor
      * Initialize the two relations which are joined, including relation type,
@@ -108,7 +109,11 @@ public class ColumnarNestedLoopJoins extends Iterator {
         catch(Exception e) {
             throw new NestedLoopException(e,"TupleUtilsException is caught by NestedLoopsJoins.java");
         }
-
+        this.relName = columnarFileName;
+        inner_rel_proj_list = new FldSpec[len_in2];
+        for (int i = 0; i < len_in2; i++){
+            inner_rel_proj_list[i] = new FldSpec(new RelSpec(RelSpec.outer), i);
+        }
         try {
             cf = new Columnarfile(columnarFileName);
         }
@@ -170,7 +175,7 @@ public class ColumnarNestedLoopJoins extends Iterator {
                 }
 
                 try {
-                    inner = cf.openColumnScan(1); //todo change this later!
+                    inner = new ColumnarFileScan(relName, _in2, t2_str_sizescopy, (short)in2_len, in2_len, inner_rel_proj_list,RightFilter);  //todo change this later!
                 }
                 catch(Exception e) {
                     throw new NestedLoopException(e, "openScan failed");
@@ -192,13 +197,10 @@ public class ColumnarNestedLoopJoins extends Iterator {
             // while the inner is not completely scanned && there
             // is no match (with pred),get a tuple from the inner
 
-            RID rid = new RID();
-            while( (inner_tuple = inner.getNext(rid) ) != null )
+            TID tid = new TID(in2_len);
+            while( (inner_tuple = inner.get_next() ) != null )
             {
-                inner_tuple.setHdr( (short)in2_len, _in2,t2_str_sizescopy );
-                if( PredEval.Eval(RightFilter, inner_tuple, null, _in2, null) )
-                {
-                    if( PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) )
+               if( PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) )
                     {
                         // Apply a projection on the outer and inner tuples
                         Projection.Join(outer_tuple, _in1,
@@ -206,8 +208,8 @@ public class ColumnarNestedLoopJoins extends Iterator {
                                 Jtuple, perm_mat, nOutFlds);
                         return Jtuple;
                     }
-                }
             }
+
 
             // There has been no match. (otherwise, we would have
             //returned from t//he while loop. Hence, inner is
