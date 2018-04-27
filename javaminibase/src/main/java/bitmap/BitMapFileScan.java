@@ -2,6 +2,7 @@ package bitmap;
 
 import btree.*;
 import columnar.Columnarfile;
+import global.PageId;
 import global.RID;
 import global.ValueIntClass;
 import global.ValueStrClass;
@@ -58,7 +59,8 @@ public class BitMapFileScan extends IndexFileScan {
 
                 try {
 //                    System.out.println("calling getRIDByPosition for the position: "+currentPosition);
-                    ridByPosition = columnarFile.getRIDByPosition(currentPosition);
+                    ridByPosition = new RID(new PageId(0), currentPosition);
+                    //columnarFile.getRIDByPosition(currentPosition);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
