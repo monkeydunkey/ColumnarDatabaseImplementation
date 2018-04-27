@@ -58,11 +58,11 @@ public class SerializedScan {
 
     /**
      * Retrieve the next tuple in a sequential scan
-     * @param tid
+     * @param rid
      * @return
      */
 
-    public TID getNextSerialized(int position) throws InvalidTupleSizeException, IOException
+    public RID getNextSerialized(int position) throws InvalidTupleSizeException, IOException
     {
         Tuple recptrtuple = null;
         Tuple tupleArr;
@@ -83,7 +83,7 @@ public class SerializedScan {
             PosTuple = scanList[1].getNext(positionRowID);
         }
         if (delTupleArr != null && PosTuple != null && Convert.getIntValue(4, PosTuple.getTupleByteArray()) == position){
-            return tempClmnFile.deserializeTuple(PosTuple.getTupleByteArray());
+            return positionRowID;//tempClmnFile.deserializeTuple(PosTuple.getTupleByteArray());
         }
         else{
             return null;

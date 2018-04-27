@@ -103,7 +103,7 @@ public class TestPrompt {
             else if( command.equals("query") )
             {
                 try {
-                    query_v2.run(split);
+                    query.run(split);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
