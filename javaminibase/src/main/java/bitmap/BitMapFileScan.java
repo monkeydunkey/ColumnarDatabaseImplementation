@@ -46,7 +46,7 @@ public class BitMapFileScan extends IndexFileScan {
         // find next value that matches boolean == 1
         Tuple tuple = null;
         //System.out.println(Arrays.toString(booleans));
-        while(tuple == null){
+        while(tuple == null && currentPosition < booleans.length){
             if(booleans[currentPosition]){
 //                System.out.println("position matches bitmap index and condition! "+currentPosition);
 //
