@@ -293,8 +293,7 @@ public class query implements GlobalConst {
                     	cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
                     }
                     //cFile.createBTreeIndex(cFile.getColumnIndexByName(valConst_ColName));
-                    ciScanObj = new ColumnIndexScan(new IndexType(1), cfName, indexName,
-                            colAttrType, bSize, outFilter, false);
+                    ciScanObj = new ColumnIndexScan(new IndexType(1), cfName, indexName, colAttrType, bSize, outFilter, false);
                     t = ciScanObj.get_next();
                     while(t != null) {
                         t.print(targetColType);
@@ -303,9 +302,15 @@ public class query implements GlobalConst {
                     ciScanObj.close();
                 }else {
 //                    cFile.createBitMapIndex(cFile.getColumnIndexByName(valConst_ColName), colValCls);
-//                    indexName = cfName + String.valueOf(cFile.getColumnIndexByName(valConst_ColName)) + ".Bitmap";
-//                    ciScanObj = new ColumnIndexScan(new IndexType(0), cfName, indexName,
-//                            colAttrType, bSize, outFilter, false);
+                    int columnIndexByName = cFile.getColumnIndexByName(valConst_ColName);
+                    indexName = Columnarfile.getBitMapIndexFileName(Columnarfile.getHeapFileName(cfName), columnIndexByName);
+                    ciScanObj = new ColumnIndexScan(new IndexType(IndexType.BitMapIndex), cfName, indexName, colAttrType, bSize, outFilter, false);
+                    t = ciScanObj.get_next();
+                    while(t != null) {
+                        t.print(targetColType);
+                        t = ciScanObj.get_next();
+                    }
+                    ciScanObj.close();
                 }
             }catch(Exception e) {
                 e.printStackTrace();

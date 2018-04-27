@@ -273,7 +273,22 @@ public class Convert{
    System.arraycopy (B, 0, data, position, sz);
    
  }
-  
+
+ public static int getStringByteLength(String value) throws IOException {
+   OutputStream out = new ByteArrayOutputStream();
+   DataOutputStream outstr = new DataOutputStream (out);
+
+   // write the value to the output stream
+
+   outstr.writeUTF(value);
+   // creates a byte array with this output stream size and the
+   // valid contents of the buffer have been copied into it
+   byte []B = ((ByteArrayOutputStream) out).toByteArray();
+
+   int sz =outstr.size();
+   return sz;
+ }
+
   /**
    * Update a character in the given byte array at the specified position.
    * @param       data            a byte array

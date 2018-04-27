@@ -27,6 +27,10 @@ public class TupleScan {
         }
     }
 
+    public int getCurrentPosition(){
+    	return scanList[0].getRecordPosition();
+	}
+
     /**
      * Closes the TupleScan object
      */
@@ -90,9 +94,12 @@ public class TupleScan {
 		Tuple tupleArr;
 		int totalLength = 0;
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		for (int i = 0; i < Columnarfile.numColumns + 2; i++) {
+		for (int i = 0; i < Columnarfile.numColumns + 2; i++) { // loop through column indexes
 			try {
-				tupleArr = scanList[i].getNext(tid.recordIDs[i]);
+				RID recordID = tid.recordIDs[i];
+				int recordPosition = scanList[i].getRecordPosition();
+				tupleArr = scanList[i].getNext(recordID);
+				//System.out.println("recordId: "+recordID.toString() + " " + recordPosition);
 				if (tupleArr == null) break;
 				totalLength += tupleArr.getLength();
 				outputStream.write( tupleArr.getTupleByteArray());

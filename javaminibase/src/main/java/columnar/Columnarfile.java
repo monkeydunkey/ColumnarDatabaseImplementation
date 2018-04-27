@@ -6,6 +6,7 @@ import btree.*;
 import diskmgr.Page;
 import global.*;
 import heap.*;
+import iterator.ColumnarFileScan;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -192,7 +193,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         // We are assuming that the table name will be provided we will not be creating
         // temporary tables right now. Maybe later we can add a clause for it as well
         // if it is required for running queries
-        _fileName = name + "." + "hdr";
+        _fileName = getHeapFileName(name);
         _ftype = ORDINARY;
         // +2 for storing the deletion heap file and RID to TID mapping heap file
         columnFile = new Heapfile[totalColumns + 2];
@@ -237,6 +238,10 @@ public class Columnarfile implements Filetype, GlobalConst {
         headerRIDs[totalColumns + 1] = HeaderFile.insertRecord(_getColumnHeaderInsertTuple(columnName, 1, INTSIZE, 0));
     }
 
+    public static String getHeapFileName(String name) {
+        return name + "." + "hdr";
+    }
+
     public Columnarfile(String name, int totalColumns, AttrType[] attrType, String[] colNames)
             throws HFException,
             HFBufMgrException,
@@ -254,7 +259,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         _fileName = null;
 
 
-        _fileName = name + "." + "hdr";
+        _fileName = getHeapFileName(name);
         _ftype = ORDINARY;
         // +2 for storing the deletion heap file and RID to TID mapping heap file
         columnFile = new Heapfile[totalColumns + 2];
@@ -300,7 +305,7 @@ public class Columnarfile implements Filetype, GlobalConst {
             InvalidTupleSizeException,
             SpaceNotAvailableException,
             IOException {
-        _fileName = name + "." + "hdr";
+        _fileName = getHeapFileName(name);
         HeaderFile = new Heapfile(_fileName);
         columnNames = new String[numColumns];
         Scan headerFileScan = HeaderFile.openScan();
@@ -420,7 +425,6 @@ public class Columnarfile implements Filetype, GlobalConst {
         ValueIntClass newRow = new ValueIntClass(0);
         tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
         tid.numRIDs = i;
-
         tid.recordIDs[numColumns + 1] = columnFile[numColumns + 1].insertRecord(serializeTuple(tid));
         for (int j = 0; j < numColumns; j++){
             if (indexType[j].indexType == 1){
@@ -646,7 +650,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         BitMapFile bitMapFile = null;
 
         try {
-            String indexFileName = _fileName + "." + String.valueOf(column) + ".BitMap";
+            String indexFileName = getBitMapIndexFileName(_fileName, column);
             bitMapFile = new BitMapFile(indexFileName, this, column, value);
 
             bitMapFile.initCursor();
@@ -670,7 +674,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                         case AttrType.attrString:
                             ValueStrClass st = new ValueStrClass(dataArr);
                             key = new StringKey(st.value);
-                            System.out.println("ValueStrClass: " + st.value);
 
                             if (linkedList.isEmpty()) {
                                 linkedList.add(st.value);
@@ -697,24 +700,19 @@ public class Columnarfile implements Filetype, GlobalConst {
                         case AttrType.attrInteger:
                             ValueIntClass it = new ValueIntClass(dataArr);
                             key = new IntegerKey(it.value);
-                            System.out.print("ValueStrClass: " + it.value);
 
                             // st.value
                             // insert string value here
                             if (linkedList.isEmpty()) {
-                                System.out.print(", Empty add: " + it.value);
                                 linkedList.add(it.value);
                                 hashMap.put(it.value, it);
                                 bitMapFile.setCursorUniqueValue(it);
                             }
                             // does the value, match the current value being iterated on?
                             // if same value as current push 1 and continue
-                            System.out.print(", linkedList.peek(): " + String.valueOf(linkedList.peek()));
                             if (linkedList.peek().equals(it.value)) {
-                                System.out.print(", Set Bit Value: 1");
                                 bitMapFile.cursorInsert(true);
                             } else {
-                                System.out.print(", Set Bit Value: 0");
                                 bitMapFile.cursorInsert(false);
                             }
                             if (!hashMap.containsKey(it.value)) {
@@ -724,7 +722,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                             // if value is not the same, see if it is already in the list
                             // if its already in the list, populate 0
                             // if it is not already in the list, add to list and populate 0
-                            System.out.println("");
                             break;
                         default:
                             throw new Exception("Unexpected AttrType" + type[column].toString());
@@ -735,7 +732,6 @@ public class Columnarfile implements Filetype, GlobalConst {
                 Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
                 if (linkedList.size() != 0) {
                     bitMapFile.setCursorUniqueValue(hashMap.get(linkedList.peek()));
-                    System.out.println("setCursorUniqueValue: "+String.valueOf(linkedList.peek()));
                 }
 
                 // iterate through all tuples for each unique value
@@ -749,11 +745,16 @@ public class Columnarfile implements Filetype, GlobalConst {
             return false;
         }
 
-        BM bm = new BM();
-        bm.printBitMap(bitMapFile.getHeaderPage());
+//        BM bm = new BM();
+//        bm.printBitMap(bitMapFile.getHeaderPage());
 
 
         return true;
+    }
+
+    public static String getBitMapIndexFileName(String columnarFileName, int column) {
+        String fileName = columnarFileName + "." + String.valueOf(column) + ".BitMap";
+        return fileName;
     }
 
     public boolean markTupleDeleted(TID tid)
