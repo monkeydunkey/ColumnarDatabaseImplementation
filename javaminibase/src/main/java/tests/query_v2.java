@@ -31,7 +31,7 @@ public class query_v2 implements GlobalConst {
     private boolean FAIL = false;
 
     public static void run( String[] args ) {
-        String queryPatt = "(\\w+)\\s(\\w+)\\s\\[((\\w+\\s?)*)\\]\\s\\{((\\w+\\s(=|!=|>|<)\\s\\d+(,\\s)?)*)\\}\\s(\\d+)";
+        String queryPatt = "(\\w+)\\s(\\w+)\\s\\[((\\w+\\s?)*)\\]\\s\\{((\\w+\\s(=|!=|>|<)\\s\\w+(,\\s)?)*)\\}\\s(\\d+)";
         Pattern pattern = Pattern.compile(queryPatt);
 
         pcounter.initialize(); // Initializes read & write counters to 0

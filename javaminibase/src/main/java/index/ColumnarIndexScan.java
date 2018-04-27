@@ -92,6 +92,15 @@ public class ColumnarIndexScan {
         }
 
         for (int i = 0; i < index.length; i++) {
+            CondExpr[] tempExpr = new CondExpr[2];
+            tempExpr[0] = new CondExpr();
+            tempExpr[0].next = null;
+            tempExpr[1] = null;
+            tempExpr[0].op = selects[i].op;
+            tempExpr[0].type1 = selects[i].type1;
+            tempExpr[0].type2 = selects[i].type2;
+            tempExpr[0].operand1 = selects[i].operand1;
+            tempExpr[0].operand2 = selects[i].operand2;
             switch (index[i].indexType) {
                 case IndexType.BitMapIndex:
                     try {
@@ -100,15 +109,6 @@ public class ColumnarIndexScan {
                         throw new IndexException(e, "ColumnIndexScan.java: BitMap exceptions caught from BitMap constructor");
                     }
                     try {
-                        CondExpr[] tempExpr = new CondExpr[2];
-                        tempExpr[0] = new CondExpr();
-                        tempExpr[0].next = null;
-                        tempExpr[1] = null;
-                        tempExpr[0].op = selects[i].op;
-                        tempExpr[0].type1 = selects[i].type1;
-                        tempExpr[0].type2 = selects[i].type2;
-                        tempExpr[0].operand1 = selects[i].operand1;
-                        tempExpr[0].operand2 = selects[i].operand2;
                         indScan[i] = IndexUtils.BitMap_scan(tempExpr, indFile, f);
                     } catch (Exception e) {
                         throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
@@ -127,15 +127,6 @@ public class ColumnarIndexScan {
                     }
 
                     try {
-                        CondExpr[] tempExpr = new CondExpr[2];
-                        tempExpr[0] = new CondExpr();
-                        tempExpr[0].next = null;
-                        tempExpr[1] = null;
-                        tempExpr[0].op = selects[i].op;
-                        tempExpr[0].type1 = selects[i].type1;
-                        tempExpr[0].type2 = selects[i].type2;
-                        tempExpr[0].operand1 = selects[i].operand1;
-                        tempExpr[0].operand2 = selects[i].operand2;
                         System.out.println("Operand Created " + tempExpr[0].op.toString() + " " + tempExpr[0].type1.toString() + " " + tempExpr[0].operand2.integer + " " + indName[indexFileName] + " " + tempExpr[0].operand1.symbol.offset);
                         if (indFile == null){
                             System.out.printf("Index file is null");
@@ -231,12 +222,8 @@ public class ColumnarIndexScan {
                         nextentry = ((BitMapFileScan)indScan[roundRobinInd]).get_next();
                         if (nextentry != null){
                             RID keyRID = ((LeafData)((KeyDataEntry)nextentry).data).getData();
-                            //The Slot number will be used to store the position
-                            tempTID = ((BitMapFileScan)indScan[roundRobinInd]).internalScan.getNextSerialized(keyRID.slotNo);
-                            if (tempTID != null){
-                                position = tempTID.position;
-                            }
-
+                            tempTID = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(keyRID).getTupleByteArray());
+                            position = tempTID.position;
                         }
                     } catch (Exception e){
                         throw new ScanIteratorException(e, "ColumnarIndexScan.java:  Btree Scan error");
@@ -355,7 +342,7 @@ public class ColumnarIndexScan {
             switch (indexTypes[i].indexType) {
                 case IndexType.BitMapIndex:
                     try {
-                        ((BTFileScan) indScan[i]).DestroyBTreeFileScan();
+                        ((BitMapFileScan) indScan[i]).delete_current();
                     } catch (Exception e) {
                         throw new IndexException(e, "BTree error in destroying index scan.");
                     }
