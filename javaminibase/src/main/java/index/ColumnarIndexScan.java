@@ -177,10 +177,7 @@ public class ColumnarIndexScan {
             runCount += 1;
             //System.out.println("It goes in loop");
             tempTID = orConditions[roundRobinInd].get_next();
-            if (tempTID != null){
-                System.out.println("Round Robin Ind: " + roundRobinInd + " position returned: " + tempTID.position);
-            }
-            roundRobinInd = (roundRobinInd + 1) % indexTypes.length;
+            roundRobinInd = (roundRobinInd + 1) % (selects.length - 1);
             runCount = (tempTID == null) ? runCount : 0;
 
             if (tempTID != null){

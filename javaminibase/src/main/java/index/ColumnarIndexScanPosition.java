@@ -252,7 +252,7 @@ public class ColumnarIndexScanPosition {
             runCount = (position == null) ? runCount : 0;
 
             if (position != null && !positions.contains(position)){
-                System.out.println("It does come here as well internal " + tempTID.position + " " + tempTID.numRIDs);
+                //System.out.println("It does come here as well internal " + tempTID.position + " " + tempTID.numRIDs);
                 positions.add(position);
                 break;
             }
