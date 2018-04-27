@@ -8,6 +8,7 @@ import global.ValueIntClass;
 import global.ValueStrClass;
 import heap.InvalidSlotNumberException;
 import heap.InvalidTupleSizeException;
+import heap.SerializedScan;
 import heap.Tuple;
 
 import java.io.IOException;
@@ -19,15 +20,17 @@ public class BitMapFileScan extends IndexFileScan {
     private final boolean[] booleans;
     private final Columnarfile columnarFile;
     private int currentPosition = 0;
+    private SerializedScan internalScan;
 
 
-    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile) throws InvalidSlotNumberException, IOException, PinPageException {
+    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile)
+            throws InvalidSlotNumberException, IOException, PinPageException, InvalidTupleSizeException {
         this.directoryForValue = directoryForValue;
         boolean[] booleans = BM.givenDirectoryPageGetBitMap(directoryForValue);
         this.booleans = booleans;
         this.columnarFile = columnarfile;
+        this.internalScan = new SerializedScan(columnarfile);
     }
-
     @Override
     /**
      * Returns the next KeyDataEntry for which the bit map file is equal to 1
@@ -59,15 +62,20 @@ public class BitMapFileScan extends IndexFileScan {
 
                 try {
 //                    System.out.println("calling getRIDByPosition for the position: "+currentPosition);
-                    ridByPosition = new RID(new PageId(0), currentPosition);
-                    //columnarFile.getRIDByPosition(currentPosition);
+
+                    ridByPosition = internalScan.getNextSerialized(currentPosition);
+                    currentPosition++;
+                    if (ridByPosition != null){
+                        //columnarFile.getRIDByPosition(currentPosition);
+                        KeyDataEntry keyDataEntry = new KeyDataEntry(keyClass, new LeafData(ridByPosition));
+                        // make sure this is after using the current position
+                        return keyDataEntry; //return tuple for this position
+                    }
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                KeyDataEntry keyDataEntry = new KeyDataEntry(keyClass, new LeafData(ridByPosition));
 
-                currentPosition++;// make sure this is after using the current position
-                return keyDataEntry; //return tuple for this position
             }else{
                 currentPosition++;
             }

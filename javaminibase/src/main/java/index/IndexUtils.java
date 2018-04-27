@@ -4,6 +4,7 @@ import columnar.Columnarfile;
 import global.*;
 import btree.*;
 import heap.InvalidSlotNumberException;
+import heap.InvalidTupleSizeException;
 import iterator.*;
 import java.io.*;
 
@@ -198,7 +199,16 @@ public class IndexUtils {
     
   }
 
-	public static IndexFileScan BitMap_scan(CondExpr[] selects, IndexFile indFile, Columnarfile f) throws PinPageException, KeyNotMatchException, IteratorException, IOException, ConstructPageException, UnpinPageException, UnknownKeyTypeException, InvalidSlotNumberException {
+	public static IndexFileScan BitMap_scan(CondExpr[] selects, IndexFile indFile, Columnarfile f)
+			throws 	PinPageException,
+			       	KeyNotMatchException,
+			       	IteratorException,
+					IOException,
+					ConstructPageException,
+					UnpinPageException,
+					UnknownKeyTypeException,
+					InvalidSlotNumberException,
+					InvalidTupleSizeException {
 		IndexFileScan indScan;
 
 		if (selects == null || selects[0] == null) {

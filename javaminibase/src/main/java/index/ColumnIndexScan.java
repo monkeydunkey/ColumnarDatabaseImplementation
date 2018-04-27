@@ -57,7 +57,7 @@ public class ColumnIndexScan extends Iterator {
         _selects = selects;
         tuple1 = new Tuple();
         index_only = indexOnly;  // added by bingjie miao
-
+        indType = index;
         try {
             f = new Columnarfile(relName);
         }
@@ -432,5 +432,6 @@ public class ColumnIndexScan extends Iterator {
     private int           _fldNum;
     private boolean       index_only;
     private short[]       _string_sizes;
+    private IndexType     indType;
 
 }
