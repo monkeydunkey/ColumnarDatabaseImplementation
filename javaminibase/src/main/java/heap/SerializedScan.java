@@ -6,6 +6,8 @@ import global.TID;
 import columnar.Columnarfile;
 import heap.Scan;
 import heap.Tuple;
+import iterator.CondExpr;
+
 import java.io.*;
 /**
  * Created by shashankbhushan on 4/15/18.
@@ -14,6 +16,7 @@ public class SerializedScan {
     Scan[] scanList;
     Columnarfile tempClmnFile;
     int currScanPos = 0;
+    public CondExpr[] scanCond;
     public int columnVal;
     public SerializedScan(Columnarfile cf) throws InvalidTupleSizeException, IOException
     {
@@ -29,8 +32,10 @@ public class SerializedScan {
         }
     }
 
-    public SerializedScan(Columnarfile cf, int column) throws InvalidTupleSizeException, IOException {
+    public SerializedScan(Columnarfile cf, int column, CondExpr[] scanCondSent) throws InvalidTupleSizeException, IOException {
         this.columnVal = column;
+        this.scanCond = new CondExpr[scanCondSent.length];
+        System.arraycopy(scanCondSent, 0, scanCond, 0, scanCondSent.length);
         tempClmnFile = cf;
         //+2 for deletion file and TID Encoding file
         scanList = new Scan[2];
