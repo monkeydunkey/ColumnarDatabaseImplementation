@@ -2,6 +2,8 @@ package tests;
 
 import java.io.*;
 import java.lang.*;
+
+import diskmgr.pcounter;
 import heap.*;
 import global.*;
 import columnar.*;
@@ -186,12 +188,12 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
 
         if (status == OK)
             System.out.println("\n  Test 1 completed successfully.\n");
-
         return status;
     }
 
     protected boolean test2()
     {
+        pcounter.initialize();
         System.out.println("\n  Test 2: Opening the Columnar File created in the last step and add joining w/ filescan accesstype\n");
         boolean status = OK;
         TID insertedVal;
@@ -322,7 +324,8 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
         return status;
     }
 
-    protected boolean test3() {
+    protected boolean test3()
+    {
         System.out.println("\n  Test 3: Opening the Columnar File created in the last step and add joining w/ filescan accesstype and multiple conditions\n");
         boolean status = OK;
         TID insertedVal;
@@ -446,8 +449,9 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
         System.out.println("Test 3 Status " + status);
         return status;
     }
-    protected boolean test4() {
-        System.out.println("\n  Test 3: Opening the Columnar File created in the last step and add joining w/ btree accesstype and multiple conditions\n");
+    protected boolean test4()
+    {
+        System.out.println("\n  Test 4: Opening the Columnar File created in the last step and add joining w/ btree accesstype and multiple conditions\n");
         boolean status = OK;
         TID insertedVal;
         Columnarfile outer;
@@ -527,11 +531,13 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
                 new FldSpec(new RelSpec(RelSpec.outer), 2),
                 new FldSpec(new RelSpec(RelSpec.outer), 3)
         };
-
+        CondExpr[] expr = new CondExpr[2];
+        expr[0] = null;
+        expr[1] = null;
         ColumnIndexScan am = null;
         try {
             am = new ColumnIndexScan(b_index,"test_file", indexName,
-                    outertypes[0],  (short)0, outFilter, false);
+                    outertypes[0], (short)25, expr,false);
         }
         catch (Exception e) {
             status = FAIL;
@@ -574,7 +580,136 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
         System.out.println("Test 4 Status " + status);
         return status;
     }
-    protected boolean test5() { return true; }
+    protected boolean test5() {
+//        System.out.println("\n  Test 4: Opening the Columnar File created in the last step and add joining w/ btree accesstype and multiple conditions\n");
+//        boolean status = OK;
+//        TID insertedVal;
+//        Columnarfile outer;
+//        Columnarfile inner;
+//        IndexType bm_index = new IndexType (IndexType.BitMapIndex);
+//        String indexName = Columnarfile.getBitMapIndexFileName("test_file", 2);
+//        try {
+//            System.out.println("  - Opening already created columnar files\n");
+//            outer = new Columnarfile("test_file");
+//            inner = new Columnarfile("test_file2");
+//            System.out.println("  - Trying to create btree index on the 1st column\n");
+//            outer.createBitMapIndex(2, outer.getColumnTypeByName("2"));
+//        } catch (Exception e) {
+//            status = FAIL;
+//            System.err.println("*** Could not read the created columnar files\n");
+//            e.printStackTrace();
+//            return status;
+//        }
+//
+//        System.out.println("Join two tables on the first column\n"
+//                + "Pi(outer.col1 outer.col2 outer.col3 inner.col1) outer.col1 |X| inner.col1)");
+//
+//        CondExpr [] outFilter  = new CondExpr[3];
+//        outFilter[0] = new CondExpr();
+//        outFilter[1] = new CondExpr();
+//        outFilter[2] = new CondExpr();
+//
+//        Join3_CondExpr(outFilter);
+//        Tuple t = new Tuple();
+//        t = null;
+//
+//        AttrType [] outertypes = {
+//                new AttrType(AttrType.attrInteger),
+//                new AttrType(AttrType.attrInteger),
+//                new AttrType(AttrType.attrString)
+//        };
+//
+//        short [] outersizes = new short[1];
+//        outersizes[0] = 25;
+//
+//        AttrType [] innertypes = {
+//                new AttrType(AttrType.attrInteger),
+//                new AttrType(AttrType.attrInteger),
+//                new AttrType(AttrType.attrString)
+//        };
+//
+//        short  []  innersizes = new short[1] ;
+//        innersizes[0] = 25;
+//
+//        AttrType [] Jtypes = {
+//                new AttrType(AttrType.attrInteger),
+//                new AttrType(AttrType.attrInteger)
+//        };
+//
+//        short  []  Jsizes = new short[1];
+//        Jsizes[0] = 25;
+//
+//        AttrType [] JJtype = {
+//                new AttrType(AttrType.attrInteger),
+//                new AttrType(AttrType.attrInteger),
+//                new AttrType(AttrType.attrString),
+//                new AttrType(AttrType.attrInteger)
+//        };
+//        short [] JJsize = new short[1];
+//        JJsize[0] = 25;
+//
+//        FldSpec []  proj = {
+//                new FldSpec(new RelSpec(RelSpec.outer), 1),
+//                new FldSpec(new RelSpec(RelSpec.outer), 2),
+//                new FldSpec(new RelSpec(RelSpec.outer), 3),
+//                new FldSpec(new RelSpec(RelSpec.innerRel), 2)
+//        };
+//
+//        FldSpec [] outerprojection = {
+//                new FldSpec(new RelSpec(RelSpec.outer), 1),
+//                new FldSpec(new RelSpec(RelSpec.outer), 2),
+//                new FldSpec(new RelSpec(RelSpec.outer), 3)
+//        };
+//        CondExpr[] expr = new CondExpr[2];
+//        expr[0] = null;
+//        expr[1] = null;
+//        ColumnIndexScan am = null;
+//        try {
+//            am = new ColumnIndexScan(bm_index,"test_file", indexName,
+//                    outertypes[0], (short)25, expr,false);
+//        }
+//        catch (Exception e) {
+//            status = FAIL;
+//            System.err.println (""+e);
+//            e.printStackTrace();
+//        }
+//
+//        if (status != OK) {
+//            //bail out
+//            System.err.println ("*** Error setting up scan for outer");
+//            Runtime.getRuntime().exit(1);
+//        }
+//
+//        ColumnarNestedLoopJoins inl = null;
+//        Tuple tup = null;
+//        try {
+//            inl = new ColumnarNestedLoopJoins(outertypes, 3, outersizes,
+//                    innertypes, 3, innersizes,
+//                    10,
+//                    am, "test_file2",
+//                    outFilter, null, proj, 4);
+//            while( (tup = inl.get_next()) != null )
+//            {
+//                tup.print(JJtype);
+//            }
+//        }
+//        catch (Exception e) {
+//            System.err.println ("*** Error preparing for nested_loop_join");
+//            System.err.println (""+e);
+//            e.printStackTrace();
+//            Runtime.getRuntime().exit(1);
+//        }
+//
+//        System.out.print( "After nested loop join outer|><|inner.\n");
+//
+//        if (status != OK) {
+//            //bail out
+//            Runtime.getRuntime().exit(1);
+//        }
+//        System.out.println("Test 4 Status " + status);
+//        return status;
+        return true;
+    }
     protected boolean test6() { return true; }
 
     private void Join1_CondExpr(CondExpr[] expr)

@@ -35,11 +35,15 @@ public class Columnarfile implements Filetype, GlobalConst {
     private boolean _file_deleted;
     private String _fileName;
     private int INTSIZE = 4;
-    private int STRINGSIZE = 25; //The default string size
+    public int STRINGSIZE = 25; //The default string size
     private static int tempfilecount = 0;
     private int headerTupleOffset = 12;
     private RID[] headerRIDs;
     public int[] offsets; //store the offset count for each column
+
+    public String getFileName() {
+        return _fileName;
+    }
 
     private static String _convertToStrings(byte[] byteStrings) {
         /*
@@ -742,6 +746,8 @@ public class Columnarfile implements Filetype, GlobalConst {
                 // hashmap ensures we do not insert duplicate values with O(1) time on the check
             } while (!linkedList.isEmpty());
             bitMapFile.cursorComplete();
+            bitMapFile.close();
+            updateIndexType(column, IndexType.BitMapIndex);
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -760,6 +766,18 @@ public class Columnarfile implements Filetype, GlobalConst {
         return fileName;
     }
 
+    public String getBitMapIndexFileName(int column) {
+        return getBitMapIndexFileName(getFileName(), column);
+    }
+
+    public BitMapFile getBitMapIndexFile(int column){
+        try {
+            return new BitMapFile(getBitMapIndexFileName(column));
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting bitmap file from columnar file by column: "+column);
+        }
+    }
+
     public boolean markTupleDeleted(TID tid)
             throws InvalidSlotNumberException,
             InvalidUpdateException,
@@ -770,7 +788,7 @@ public class Columnarfile implements Filetype, GlobalConst {
             Exception {
         ValueIntClass toDelete = new ValueIntClass(1);
         byte[] arr = toDelete.getByteArr();
-        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns], new Tuple(arr, 0, arr.length));
+        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns-1], new Tuple(arr, 0, arr.length));
     }
 
     public boolean purgeAllDeletedTuples()
