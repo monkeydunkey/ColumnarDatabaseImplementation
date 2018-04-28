@@ -1,14 +1,10 @@
 package tests;
 
 import java.io.*;
-import java.util.*;
 import java.lang.*;
 import heap.*;
-import bufmgr.*;
-import diskmgr.*;
 import global.*;
 import columnar.*;
-import chainexception.*;
 import index.ColumnIndexScan;
 import iterator.*;
 
@@ -114,7 +110,7 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
         }
 
         System.out.print("\n" + "..." + testName() + " tests ");
-        System.out.print(_pass == OK ? "completely successfully" : "failed");
+        System.out.print(_pass == OK ? "completed successfully" : "failed");
         System.out.print(".\n\n");
 
         return _pass;
@@ -147,40 +143,11 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
             status = FAIL;
         }
 
-        if (status == OK)
-            System.out.println("  Test 1 completed successfully.\n");
-
-        return status;
-    }
-
-    protected boolean test2()
-    {
-        System.out.println("\n  Test 2: Opening the Columnar File created in the last step and add some entries\n");
-        boolean status = OK;
-        TID insertedVal;
-        Columnarfile outer;
-        Columnarfile inner;
+        TID insertedVal = new TID(4);
         try {
-            System.out.println("  - Opening already created columnar files\n");
+            System.out.println("  - Opening the columnar files and adding a lot of data entries\n");
             outer = new Columnarfile("test_file");
             inner = new Columnarfile("test_file2");
-
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("*** Could not read the created columnar files\n");
-            e.printStackTrace();
-            return status;
-        }
-        if (status == OK && SystemDefs.JavabaseBM.getNumUnpinnedBuffers()
-                != SystemDefs.JavabaseBM.getNumBuffers()) {
-            System.err.println("*** Opening columnar file has left pinned pages\n");
-            status = FAIL;
-            return status;
-        }
-        insertedVal = new TID(4);
-        try {
-            System.out.println("  - Opening the columnar file and adding a lot of data entries\n");
-            outer = new Columnarfile("test_file");
             for (int i = 0; i < data_1.length; i++){
                 byte[] dataArray = new byte[8 + 25];
                 ValueIntClass val1 = new ValueIntClass(data_1[i]);
@@ -207,10 +174,9 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
 
         try{
             TupleScan tpScan = new TupleScan(outer);
-            System.out.println(outer.getTupleCnt());
-
+            System.out.println("    Number of tuples in outer: " + outer.getTupleCnt());
             TupleScan tpScan2 = new TupleScan(inner);
-            System.out.println(inner.getTupleCnt());
+            System.out.println("    Number of tuples in inner: " + inner.getTupleCnt());
         } catch (Exception e) {
             status = FAIL;
             System.err.println("*** Could not read all the tuples\n");
@@ -218,14 +184,442 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
             return status;
         }
 
+        if (status == OK)
+            System.out.println("\n  Test 1 completed successfully.\n");
+
+        return status;
+    }
+
+    protected boolean test2()
+    {
+        System.out.println("\n  Test 2: Opening the Columnar File created in the last step and add joining w/ filescan accesstype\n");
+        boolean status = OK;
+        TID insertedVal;
+        Columnarfile outer;
+        Columnarfile inner;
+        try {
+            System.out.println("  - Opening already created columnar files\n");
+            outer = new Columnarfile("test_file");
+            inner = new Columnarfile("test_file2");
+
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not read the created columnar files\n");
+            e.printStackTrace();
+            return status;
+        }
+        if (status == OK && SystemDefs.JavabaseBM.getNumUnpinnedBuffers()
+                != SystemDefs.JavabaseBM.getNumBuffers()) {
+            System.err.println("*** Opening columnar file has left pinned pages\n");
+            status = FAIL;
+            return status;
+        }
+
+        System.out.println("Join two tables on the second column\n"
+                + "Pi(outer.col1 outer.col2 outer.col3 inner.col1) (outer.col2 |X| inner.col2)");
+
+        CondExpr [] outFilter  = new CondExpr[3];
+        outFilter[0] = new CondExpr();
+        outFilter[1] = new CondExpr();
+        outFilter[2] = new CondExpr();
+
+        Join1_CondExpr(outFilter);
+        Tuple t = new Tuple();
+        t = null;
+
+        AttrType [] outertypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString)
+        };
+
+        short [] outersizes = new short[1];
+        outersizes[0] = 25;
+
+        AttrType [] innertypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString)
+        };
+
+        short  []  innersizes = new short[1] ;
+        innersizes[0] = 25;
+
+        AttrType [] Jtypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger)
+        };
+
+        short  []  Jsizes = new short[1];
+        Jsizes[0] = 25;
+
+        AttrType [] JJtype = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString),
+                new AttrType(AttrType.attrInteger)
+        };
+        short [] JJsize = new short[1];
+        JJsize[0] = 25;
+
+        FldSpec []  proj = {
+                new FldSpec(new RelSpec(RelSpec.outer), 1),
+                new FldSpec(new RelSpec(RelSpec.outer), 2),
+                new FldSpec(new RelSpec(RelSpec.outer), 3),
+                new FldSpec(new RelSpec(RelSpec.innerRel), 2)
+        }; // S.sname, R.bid
+
+        FldSpec [] outerprojection = {
+                new FldSpec(new RelSpec(RelSpec.outer), 1),
+                new FldSpec(new RelSpec(RelSpec.outer), 2),
+                new FldSpec(new RelSpec(RelSpec.outer), 3)
+        };
+
+        ColumnarFileScan am = null;
+        try {
+            am  = new ColumnarFileScan("test_file", outertypes, outersizes,
+                    (short)3, (short)3, outerprojection, null);
+        }
+        catch (Exception e) {
+            status = FAIL;
+            System.err.println (""+e);
+            e.printStackTrace();
+        }
+
+        if (status != OK) {
+            //bail out
+            System.err.println ("*** Error setting up scan for outer");
+            Runtime.getRuntime().exit(1);
+        }
+
+        ColumnarNestedLoopJoins inl = null;
+        Tuple tup = null;
+        try {
+            inl = new ColumnarNestedLoopJoins(outertypes, 3, outersizes,
+                    innertypes, 3, innersizes,
+                    10,
+                    am, "test_file2",
+                    outFilter, null, proj, 4);
+            while( (tup = inl.get_next()) != null )
+            {
+                tup.print(JJtype);
+            }
+        }
+        catch (Exception e) {
+            System.err.println ("*** Error preparing for nested_loop_join");
+            System.err.println (""+e);
+            e.printStackTrace();
+            Runtime.getRuntime().exit(1);
+        }
+
+        System.out.print( "After nested loop join outer|><|inner.\n");
+
+        if (status != OK) {
+            //bail out
+            Runtime.getRuntime().exit(1);
+        }
         System.out.println("Test 2 Status " + status);
         return status;
     }
 
-    protected boolean test3() { return true; }
-    protected boolean test4() { return true; }
+    protected boolean test3() {
+        System.out.println("\n  Test 3: Opening the Columnar File created in the last step and add joining w/ filescan accesstype and multiple conditions\n");
+        boolean status = OK;
+        TID insertedVal;
+        Columnarfile outer;
+        Columnarfile inner;
+        try {
+            System.out.println("  - Opening already created columnar files\n");
+            outer = new Columnarfile("test_file");
+            inner = new Columnarfile("test_file2");
+
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not read the created columnar files\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        System.out.println("Join two tables on the second column\n"
+                + "Pi(outer.col1 outer.col2 outer.col3 inner.col1) (Sigma(outer.col1 >= 7) (outer.col2) |X| inner.col2)");
+
+        CondExpr [] outFilter  = new CondExpr[3];
+        outFilter[0] = new CondExpr();
+        outFilter[1] = new CondExpr();
+        outFilter[2] = new CondExpr();
+
+        Join2_CondExpr(outFilter);
+        Tuple t = new Tuple();
+        t = null;
+
+        AttrType [] outertypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString)
+        };
+
+        short [] outersizes = new short[1];
+        outersizes[0] = 25;
+
+        AttrType [] innertypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString)
+        };
+
+        short  []  innersizes = new short[1] ;
+        innersizes[0] = 25;
+
+        AttrType [] Jtypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger)
+        };
+
+        short  []  Jsizes = new short[1];
+        Jsizes[0] = 25;
+
+        AttrType [] JJtype = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString),
+                new AttrType(AttrType.attrInteger)
+        };
+        short [] JJsize = new short[1];
+        JJsize[0] = 25;
+
+        FldSpec []  proj = {
+                new FldSpec(new RelSpec(RelSpec.outer), 1),
+                new FldSpec(new RelSpec(RelSpec.outer), 2),
+                new FldSpec(new RelSpec(RelSpec.outer), 3),
+                new FldSpec(new RelSpec(RelSpec.innerRel), 2)
+        };
+
+        FldSpec [] outerprojection = {
+                new FldSpec(new RelSpec(RelSpec.outer), 1),
+                new FldSpec(new RelSpec(RelSpec.outer), 2),
+                new FldSpec(new RelSpec(RelSpec.outer), 3)
+        };
+
+        ColumnarFileScan am = null;
+        try {
+            am  = new ColumnarFileScan("test_file", outertypes, outersizes,
+                    (short)3, (short)3, outerprojection, null);
+        }
+        catch (Exception e) {
+            status = FAIL;
+            System.err.println (""+e);
+            e.printStackTrace();
+        }
+
+        if (status != OK) {
+            //bail out
+            System.err.println ("*** Error setting up scan for outer");
+            Runtime.getRuntime().exit(1);
+        }
+
+        ColumnarNestedLoopJoins inl = null;
+        Tuple tup = null;
+        try {
+            inl = new ColumnarNestedLoopJoins(outertypes, 3, outersizes,
+                    innertypes, 3, innersizes,
+                    10,
+                    am, "test_file2",
+                    outFilter, null, proj, 4);
+            while( (tup = inl.get_next()) != null )
+            {
+                tup.print(JJtype);
+            }
+        }
+        catch (Exception e) {
+            System.err.println ("*** Error preparing for nested_loop_join");
+            System.err.println (""+e);
+            e.printStackTrace();
+            Runtime.getRuntime().exit(1);
+        }
+
+        System.out.print( "After nested loop join outer|><|inner.\n");
+
+        if (status != OK) {
+            //bail out
+            Runtime.getRuntime().exit(1);
+        }
+        System.out.println("Test 3 Status " + status);
+        return status;
+    }
+    protected boolean test4() {
+        System.out.println("\n  Test 3: Opening the Columnar File created in the last step and add joining w/ btree accesstype and multiple conditions\n");
+        boolean status = OK;
+        TID insertedVal;
+        Columnarfile outer;
+        Columnarfile inner;
+        try {
+            System.out.println("  - Opening already created columnar files\n");
+            outer = new Columnarfile("test_file");
+            inner = new Columnarfile("test_file2");
+            System.out.println("  - Trying to create btree index on the 1st column\n");
+            outer.createBTreeIndex(1);
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not read the created columnar files\n");
+            e.printStackTrace();
+            return status;
+        }
+
+        System.out.println("Join two tables on the first column\n"
+                + "Pi(outer.col1 outer.col2 outer.col3 inner.col1) outer.col1 |X| inner.col1)");
+
+        IndexType b_index = new IndexType (IndexType.B_Index);
+        String indexName = "test_file.hdr." + String.valueOf(1) + ".Btree";
+
+        CondExpr [] outFilter  = new CondExpr[3];
+        outFilter[0] = new CondExpr();
+        outFilter[1] = new CondExpr();
+        outFilter[2] = new CondExpr();
+
+        Join3_CondExpr(outFilter);
+        Tuple t = new Tuple();
+        t = null;
+
+        AttrType [] outertypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString)
+        };
+
+        short [] outersizes = new short[1];
+        outersizes[0] = 25;
+
+        AttrType [] innertypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString)
+        };
+
+        short  []  innersizes = new short[1] ;
+        innersizes[0] = 25;
+
+        AttrType [] Jtypes = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger)
+        };
+
+        short  []  Jsizes = new short[1];
+        Jsizes[0] = 25;
+
+        AttrType [] JJtype = {
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrInteger),
+                new AttrType(AttrType.attrString),
+                new AttrType(AttrType.attrInteger)
+        };
+        short [] JJsize = new short[1];
+        JJsize[0] = 25;
+
+        FldSpec []  proj = {
+                new FldSpec(new RelSpec(RelSpec.outer), 1),
+                new FldSpec(new RelSpec(RelSpec.outer), 2),
+                new FldSpec(new RelSpec(RelSpec.outer), 3),
+                new FldSpec(new RelSpec(RelSpec.innerRel), 2)
+        };
+
+        FldSpec [] outerprojection = {
+                new FldSpec(new RelSpec(RelSpec.outer), 1),
+                new FldSpec(new RelSpec(RelSpec.outer), 2),
+                new FldSpec(new RelSpec(RelSpec.outer), 3)
+        };
+
+        ColumnIndexScan am = null;
+        try {
+            am = new ColumnIndexScan(b_index,"test_file", indexName,
+                    outertypes[0],  (short)0, outFilter, false);
+        }
+        catch (Exception e) {
+            status = FAIL;
+            System.err.println (""+e);
+            e.printStackTrace();
+        }
+
+        if (status != OK) {
+            //bail out
+            System.err.println ("*** Error setting up scan for outer");
+            Runtime.getRuntime().exit(1);
+        }
+
+        ColumnarNestedLoopJoins inl = null;
+        Tuple tup = null;
+        try {
+            inl = new ColumnarNestedLoopJoins(outertypes, 3, outersizes,
+                    innertypes, 3, innersizes,
+                    10,
+                    am, "test_file2",
+                    outFilter, null, proj, 4);
+            while( (tup = inl.get_next()) != null )
+            {
+                tup.print(JJtype);
+            }
+        }
+        catch (Exception e) {
+            System.err.println ("*** Error preparing for nested_loop_join");
+            System.err.println (""+e);
+            e.printStackTrace();
+            Runtime.getRuntime().exit(1);
+        }
+
+        System.out.print( "After nested loop join outer|><|inner.\n");
+
+        if (status != OK) {
+            //bail out
+            Runtime.getRuntime().exit(1);
+        }
+        System.out.println("Test 4 Status " + status);
+        return status;
+    }
     protected boolean test5() { return true; }
-    protected boolean test6(){ return true; }
+    protected boolean test6() { return true; }
+
+    private void Join1_CondExpr(CondExpr[] expr)
+    {
+        expr[0].next  = null;
+        expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+        expr[0].type1 = new AttrType(AttrType.attrSymbol);
+        expr[0].type2 = new AttrType(AttrType.attrSymbol);
+        expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),2);
+        expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
+
+        expr[1] = null;
+        expr[2] = null;
+    }
+
+    private void Join2_CondExpr(CondExpr[] expr)
+    {
+        expr[0].next  = null;
+        expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+        expr[0].type1 = new AttrType(AttrType.attrSymbol);
+        expr[0].type2 = new AttrType(AttrType.attrSymbol);
+        expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),2);
+        expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),2);
+
+        expr[1].next  = null;
+        expr[1].op    = new AttrOperator(AttrOperator.aopGE);
+        expr[1].type1 = new AttrType(AttrType.attrSymbol);
+        expr[1].type2 = new AttrType(AttrType.attrInteger);
+        expr[1].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
+        expr[1].operand2.integer = 13;
+        expr[2] = null;
+    }
+
+    private void Join3_CondExpr(CondExpr[] expr)
+    {
+        expr[0].next  = null;
+        expr[0].op    = new AttrOperator(AttrOperator.aopEQ);
+        expr[0].type1 = new AttrType(AttrType.attrSymbol);
+        expr[0].type2 = new AttrType(AttrType.attrSymbol);
+        expr[0].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),1);
+        expr[0].operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),1);
+
+        expr[1] = null;
+        expr[2] = null;
+    }
 
     protected boolean runAllTests() {
 
@@ -255,7 +649,7 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
 
     protected String testName() {
 
-        return "Columnar File";
+        return "Columnar Nested Loop Join";
     }
 }
 
