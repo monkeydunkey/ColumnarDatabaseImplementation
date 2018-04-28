@@ -26,13 +26,13 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
     private int choice;
     private final static int reclen = 32;
 
-    int[] data_1 = {1, 20, 13, 42, 15, 12, 24, 4};
+    int[] data_1 = {1, 20, 13, 42, 12, 12, 24, 4};
     int[] data_2 = {3, 40, 23, 92, 25, 10, 11, 41};
     private static String data_3[] = {
-            "raghu", "xbao", "cychan", "leela", "ketola", "soma", "ulloa",
-            "dhanoa", "dsilva", "kurniawa", "dissoswa", "waic", "susanc", "kinc",
-            "marc", "scottc", "yuc", "ireland", "rathgebe", "joyce", "daode",
-            "yuvadee", "he", "huxtable", "muerle", "flechtne", "thiodore", "jhowe",
+            "xbao", "xbao", "cychan", "cychan", "ketola", "soma", "yuc",
+            "ketola", "marc", "yuc", "soma", "ketola", "susanc", "kinc",
+            "marc", "scottc", "yuc", "yung", "rathgebe", "joyce", "daode",
+            "yuvadee", "he", "huxtable", "muerle", "flechtne", "susanc", "jhowe",
             "frankief", "yiching", "xiaoming", "jsong", "yung", "muthiah", "bloch",
             "binh", "dai", "hai", "handi", "shi", "sonthi", "evgueni", "chung-pi",
             "chui", "siddiqui", "mak", "tak", "sungk", "randal", "barthel",
@@ -265,7 +265,7 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
         return status;
     }
     protected boolean test3() {
-        System.out.println("Test 3: Testing columnar index Scan");
+        System.out.println("Test 3: Testing columnar index Scan - Only And Condition");
         boolean status = OK;
 
         Columnarfile f;
@@ -295,7 +295,7 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
             expr[0].type1 = new AttrType(AttrType.attrSymbol);
             expr[0].type2 = new AttrType(AttrType.attrInteger);
             expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-            expr[0].operand2.integer = 69;
+            expr[0].operand2.integer = 13;
 
             expr[1] = new CondExpr();
             expr[1].op = new AttrOperator(AttrOperator.aopEQ);
@@ -304,7 +304,7 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
             expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 3);
             expr[1].operand2.string = "cychan";
 
-            expr[0].next = expr[1];
+            expr[0].next = null;
             expr[1].next = null;
             expr[2] = null;
 
@@ -348,150 +348,155 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
             return status;
         }
 
+
+        try {
+            System.out.println("Setting up the selection condition");
+            // set up an identity selection
+            CondExpr[] expr = new CondExpr[3];
+            expr[0] = new CondExpr();
+            expr[0].op = new AttrOperator(AttrOperator.aopEQ);
+            expr[0].type1 = new AttrType(AttrType.attrSymbol);
+            expr[0].type2 = new AttrType(AttrType.attrInteger);
+            expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
+            expr[0].operand2.integer = 69;
+
+            expr[1] = new CondExpr();
+            expr[1].op = new AttrOperator(AttrOperator.aopEQ);
+            expr[1].type1 = new AttrType(AttrType.attrSymbol);
+            expr[1].type2 = new AttrType(AttrType.attrString);
+            expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 3);
+            expr[1].operand2.string = "cychan";
+
+            expr[0].next = null;
+            expr[1].next = null;
+            expr[2] = null;
+
+            FldSpec[] proj_list = new FldSpec[1];
+            proj_list[0] = new FldSpec(new RelSpec(RelSpec.outer), 2);
+            int n_out_flds = 1;
+
+            AttrType[] attrTypes = new AttrType[3];
+            attrTypes[0] = new AttrType(1);
+            attrTypes[1] = new AttrType(1);
+            attrTypes[2] = new AttrType(0);
+            short[] s1_sizes = {25};
+            short len_in1 = 3;
+
+            IndexType[] indexes = {new IndexType(IndexType.B_Index), new IndexType(IndexType.None)};
+            ColumnarIndexScan cfscan = new ColumnarIndexScan("test_file", indexes, indexName, attrTypes, s1_sizes,
+                    len_in1, n_out_flds, proj_list, expr, false);
+
+            System.out.println("Scan object Created");
+            TID emptyTID = new TID(5);
+            Tuple newtuple = cfscan.get_next(emptyTID);
+            if (newtuple != null){
+                System.out.println("The query returned some value " + newtuple.getIntFld(1));
+                status = FAIL;
+            }
+            cfscan.close();
+
+        } catch (Exception e) {
+            status = FAIL;
+            System.err.println("*** Could not apply filters on columnar file \n");
+            e.printStackTrace();
+            return status;
+        }
+
         return status;
     }
     protected boolean test4() {
 
+        System.out.println("Test 4: Testing columnar index Scan with BTree and Bitmap Only And Condition");
         boolean status = OK;
-        return status;
-    }
-    protected boolean test5() {
 
-        System.out.println("\n  Test 5: Running Column Index scan on the table using Int keys\n");
-        boolean status = OK;
         Columnarfile f;
-        TID insertedVal = new TID(5);
+        TID insertedVal = new TID(4);
         try {
             f = new Columnarfile("test_file");
+            System.out.println("  - Trying to create bitmap index on the 3rd column\n");
+            f.createBitMapIndex(2, f.type[2].getValueClass());
         } catch (Exception e) {
             status = FAIL;
             System.err.println("*** Could not create b tree index\n");
             e.printStackTrace();
             return status;
         }
-        String indexName = "test_file.hdr." + String.valueOf(1) + ".Btree";
+        String[] indexName = {"test_file.hdr." + String.valueOf(0) + ".Btree", "test_file.hdr." + String.valueOf(2) + ".BitMap"};
+
+
 
         try {
-            System.out.println("  - Trying to query and get the first record using the index\n");
+            System.out.println("Setting up the selection condition");
             // set up an identity selection
-            CondExpr[] expr = new CondExpr[2];
+            CondExpr[] expr = new CondExpr[3];
             expr[0] = new CondExpr();
-            expr[0].op = new AttrOperator(AttrOperator.aopGT);
+            expr[0].op = new AttrOperator(AttrOperator.aopLE);
             expr[0].type1 = new AttrType(AttrType.attrSymbol);
             expr[0].type2 = new AttrType(AttrType.attrInteger);
             expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-            expr[0].operand2.integer = 12;
+            expr[0].operand2.integer = 13;
+
+            expr[1] = new CondExpr();
+            expr[1].op = new AttrOperator(AttrOperator.aopEQ);
+            expr[1].type1 = new AttrType(AttrType.attrSymbol);
+            expr[1].type2 = new AttrType(AttrType.attrString);
+            expr[1].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 3);
+            expr[1].operand2.string = "ketola";
+
             expr[0].next = null;
-            expr[1] = null;
+            expr[1].next = null;
+            expr[2] = null;
+
+            FldSpec[] proj_list = new FldSpec[3];
+            proj_list[0] = new FldSpec(new RelSpec(RelSpec.outer), 1);
+            proj_list[1] = new FldSpec(new RelSpec(RelSpec.outer), 2);
+            proj_list[2] = new FldSpec(new RelSpec(RelSpec.outer), 3);
+            int n_out_flds = 3;
 
             AttrType[] attrTypes = new AttrType[3];
             attrTypes[0] = new AttrType(1);
             attrTypes[1] = new AttrType(1);
             attrTypes[2] = new AttrType(0);
-            short[] s1_sizes = new short[25];
+            short[] s1_sizes = {25};
             short len_in1 = 3;
-            ColumnIndexScan cfscan = new ColumnIndexScan(new IndexType(1),  "test_file", indexName,
-                    attrTypes[0],  (short)0, expr, false);
 
-            Tuple newtuple = cfscan.get_next();
-            while (newtuple != null){
-                System.out.println("val1Class.value: "+newtuple.getIntFld(1)+", val2Class.value: "+newtuple.getIntFld(2) + ", 3rd Col: " + newtuple.getStrFld(3));
-                newtuple = cfscan.get_next();
+            IndexType[] indexes = {new IndexType(IndexType.B_Index), new IndexType(IndexType.BitMapIndex)};
+            ColumnarIndexScan cfscan = new ColumnarIndexScan("test_file", indexes, indexName, attrTypes, s1_sizes,
+                    len_in1, n_out_flds, proj_list, expr, false);
+
+            System.out.println("Scan object Created");
+            TID emptyTID = new TID(5);
+            Tuple newtuple;
+            for (int i =0;i<2;i++){
+                newtuple = cfscan.get_next(emptyTID);
+                AttrType[] outtypes = {new AttrType(1), new AttrType(1), new AttrType(0)};
+                newtuple.print(outtypes);
+            }
+
+            if (cfscan.get_next(emptyTID) != null){
+                status = FAIL;
+                System.out.println("More results returned than expected");
             }
             /*
-            if (newtuple == null || newtuple.getIntFld(1) != 15 || !newtuple.getStrFld(3).equals("ketola")){
+            String v1 = newtuple.getStrFld(1);
+            if (!v1.equals("xbao")){
+                System.out.println(v1);
                 status = FAIL;
             }
             */
             cfscan.close();
+
         } catch (Exception e) {
             status = FAIL;
-            System.err.println("*** Could not Scan using Btree index\n");
+            System.err.println("*** Could not apply filters on columnar file \n");
             e.printStackTrace();
             return status;
         }
 
-
-        try {
-            System.out.println("  - Opening the columnar file and adding an entry");
-
-            byte[] dataArray = new byte[8 + 25];
-            ValueIntClass val1 = new ValueIntClass(3);
-            ValueIntClass val2 = new ValueIntClass(45);
-            System.arraycopy (val1.getByteArr(), 0, dataArray, 0, 4);
-            System.arraycopy (val2.getByteArr(), 0, dataArray, 4, 4);
-            Convert.setStrValue("Shashank", 8, dataArray);
-            insertedVal = f.insertTuple(dataArray);
-
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("*** Could not open the columnar file\n");
-            e.printStackTrace();
-            return status;
-        }
-
-        try {
-            System.out.println("  - Trying to query and search for the last inserted tuples using index\n");
-            // set up an identity selection
-            CondExpr[] expr = new CondExpr[2];
-            expr[0] = new CondExpr();
-            expr[0].op = new AttrOperator(AttrOperator.aopEQ);
-            expr[0].type1 = new AttrType(AttrType.attrSymbol);
-            expr[0].type2 = new AttrType(AttrType.attrInteger);
-            expr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 2);
-            expr[0].operand2.integer = 45;
-            expr[0].next = null;
-            expr[1] = null;
-
-            AttrType[] attrTypes = new AttrType[3];
-            attrTypes[0] = new AttrType(1);
-            attrTypes[1] = new AttrType(1);
-            attrTypes[2] = new AttrType(0);
-            short[] s1_sizes = new short[25];
-            short len_in1 = 3;
-            ColumnIndexScan cfscan = new ColumnIndexScan(new IndexType(1),  "test_file", indexName,
-                    attrTypes[0],  (short)0, expr, false);
-
-            Tuple newtuple = cfscan.get_next();
-            if (newtuple != null || newtuple.getIntFld(1) != 3 || !newtuple.getStrFld(3).equals("Shashank")){
-                status = FAIL;
-            }
-
-            cfscan.close();
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("*** Could not Scan using Btree index for newly inserted tuple\n");
-            e.printStackTrace();
-            return status;
-        }
-
-
-        try {
-            System.out.println(" - Marking the last inserted tuple for deletion\n");
-            status = f.markTupleDeleted(insertedVal);
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("*** Could not Mark tuple deleted\n");
-            e.printStackTrace();
-            return status;
-        }
-
-        try {
-            System.out.println(" - purging the deleted record\n");
-            Boolean pass = f.purgeAllDeletedTuples();
-            if (!pass){
-                status = FAIL;
-            }
-            if (f.getTupleCnt() != 9){
-                status = FAIL;
-            }
-        } catch (Exception e) {
-            status = FAIL;
-            System.err.println("*** Could not purge tuples marked for deletion\n");
-            e.printStackTrace();
-            return status;
-        }
-
+        return status;
+    }
+    protected boolean test5() {
+        Boolean status = OK;
         return status;
     }
     protected boolean test6(){
@@ -530,7 +535,7 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
 
     protected String testName() {
 
-        return "Columnar File";
+        return "Columnar Index Scan Test";
     }
 }
 
@@ -544,7 +549,7 @@ public class CMIndexTest {
         dbstatus = hd.runTests();
 
         if (dbstatus != true) {
-            System.err.println("Error encountered during Columnar file tests:\n");
+            System.err.println("Error encountered during Columnar Index Scan tests:\n");
             Runtime.getRuntime().exit(1);
         }
 
