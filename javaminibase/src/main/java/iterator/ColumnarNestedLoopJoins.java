@@ -112,7 +112,7 @@ public class ColumnarNestedLoopJoins extends Iterator {
         this.relName = columnarFileName;
         inner_rel_proj_list = new FldSpec[len_in2];
         for (int i = 0; i < len_in2; i++){
-            inner_rel_proj_list[i] = new FldSpec(new RelSpec(RelSpec.outer), i);
+            inner_rel_proj_list[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
         }
         try {
             cf = new Columnarfile(columnarFileName);
@@ -154,7 +154,6 @@ public class ColumnarNestedLoopJoins extends Iterator {
             Exception
     {
         // This is a DUMBEST form of a join, not making use of any key information...
-
         if(done)
             return null;
 
@@ -173,9 +172,8 @@ public class ColumnarNestedLoopJoins extends Iterator {
                     // close scan
                     inner = null;
                 }
-
                 try {
-                    inner = new ColumnarFileScan(relName, _in2, t2_str_sizescopy, (short)in2_len, in2_len, inner_rel_proj_list,RightFilter);  //todo change this later!
+                    inner = new ColumnarFileScan(relName, _in2, t2_str_sizescopy, (short)in2_len, in2_len, inner_rel_proj_list,RightFilter);
                 }
                 catch(Exception e) {
                     throw new NestedLoopException(e, "openScan failed");
