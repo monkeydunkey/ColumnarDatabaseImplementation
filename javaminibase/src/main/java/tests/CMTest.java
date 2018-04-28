@@ -178,7 +178,7 @@ class CMDriver extends TestDriver implements GlobalConst {
 
         if (status == OK && SystemDefs.JavabaseBM.getNumUnpinnedBuffers()
                 != SystemDefs.JavabaseBM.getNumBuffers()) {
-            System.err.println("*** The heap file has left pages pinned\n");
+            System.err.println("*** The heap file has left pages pinned " + SystemDefs.JavabaseBM.getNumUnpinnedBuffers() + "\n");
             status = FAIL;
             return status;
         }

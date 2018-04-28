@@ -10,6 +10,7 @@ import diskmgr.Page;
 import global.*;
 import heap.HFBufMgrException;
 import heap.InvalidSlotNumberException;
+import heap.InvalidTupleSizeException;
 
 import java.io.IOException;
 import java.util.*;
@@ -343,7 +344,8 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return false;
     }
 
-    public IndexFileScan new_scan(ValueClass valueClass, Columnarfile f) throws InvalidSlotNumberException, PinPageException, IOException {
+    public IndexFileScan new_scan(ValueClass valueClass, Columnarfile f)
+            throws InvalidSlotNumberException, PinPageException, IOException, InvalidTupleSizeException {
         // go through directory pages
         // get the linklist that matches the given key
         BMHeaderPageDirectoryRecord directoryForValue = BM.getDirectoryForValue(valueClass, headerPage);

@@ -47,8 +47,8 @@ public class TestPrompt {
     public static void main( String[] args )
     {
         boolean quit = false;
-        SystemDefs sysdef = new SystemDefs("db1",100000,100,"Clock");
-        System.out.println("Setting up temporary DB: db1");
+        //SystemDefs sysdef = new SystemDefs("db1",100000,100,"Clock");
+        //System.out.println("Setting up temporary DB: db1");
         boolean testMode = false;
 
         Scanner scan;
@@ -101,7 +101,7 @@ public class TestPrompt {
             else if( command.equals("query") )
             {
                 try {
-                    query.run(split);
+                    query_v2.run(split);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

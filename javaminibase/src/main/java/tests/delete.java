@@ -44,7 +44,9 @@ public class delete implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void run( String[] args ) {
+    public static void run( String[] args )
+        throws Exception
+    {
         pcounter.initialize(); // Initializes read & write counters to 0
 
         String str = "";
@@ -138,7 +140,15 @@ public class delete implements GlobalConst {
          * System.out.println("NUMBUF: " + numBuf);
          * System.out.println("ACCESSTYPE: " + accessType);
          */
-
+        File db_file = new File(dbName);
+        if(db_file.exists()) {	// file found
+            System.out.printf("An existing database (%s) was found, opening database with %d buffers.\n", dbName, numBuf);
+            // open database with 100 buffers
+            SystemDefs sysdef = new SystemDefs(dbName,0,numBuf,"Clock");
+        }else
+        {
+            throw new Exception("EXCEPTION: Database provided: " + dbName + " was not found, exiting.");
+        }
         System.out.println( "Running delete_query test...\n" );
 
         try {
@@ -337,6 +347,7 @@ public class delete implements GlobalConst {
         try {
             SystemDefs.JavabaseBM.resetAllPins();
             SystemDefs.JavabaseBM.flushAllPages();
+            SystemDefs.JavabaseDB.closeDB();
         } catch (Exception ex){
             System.out.println("could not flush the pages");
             ex.printStackTrace();

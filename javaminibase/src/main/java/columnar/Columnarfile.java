@@ -307,12 +307,15 @@ public class Columnarfile implements Filetype, GlobalConst {
             IOException {
         _fileName = getHeapFileName(name);
         HeaderFile = new Heapfile(_fileName);
-        columnNames = new String[numColumns];
         Scan headerFileScan = HeaderFile.openScan();
         RID emptyRID = new RID();
         Tuple colCountTuple = headerFileScan.getNext(emptyRID);
+        if (colCountTuple == null){
+            System.out.println("The header tuple is empty for table: " + name);
+        }
         ValueIntClass columnCount = new ValueIntClass(colCountTuple.getTupleByteArray());
         numColumns = columnCount.value - 2;
+        columnNames = new String[numColumns];
         columnFile = new Heapfile[columnCount.value];
         headerRIDs = new RID[columnCount.value];
         indexType = new IndexType[numColumns];
@@ -381,7 +384,8 @@ public class Columnarfile implements Filetype, GlobalConst {
             HFException,
             HFBufMgrException,
             HFDiskMgrException,
-            IOException {
+            IOException,
+            Exception{
         if (tupleptr.length >= MAX_SPACE) {
             throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
         }
@@ -438,7 +442,9 @@ public class Columnarfile implements Filetype, GlobalConst {
                 }
             }
         }
-        tid.position = columnFile[0].RidToPos(tid.recordIDs[0]);
+        tid.position = columnFile[numColumns + 1].RidToPos(tid.recordIDs[numColumns + 1], this);
+        byte[] arr = serializeTuple(tid);
+        updateColumnofTuple(tid, new Tuple(arr, 0, arr.length), numColumns + 1);
         return tid;
     }
 
@@ -966,33 +972,35 @@ public class Columnarfile implements Filetype, GlobalConst {
         return null;
     }
 
-
-    /**
-     * Given a position (index of the tuple amoung all tuples in the columnar file) returns the RID
-     *
-     * todo get shashank to help optimize this using HFPage.setCurPage_forGivenPosition
-     *
-     * @see heap.HFPage#setCurPage_forGivenPosition(int)
-     * @param position
-     */
-    public RID getRIDByPosition(int position) throws InvalidTupleSizeException, IOException {
+    public RID getRIDByPosition(int position, int column) throws InvalidTupleSizeException, IOException {
         int positionCur =0;
 
-        TupleScan cfs = new TupleScan(this);
+        Scan cfs = new Scan(columnFile[numColumns + 1]);
         TID emptyTID = new TID(numColumns + 2);
-        Tuple dataTuple = cfs.getNextInternal(emptyTID);
+        RID emptyRID = new RID();
+        Tuple dataTuple = cfs.getNext(emptyRID);
         while (dataTuple != null) {
-            RID recordID = emptyTID.recordIDs[emptyTID.recordIDs.length - 1];
-
-            if(position == positionCur){
-                return recordID;
+            emptyTID = deserializeTuple(dataTuple.getTupleByteArray());
+            if(position == emptyTID.position){
+                return emptyTID.recordIDs[column];
             }
-
-            emptyTID = new TID(numColumns + 2);
-            dataTuple = cfs.getNextInternal(emptyTID);
-            positionCur++;
+            dataTuple = cfs.getNext(emptyRID);
         }
+        return null;
+    }
 
+    public TID getTIDByPosition(int position) throws InvalidTupleSizeException, IOException {
+        Scan cfs = new Scan(columnFile[numColumns + 1]);
+        TID emptyTID = new TID(numColumns + 2);
+        RID emptyRID = new RID();
+        Tuple dataTuple = cfs.getNext(emptyRID);
+        while (dataTuple != null) {
+            emptyTID = deserializeTuple(dataTuple.getTupleByteArray());
+            if(position == emptyTID.position){
+                return emptyTID;
+            }
+            dataTuple = cfs.getNext(emptyRID);
+        }
         return null;
     }
 }

@@ -47,7 +47,7 @@ test:
 	cd tests; make bmtest dbtest; whoami; make hftest bttest indextest jointest sorttest sortmerge
 
 test-noniterative:
-	cd tests; make bmtest dbtest; whoami; make hftest indextest jointest sorttest sortmerge cmtest
+	cd tests; make cmindextest bmtest dbtest; whoami; make hftest indextest jointest sorttest sortmerge cmtest
 
 test-prompt:
 	cd tests; make testprompt
