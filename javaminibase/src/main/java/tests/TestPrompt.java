@@ -60,7 +60,7 @@ public class TestPrompt {
         }else{
             // the below is for testing purposes (instead of type each command from the commandline, we can conveniently read it from a file
             // this allows us to put different sample inputs into many files and quickly iterate through them to test
-            // while keeping the behavior of the program the same
+            // while keeping the behavior of the program the same)
             try {
                 testMode = true;
                 scan = new Scanner(new File(args[0]));
@@ -84,8 +84,6 @@ public class TestPrompt {
             list.remove(0);
             String[] split = new String[list.size()];
             split = list.toArray(split);
-
-
 
             if( command.equals("batchinsert") )
             {
@@ -144,7 +142,6 @@ public class TestPrompt {
                 } catch (IOException ex){
                     System.out.println("could not destroy the db");
                 }
-
             }
             else
             {
