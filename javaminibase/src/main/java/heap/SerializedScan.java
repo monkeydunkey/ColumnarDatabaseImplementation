@@ -25,7 +25,7 @@ public class SerializedScan {
         scanList = new Scan[2];
         for (int i=0; i < 2; i++) {
             try {
-                scanList[i] = cf.columnFile[Columnarfile.numColumns + i].openScan();
+                scanList[i] = cf.columnFile[cf.numColumns + i].openScan();
             }catch(Exception e) {
                 e.printStackTrace();
             }
@@ -41,7 +41,7 @@ public class SerializedScan {
         scanList = new Scan[2];
         for (int i = 0; i < 2; i++) {
             try {
-                scanList[i] = cf.columnFile[Columnarfile.numColumns + i].openScan();
+                scanList[i] = cf.columnFile[tempClmnFile.numColumns + i].openScan();
             } catch (Exception e) {
                 e.printStackTrace();
             }
