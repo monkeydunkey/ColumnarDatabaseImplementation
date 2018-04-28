@@ -51,6 +51,7 @@ public class query_v2 implements GlobalConst {
         boolean colNamesDone = false;
         Columnarfile cFile = null;
         int newIndex = 0;
+
         CondExpr[] condList;
         System.out.println(queryString);
         Matcher matcher = pattern.matcher(queryString);

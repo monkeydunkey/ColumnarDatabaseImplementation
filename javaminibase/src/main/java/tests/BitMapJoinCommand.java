@@ -14,7 +14,7 @@ public class BitMapJoinCommand {
 
         final Pattern pattern = Pattern.compile(regex);
         final Matcher matcher = pattern.matcher(inputString);
-
+        System.out.println(matcher.matches());
         while (matcher.find()) {
             System.out.println("Full match: " + matcher.group(0));
             for (int i = 1; i <= matcher.groupCount(); i++) {
