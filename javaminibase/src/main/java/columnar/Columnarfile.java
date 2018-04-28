@@ -35,7 +35,7 @@ public class Columnarfile implements Filetype, GlobalConst {
     private boolean _file_deleted;
     private String _fileName;
     private int INTSIZE = 4;
-    private int STRINGSIZE = 25; //The default string size
+    public int STRINGSIZE = 25; //The default string size
     private static int tempfilecount = 0;
     private int headerTupleOffset = 12;
     private RID[] headerRIDs;
