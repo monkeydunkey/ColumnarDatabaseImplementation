@@ -1,4 +1,4 @@
-package index;
+package iterator;
 
 import bitmap.BitMapFile;
 import bitmap.BitMapFileScan;
@@ -9,6 +9,9 @@ import heap.FieldNumberOutOfBoundException;
 import heap.InvalidTypeException;
 import heap.SerializedScan;
 import heap.Tuple;
+import index.IndexException;
+import index.IndexUtils;
+import index.UnknownIndexTypeException;
 import iterator.*;
 
 import java.io.IOException;

@@ -22,7 +22,7 @@ interface Filetype {
 }
 
 public class Columnarfile implements Filetype, GlobalConst {
-    public static int numColumns;
+    public int numColumns;
     public AttrType[] type;
     public Heapfile[] columnFile;
     public IndexType[] indexType;

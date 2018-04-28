@@ -1,18 +1,16 @@
-package index;
+package iterator;
 import columnar.*;
 import global.*;
-import bufmgr.*;
-import diskmgr.*;
 import btree.*;
-import iterator.*;
+import index.IndexException;
+import index.UnknownIndexTypeException;
 import heap.*;
 import java.io.*;
-import bitmap.*;
 import java.util.*;
 /**
  * Created by shashankbhushan on 4/17/18.
  */
-public class ColumnarIndexScan {
+public class ColumnarIndexScan extends Iterator{
     /*
      Following is how the flow is going to look like. The incoming condition is assumed to be in conjuctive normal
      form i.e. it will be a conjunctions of disjunctions.
@@ -159,7 +157,7 @@ public class ColumnarIndexScan {
         return;
     }
 
-    public Tuple get_next(TID tid)
+    public Tuple get_next()
         throws ScanIteratorException,
             UnknownIndexTypeException,
             IndexException,
@@ -191,12 +189,11 @@ public class ColumnarIndexScan {
                 if (positions.get(position) >= selects.length - 1){
                     //We got this position from all the condition
                     //System.out.println("It does come here as well " + tempTID.position + " " + tempTID.numRIDs);
-                    tid = tempTID;
                     retTup =  new Tuple();
                     AttrType[] Jtypes = new AttrType[noOutFlds];
                     short[]    ts_size;
                     ts_size = TupleUtils.setup_op_tuple(retTup, Jtypes, attrTypes, noInFlds, str_sizes, outFlds, noOutFlds);
-                    Project(f, tid, attrTypes, retTup, outFlds, noOutFlds);
+                    Project(f, tempTID, attrTypes, retTup, outFlds, noOutFlds);
                     break;
                 }
             }
@@ -205,12 +202,18 @@ public class ColumnarIndexScan {
     }
 
     public void close()
-            throws IndexException,
-            UnknownIndexTypeException,
-            Exception
+            throws IOException,
+            JoinsException,
+            SortException,
+            IndexException
     {
         for (int i = 0; i < orConditions.length; i++) {
-            orConditions[i].close();
+            try {
+                orConditions[i].close();
+            } catch (Exception ex){
+                System.out.println("There was an error in closing the iterator");
+                ex.printStackTrace();
+            }
         }
     }
 }

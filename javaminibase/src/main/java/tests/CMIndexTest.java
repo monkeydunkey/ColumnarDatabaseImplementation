@@ -1,15 +1,10 @@
 package tests;
 
 import java.io.*;
-import java.util.*;
 import java.lang.*;
 import heap.*;
-import bufmgr.*;
-import diskmgr.*;
 import global.*;
 import columnar.*;
-import chainexception.*;
-import index.*;
 import iterator.*;
 
 /**
@@ -324,8 +319,8 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
                                                                 len_in1, n_out_flds, proj_list, expr, false);
 
             System.out.println("Scan object Created");
-            TID emptyTID = new TID(5);
-            Tuple newtuple = cfscan.get_next(emptyTID);
+
+            Tuple newtuple = cfscan.get_next();
 
             int v1 = newtuple.getIntFld(1);
             if (v1 != 23){
@@ -387,8 +382,8 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
                     len_in1, n_out_flds, proj_list, expr, false);
 
             System.out.println("Scan object Created");
-            TID emptyTID = new TID(5);
-            Tuple newtuple = cfscan.get_next(emptyTID);
+
+            Tuple newtuple = cfscan.get_next();
             if (newtuple != null){
                 System.out.println("The query returned some value " + newtuple.getIntFld(1));
                 status = FAIL;
@@ -465,15 +460,15 @@ class CMIndexDriver extends TestDriver implements GlobalConst {
                     len_in1, n_out_flds, proj_list, expr, false);
 
             System.out.println("Scan object Created");
-            TID emptyTID = new TID(5);
+
             Tuple newtuple;
             for (int i =0;i<2;i++){
-                newtuple = cfscan.get_next(emptyTID);
+                newtuple = cfscan.get_next();
                 AttrType[] outtypes = {new AttrType(1), new AttrType(1), new AttrType(0)};
                 newtuple.print(outtypes);
             }
 
-            if (cfscan.get_next(emptyTID) != null){
+            if (cfscan.get_next() != null){
                 status = FAIL;
                 System.out.println("More results returned than expected");
             }

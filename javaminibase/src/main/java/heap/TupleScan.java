@@ -17,8 +17,8 @@ public class TupleScan {
     {
     	tempClmnFile = cf;
 		//+2 for deletion file and TID Encoding file
-        scanList = new Scan[Columnarfile.numColumns + 2];
-        for (int i=0; i < Columnarfile.numColumns + 2; i++) {
+        scanList = new Scan[cf.numColumns + 2];
+        for (int i=0; i < cf.numColumns + 2; i++) {
         	try {
         		scanList[i] = cf.columnFile[i].openScan();
         	}catch(Exception e) {
@@ -35,7 +35,7 @@ public class TupleScan {
      * Closes the TupleScan object
      */
     public void closeTupleScan(){
-        for (int i = 0; i < Columnarfile.numColumns + 2; i++) {
+        for (int i = 0; i < tempClmnFile.numColumns + 2; i++) {
         	try {
         		scanList[i].closescan();
         	}catch(Exception e) {
@@ -59,18 +59,18 @@ public class TupleScan {
 
 		//Rejecting the tuples marked for deletion
 		RID deletionRowID = new RID();
-		delTupleArr = scanList[Columnarfile.numColumns].getNext(deletionRowID);
+		delTupleArr = scanList[tempClmnFile.numColumns].getNext(deletionRowID);
 		while (delTupleArr != null && Convert.getIntValue(0, delTupleArr.getTupleByteArray()) == 1){
-			for (int i = 0; i < Columnarfile.numColumns; i++) {
+			for (int i = 0; i < tempClmnFile.numColumns; i++) {
 				try {
 					tupleArr = scanList[i].getNext(tid.recordIDs[i]);
 				}catch(Exception e) {
 					e.printStackTrace();
 				}
 			}
-			delTupleArr = scanList[Columnarfile.numColumns].getNext(deletionRowID);
+			delTupleArr = scanList[tempClmnFile.numColumns].getNext(deletionRowID);
 		}
-		for (int i = 0; i < Columnarfile.numColumns; i++) {
+		for (int i = 0; i < tempClmnFile.numColumns; i++) {
 			try {
 				tupleArr = scanList[i].getNext(tid.recordIDs[i]);
 				if (tupleArr == null) break;
@@ -94,7 +94,7 @@ public class TupleScan {
 		Tuple tupleArr;
 		int totalLength = 0;
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		for (int i = 0; i < Columnarfile.numColumns + 2; i++) { // loop through column indexes
+		for (int i = 0; i < tempClmnFile.numColumns + 2; i++) { // loop through column indexes
 			try {
 				RID recordID = tid.recordIDs[i];
 				int recordPosition = scanList[i].getRecordPosition();
@@ -123,7 +123,7 @@ public class TupleScan {
      * @return
      */
     boolean position(TID tid)throws InvalidTupleSizeException, IOException{
-	    for (int i = 0; i < Columnarfile.numColumns; i++) {
+	    for (int i = 0; i < tempClmnFile.numColumns; i++) {
 	    	try {
 	    		if (scanList[i].position(tid.recordIDs[i]) == false)
 		            return false;
