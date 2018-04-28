@@ -2,6 +2,7 @@ package tests;
 
 import diskmgr.ColumnDB;
 
+import diskmgr.DB;
 import global.*;
 import heap.Heapfile;
 import heap.Scan;
@@ -12,7 +13,6 @@ import columnar.*;
 import java.io.*;
 import java.util.Arrays;
 import java.util.StringTokenizer;
-import java.nio.file.*;
 
 import diskmgr.pcounter;
 
@@ -38,19 +38,20 @@ public class batchinsert {
 		AttrType[] type = new AttrType[numcolumns];
 		String[] columnnames = new String[numcolumns];
 
-    
+		SystemDefs sysdef = null;
 	    try {
 			//SystemDefs sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
-			Path dbpath = Paths.get(filepath + COLUMN_DB_NAME);
+			//Path dbpath = Paths.get(filepath + COLUMN_DB_NAME);
 
-			if (Files.exists(dbpath)) {
-				System.out.println("Opening existing DB: " + COLUMN_DB_NAME);
-				SystemDefs.JavabaseDB.openDB(COLUMN_DB_NAME);
-			}
-			else
+			File db_file = new File(COLUMN_DB_NAME);
+			if(db_file.exists()) {	// file found
+				System.out.printf("An existing database (%s) was found, opening database.\n", COLUMN_DB_NAME);
+				// open database with 100 buffers
+				sysdef = new SystemDefs(COLUMN_DB_NAME,0,100,"Clock");
+			}else
 			{
 				System.out.println("Opening new DB: " + COLUMN_DB_NAME);
-				SystemDefs sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
+				sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
 			}
 
 			//Borrowed tokenizer
@@ -109,6 +110,7 @@ public class batchinsert {
 			Columnarfile cf;
 			try {
 				//checking if the file exists
+				System.out.println("Table Name: " + COLUMNAR_FILE_NAME + "aa");
 				cf = new Columnarfile (COLUMNAR_FILE_NAME);
 			} catch (Exception ex){
 				// null pointer exception the file does not exists so creating a new one
@@ -154,6 +156,7 @@ public class batchinsert {
 			}
 			SystemDefs.JavabaseBM.resetAllPins();
 			SystemDefs.JavabaseBM.flushAllPages();
+			SystemDefs.JavabaseDB.closeDB();
 			System.out.println("Insertion done!");
 			System.out.println("Disk read count: "+ pcounter.rcounter);
 			System.out.println("Disk write count: "+ pcounter.wcounter );
