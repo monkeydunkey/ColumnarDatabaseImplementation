@@ -1,6 +1,7 @@
 package bitmap;
 
 import btree.PinPageException;
+import btree.UnpinPageException;
 import diskmgr.Page;
 import global.*;
 import heap.InvalidSlotNumberException;
@@ -41,14 +42,17 @@ public class BM {
     public static boolean[] givenDirectoryPageGetBitMap(BMHeaderPageDirectoryRecord directoryRecord) throws PinPageException, IOException, InvalidSlotNumberException {
         PageId pageno = directoryRecord.getBmPageId();
         BMPage bmPage = new BMPage(pinPage(pageno));
+        if(bmPage.getSlotCnt() == 0 ){
+            throw new RuntimeException("THERE SHOULD BE DATA HERE");
+        }
         Tuple record = bmPage.getRecord(new RID(pageno, 0));
         boolean[] booleans = BitMapFile.fromBytes(record.getTupleByteArray(), directoryRecord.arraySize);
         return booleans;
     }
 
-    private static ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
+    public static ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
         try{
-            short slotCnt = header.getSlotCnt();
+            short slotCnt = header.getSlotCnt();// returns 0 after creating the BitMap
             RID[] rids = new RID[slotCnt];
             ArrayList<BMHeaderPageDirectoryRecord> bmHeaderPageDirectoryRecords = new ArrayList<>();
 
@@ -74,7 +78,7 @@ public class BM {
         return new ArrayList<>();
     }
 
-    private static Page pinPage(PageId pageno)
+    public static Page pinPage(PageId pageno)
             throws PinPageException {
         try {
             Page page = new Page();
@@ -86,11 +90,22 @@ public class BM {
         }
     }
 
+    public static void unpinPage(PageId pageno, boolean dirty)
+            throws UnpinPageException {
+        try {
+            SystemDefs.JavabaseBM.unpinPage(pageno, dirty);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new UnpinPageException(e, "");
+        }
+    }
+
     public static BMHeaderPageDirectoryRecord getDirectoryForValue(ValueClass valueClass, BitMapHeaderPage header) {
         ArrayList<BMHeaderPageDirectoryRecord> directoryRecords = getDirectoryRecords(header);
         for (int i = 0; i < directoryRecords.size(); i++) {
             BMHeaderPageDirectoryRecord directoryRecord = directoryRecords.get(i);
             ValueClass directoryRecordValueClass = directoryRecord.getValueClass();
+
             if(valueClass instanceof ValueStrClass){
                 if(directoryRecordValueClass instanceof ValueStrClass){
                     ValueStrClass directoryRecordValueClassValue = (ValueStrClass) directoryRecordValueClass;
@@ -100,7 +115,13 @@ public class BM {
                     }
                 }
             }else if(valueClass instanceof ValueIntClass){
-
+                if(directoryRecordValueClass instanceof ValueIntClass){
+                    ValueIntClass directoryRecordValueClassValue = (ValueIntClass) directoryRecordValueClass;
+                    ValueIntClass valueClassValue = (ValueIntClass) valueClass;
+                    if(valueClassValue.equals(directoryRecordValueClassValue)){
+                        return directoryRecord;
+                    }
+                }
             }else{
                 throw new RuntimeException("Unknown Value Class type");
             }

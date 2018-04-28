@@ -62,10 +62,10 @@ public class BitMapFile extends IndexFile implements GlobalConst {
             headerPage= new  BitMapHeaderPage(headerPageId);
         }
 
-        dbname = new String(filename);
+        dbname = filename;
     }
 
-    void close() throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
+    public void close() throws PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
         //    Close the BitMap file.
         if (headerPage != null) {
             SystemDefs.JavabaseBM.unpinPage(headerPageId, true);
@@ -78,7 +78,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
             PageId pgId = headerPage.getPageId();
             if (pgId.pid != INVALID_PAGE)
                 _destroyFile(pgId);
-            unpinPage(headerPageId);
+            unpinPage(headerPageId, true);
             freePage(headerPageId);
             delete_file_entry(dbname);
             headerPage = null;
@@ -116,10 +116,10 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     }
 
 
-    private void unpinPage(PageId pageno)
+    public static void unpinPage(PageId pageno, boolean dirty)
             throws UnpinPageException {
         try {
-            SystemDefs.JavabaseBM.unpinPage(pageno, false /* = not DIRTY */);
+            SystemDefs.JavabaseBM.unpinPage(pageno, dirty /* = not DIRTY */);
         } catch (Exception e) {
             e.printStackTrace();
             throw new UnpinPageException(e, "");
@@ -148,7 +148,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     }
 
 
-    private Page pinPage(PageId pageno)
+    public static Page pinPage(PageId pageno)
             throws PinPageException {
         try {
             Page page = new Page();
@@ -211,7 +211,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         //       8                              1
 
         if((Math.ceil(cursorBuffer.size() / 8) + 4) == ((double) cursorBMPage.available_space())){
-            flushCursor();
+            //flushCursor(); add new link then flush page
         }
 
 
@@ -236,7 +236,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return booleans;
     }
     
-    public boolean[] toBooleanArray(List list){
+    public static boolean[] toBooleanArray(List list){
         boolean[] booleans = new boolean[list.size()];
         Iterator it = list.iterator();
         int i =0;
@@ -249,23 +249,27 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return booleans;
     }
 
-    public void flushCursor() throws IOException {
+    public void flushCursor() throws IOException, UnpinPageException {
         // write current buffer to page
         boolean[] booleans = toBooleanArray(cursorBuffer);
+        System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
+        System.out.println("inserting record into cursorBMPage: "+cursorBMPage.getCurPage()+" : "+cursorBuffer);
         cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
-        try {
-            boolean[] booleans1 = fromBytes(cursorBMPage.getRecord(new RID(cursorBMPage.curPage, 0)).getTupleByteArray(), booleans.length);
-        } catch (InvalidSlotNumberException e) {
-            e.printStackTrace();
-        }
+        System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
 
+        System.out.println("inserting header page with cursorBMPage: "+cursorBMPage.curPage);
         BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
         headerPage.insertRecord(directoryRecord.getByteArray());
+        System.out.println("inserting");
+        System.out.println("header page slot count: "+ headerPage.getSlotCnt());
+
+        unpinPage(cursorBMPage.getCurPage(), true);
+        System.out.println("unpinning page: "+cursorBMPage.getCurPage());
         cursorBuffer = new LinkedList<>();
         cursorValueClass = null;
     }
 
-    private BMPage getNewBMPage() throws HFBufMgrException, IOException {
+    public static BMPage getNewBMPage() throws HFBufMgrException, IOException {
         Page apage = new Page();
         PageId pageId = new PageId();
         pageId = newPage(apage, 1);
@@ -275,7 +279,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return bmPage;
     }
 
-    private PageId newPage(Page page, int num)
+    public static PageId newPage(Page page, int num)
             throws HFBufMgrException {
 
         PageId tmpId = new PageId();
@@ -291,11 +295,18 @@ public class BitMapFile extends IndexFile implements GlobalConst {
 
     } // end of newPage
 
-    public void cursorComplete() throws IOException {
+    /**
+     * Method to be called when the bitmap index creation is completed
+     * @throws IOException
+     */
+    public void cursorComplete() throws IOException, UnpinPageException {
         flushCursor();
     }
 
-    public void setCursorUniqueValue(ValueClass value) throws IOException, HFBufMgrException {
+    /**
+     * Flush the current buffer and begin on a new link list of pages
+     */
+    public void setCursorUniqueValue(ValueClass value) throws IOException, HFBufMgrException, UnpinPageException {
         // at this point BMPage should be pointing to the first page of that Unique value
         // update the header file to contain the unique values mapping to the link list of pages
 

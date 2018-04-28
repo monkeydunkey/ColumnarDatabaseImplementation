@@ -100,7 +100,7 @@ public class ColumnarIndexScanPosition {
                     try {
                         indScan[i] = IndexUtils.BitMap_scan(tempExpr, indFile, f);
                     } catch (Exception e) {
-                        throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
+                        throw new IndexException(e, "ColumnIndexScan.java: BitMap exceptions caught from IndexUtils.BitMap_scan().");
                     }
                     indexFileName++;
                     break;

@@ -1,0 +1,6 @@
+batchinsert ./tests/data/bitmap_join_outter.txt column_db_name columnar_file_name_outter 2
+index column_db_name columnar_file_name_outter B BITMAP
+batchinsert ./tests/data/bitmap_join_inner.txt column_db_name columnar_file_name_inner 2
+index column_db_name columnar_file_name_inner A BITMAP
+bmj column_db_name columnar_file_name_outter columnar_file_name_inner {A = 1,A = 2} {B = 1,B = 2} {T1.B = T2.A} [T1.A T1.B T2.B] 50
+quit

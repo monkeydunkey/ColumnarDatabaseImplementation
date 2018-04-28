@@ -31,14 +31,12 @@ public class TestPromptTest {
         System.out.println("=================================================");
         System.out.println("currently executing test: "+ name.getMethodName());
         System.out.println("=================================================");
+        new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/column_db_name").deleteOnExit();
 
     }
 
-
-
     @After
     public void cleanup(){
-        new File("C:\\Users\\jkiel\\Documents\\GitHub\\CSE510-DBMS-Project\\javaminibase\\db1").delete();
         System.setOut(out);
         System.setErr(err);
 
@@ -75,7 +73,8 @@ public class TestPromptTest {
     @Test
     public void test_insert_then_query_string_bitmap() {
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_string_bitmap.txt"});
-        assertTrue(outContent.toString().contains("Running query test...\n" +
+        assertTrue(outContent.toString().contains(
+                "Running query test...\n" +
                 System.lineSeparator() +
                 "[Montana, District_of_Columbia, 2, 8]" + System.lineSeparator() +
                 "[New_Hampshire, District_of_Columbia, 6, 6]" + System.lineSeparator() +
@@ -84,15 +83,22 @@ public class TestPromptTest {
     }
 
     @Test
+    public void test_insert_then_query_int_bitmap() {
+        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_int_bitmap.txt"});
+        assertTrue(outContent.toString().contains(
+                "Running query test...\n" +
+                        System.lineSeparator() +
+                        "[Connecticut, Delaware, 8, 8]" + System.lineSeparator() +
+                        "[Vermont, West_Virginia, 8, 6]" + System.lineSeparator() +
+                        "[Delaware, Singapore, 8, 6]" + System.lineSeparator() +
+                        "query test finished!"
+        ));
+    }
+
+    @Test
     @Ignore
     public void test_insert_then_index_then_bitmapjoin() {
-        //todo
-        // batch insert
-        // create bitmap index
-        // create second columnar file (batch insert)
-        // create bitmap index
-        // join
-//        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_index_then_bitmapjoin.txt"});
+        TestPrompt.main(new String[] {"./tests/cases/phase3/test_insert_then_index_then_bitmapjoin.txt"});
     }
 
     // todo test bitmap directory pages overflow
