@@ -120,7 +120,6 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
 
     protected boolean test1()
     {
-        pcounter.initialize();
         System.out.println("\n  Test 1: Initialize a columnar file with 2 int columns\n");
         boolean status = OK;
         Columnarfile outer = null;
@@ -325,14 +324,11 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
             Runtime.getRuntime().exit(1);
         }
         System.out.println("Test 2 Status " + status);
-        System.out.println("Pages read: " + pcounter.rcounter);
-        System.out.println("Pages written: " + pcounter.wcounter);
         return status;
     }
 
     protected boolean test3()
     {
-        pcounter.initialize();
         System.out.println("\n  Test 3: Opening the Columnar File created in the last step and add joining w/ filescan accesstype and multiple conditions\n");
         boolean status = OK;
         TID insertedVal;
@@ -454,13 +450,10 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
             Runtime.getRuntime().exit(1);
         }
         System.out.println("Test 3 Status " + status);
-        System.out.println("Pages read: " + pcounter.rcounter);
-        System.out.println("Pages written: " + pcounter.wcounter);
         return status;
     }
     protected boolean test4()
     {
-        pcounter.initialize();
         System.out.println("\n  Test 4: Opening the Columnar File created in the last step and add joining w/ btree accesstype and multiple conditions\n");
         boolean status = OK;
         TID insertedVal;
@@ -588,8 +581,6 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
             Runtime.getRuntime().exit(1);
         }
         System.out.println("Test 4 Status " + status);
-        System.out.println("Pages read: " + pcounter.rcounter);
-        System.out.println("Pages written: " + pcounter.wcounter);
         return status;
     }
     protected boolean test5() {
