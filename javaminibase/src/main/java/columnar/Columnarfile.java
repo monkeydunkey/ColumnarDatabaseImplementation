@@ -310,6 +310,9 @@ public class Columnarfile implements Filetype, GlobalConst {
         Scan headerFileScan = HeaderFile.openScan();
         RID emptyRID = new RID();
         Tuple colCountTuple = headerFileScan.getNext(emptyRID);
+        if (colCountTuple == null){
+            System.out.println("The header tuple is empty for table: " + name);
+        }
         ValueIntClass columnCount = new ValueIntClass(colCountTuple.getTupleByteArray());
         numColumns = columnCount.value - 2;
         columnNames = new String[numColumns];
