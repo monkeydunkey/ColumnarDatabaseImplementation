@@ -9,6 +9,7 @@ import index.ColumnIndexScan;
 import index.ColumnarIndexScan;
 import iterator.*;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -30,7 +31,9 @@ public class query_v2 implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void run( String[] args ) {
+    public static void run( String[] args )
+        throws Exception
+    {
         String queryPatt = "(\\w+)\\s(\\w+)\\s\\[((\\w+\\s?)*)\\]\\s\\{((\\w+\\s(=|!=|>|<)\\s\\w+((\\sAND\\s|\\sOR\\s))?)*)\\}\\s(\\d+)";
         Pattern pattern = Pattern.compile(queryPatt);
 
@@ -93,11 +96,20 @@ public class query_v2 implements GlobalConst {
          * System.out.println("ACCESSTYPE: " + accessType);
          */
 
+        File db_file = new File(dbName);
+        if(db_file.exists()) {	// file found
+            System.out.printf("An existing database (%s) was found, opening database with %d buffers.\n", dbName, numBuf);
+            // open database with 100 buffers
+            SystemDefs sysdef = new SystemDefs(dbName,0,numBuf,"Clock");
+        }else
+        {
+            throw new Exception("EXCEPTION: Database provided: " + dbName + " was not found, exiting.");
+        }
+
         System.out.println( "Running query test...\n" );
 
         try {
-
-            cFile = new Columnarfile(cfName);
+            cFile = new Columnarfile(cfName.trim());
             columnCount = cFile.numColumns;
             //Creating the projection list and storing the output column types
             FldSpec[] projection = new FldSpec[targetColNames.length];
@@ -222,6 +234,7 @@ public class query_v2 implements GlobalConst {
         try {
             SystemDefs.JavabaseBM.resetAllPins();
             SystemDefs.JavabaseBM.flushAllPages();
+            SystemDefs.JavabaseDB.closeDB();
         } catch (Exception ex){
             System.out.println("could not flush the pages");
             ex.printStackTrace();
