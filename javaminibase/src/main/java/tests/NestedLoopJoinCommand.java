@@ -7,6 +7,7 @@ import heap.Tuple;
 import iterator.ColumnarIndexScan;
 import iterator.*;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,7 +18,7 @@ public class NestedLoopJoinCommand {
                                             ArrayList<IndexType> colIndex, ArrayList<String> colIndexNames){
 
         //Creating the outer selection query
-        for(int i = 0; i < cond.length; i++) {
+        for(int i = 0; i < cond.length - 1; i++) {
             boolean success = false;
             boolean isInt = false;
             String[] conditionStatements = AndCond[i].split("\\s+OR\\s+");
@@ -87,7 +88,7 @@ public class NestedLoopJoinCommand {
                                        Columnarfile innerFile){
 
         //Creating the outer selection query
-        for(int i = 0; i < cond.length; i++) {
+        for(int i = 0; i < cond.length - 1; i++) {
             boolean success = false;
             boolean isInt = false;
             String[] conditionStatements = AndCond[i].split("\\s+OR\\s+");
@@ -126,9 +127,9 @@ public class NestedLoopJoinCommand {
                         break;
                 }
                 tempExpr.op = new AttrOperator(opType);
-                tempExpr.type1 = new AttrType(AttrType.attrSymbol);
+                tempExpr.type2 = new AttrType(AttrType.attrSymbol);
                 colInd = innerFile.getColumnIndexByName(selectparts[2].split("\\.")[1]);
-                tempExpr.operand1.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),
+                tempExpr.operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),
                         colInd + 1);
             }
 
@@ -138,7 +139,9 @@ public class NestedLoopJoinCommand {
     }
 
 
-    public static void run(String[] split) {
+    public static void run(String[] split)
+        throws Exception
+    {
         pcounter.initialize();
         String dbName = "";
         String OuterFileName = "";
@@ -188,6 +191,15 @@ public class NestedLoopJoinCommand {
             return;
         }
 
+        File db_file = new File(dbName);
+        if(db_file.exists()) {	// file found
+            System.out.printf("An existing database (%s) was found, opening database with %d buffers.\n", dbName, NumBuf);
+            // open database with 100 buffers
+            SystemDefs sysdef = new SystemDefs(dbName,0,NumBuf,"Clock");
+        }else
+        {
+            throw new Exception("EXCEPTION: Database provided: " + dbName + " was not found, exiting.");
+        }
 
         try {
 
