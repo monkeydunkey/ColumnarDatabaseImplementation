@@ -53,7 +53,7 @@ public class NestedLoopJoinCommand {
         System.out.println(Arrays.toString(OuterConstraints));
 
         System.out.println("NestedLoopJoin done!");
-        System.out.println("Disk read count: "+ pcounter.rcounter);
-        System.out.println("Disk write count: "+ pcounter.wcounter );
+        System.out.println("Disk read count: " + pcounter.rcounter);
+        System.out.println("Disk write count: " + pcounter.wcounter);
     }
 }
