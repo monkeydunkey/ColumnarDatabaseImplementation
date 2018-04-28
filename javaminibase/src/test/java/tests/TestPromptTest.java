@@ -26,24 +26,23 @@ public class TestPromptTest {
 
     @Before
     public void setup(){
-        System.setOut(new PrintStream(outContent));
-        System.setErr(new PrintStream(errContent));
+//        System.setOut(new PrintStream(outContent));
+//        System.setErr(new PrintStream(errContent));
         System.out.println("=================================================");
         System.out.println("currently executing test: "+ name.getMethodName());
         System.out.println("=================================================");
 
     }
 
-
-
-    @After
-    public void cleanup(){
-        new File("C:\\Users\\jkiel\\Documents\\GitHub\\CSE510-DBMS-Project\\javaminibase\\db1").delete();
-        System.setOut(out);
-        System.setErr(err);
-
-        System.out.println(outContent.toString());
-        System.out.println(errContent.toString());
+    @AfterClass
+    public static void cleanup(){
+        boolean delete = new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/column_db_name").delete();
+        System.out.println("delete db file was successful: "+delete);
+//        System.setOut(out);
+//        System.setErr(err);
+//
+//        System.out.println(outContent.toString());
+//        System.out.println(errContent.toString());
     }
 
     @Test

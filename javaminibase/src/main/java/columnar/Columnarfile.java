@@ -746,6 +746,8 @@ public class Columnarfile implements Filetype, GlobalConst {
                 // hashmap ensures we do not insert duplicate values with O(1) time on the check
             } while (!linkedList.isEmpty());
             bitMapFile.cursorComplete();
+            bitMapFile.close();
+            updateIndexType(column, IndexType.BitMapIndex);
 
         } catch (Exception ex) {
             ex.printStackTrace();

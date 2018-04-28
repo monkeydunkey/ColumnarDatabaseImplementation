@@ -56,7 +56,10 @@ public class BMPage extends Page
     public BMPage(){}
 
     /* Open a BMPage and make this point to the given page */
-    public BMPage(Page page){data = page.getpage();}
+    public BMPage(PageId pageno, Page page) throws IOException {
+        data = page.getpage();
+        init(pageno,page);
+    }
 
     /* Returns amount of available space */
     public int available_space()

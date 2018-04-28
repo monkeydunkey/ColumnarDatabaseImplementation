@@ -41,7 +41,7 @@ public class BM {
 
     public static boolean[] givenDirectoryPageGetBitMap(BMHeaderPageDirectoryRecord directoryRecord) throws PinPageException, IOException, InvalidSlotNumberException {
         PageId pageno = directoryRecord.getBmPageId();
-        BMPage bmPage = new BMPage(pinPage(pageno));
+        BMPage bmPage = new BMPage(pageno, pinPage(pageno));
         Tuple record = bmPage.getRecord(new RID(pageno, 0));
         boolean[] booleans = BitMapFile.fromBytes(record.getTupleByteArray(), directoryRecord.arraySize);
         return booleans;
@@ -49,7 +49,7 @@ public class BM {
 
     public static ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
         try{
-            short slotCnt = header.getSlotCnt();
+            short slotCnt = header.getSlotCnt();// returns 0 after creating the BitMap
             RID[] rids = new RID[slotCnt];
             ArrayList<BMHeaderPageDirectoryRecord> bmHeaderPageDirectoryRecords = new ArrayList<>();
 

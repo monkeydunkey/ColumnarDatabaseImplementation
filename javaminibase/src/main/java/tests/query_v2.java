@@ -62,8 +62,8 @@ public class query_v2 implements GlobalConst {
         int count = 0;
         while (matcher.find()) {
             for (int j = 0; j <= matcher.groupCount(); j++) {
-                System.out.println("------------------------------------");
-                System.out.println("Group " + count + ": " + matcher.group(j));
+//                System.out.println("------------------------------------");
+//                System.out.println("Group " + count + ": " + matcher.group(j));
                 parsedArr[count] = matcher.group(j);
                 count++;
             }
