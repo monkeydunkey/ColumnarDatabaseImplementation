@@ -3,6 +3,7 @@ package tests;
 import diskmgr.pcounter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Arrays;
 
 public class NestedLoopJoinCommand {
     public static void run(String[] split) {
@@ -20,12 +21,13 @@ public class NestedLoopJoinCommand {
         //Function Signature :
         //nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST OUTERACCTYPE [TARGETCOLUMNS] NUMBUF
 
-        final String regex = "(\\w+) (\\w+) (\\w+) (\\{.+?\\}) (\\{.+?\\}) (\\{.+?\\}) (\\w+) (\\[.+?\\])\\s(.+$)";
+        //final String regex = "(\\w+) (\\w+) (\\w+) (\\{.+?\\}) (\\{.+?\\}) (\\{.+?\\}) (\\w+) (\\[.+?\\])\\s(.+$)";
+        final String regex = "(\\w+) (\\w+) (\\w+) \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*)\\} \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*)\\} \\{((\\w+\\.\\w+ (=|!=|>|<) \\w+\\.\\w+(( AND | OR ))?)*)\\} \\[((\\w+\\.\\w+ ?)*)\\] (\\d+)";
 
         final String inputString = String.join(" ", split);
         final Pattern pattern = Pattern.compile(regex);
         final Matcher matcher = pattern.matcher(inputString);
-        String[] parsedArr = new String[9];
+        String[] parsedArr = new String[22];
         int parsedArr_count = 0;
 
         while (matcher.find()) {
@@ -47,6 +49,8 @@ public class NestedLoopJoinCommand {
         OuterAccType = parsedArr[6];
         TargetColumns = parsedArr[7].split("\\s+");
         NumBuf = parsedArr[8];
+
+        System.out.println(Arrays.toString(OuterConstraints));
 
         System.out.println("NestedLoopJoin done!");
         System.out.println("Disk read count: "+ pcounter.rcounter);
