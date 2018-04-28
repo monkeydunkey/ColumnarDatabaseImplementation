@@ -311,12 +311,15 @@ public class Columnarfile implements Filetype, GlobalConst {
             IOException {
         _fileName = getHeapFileName(name);
         HeaderFile = new Heapfile(_fileName);
-        columnNames = new String[numColumns];
         Scan headerFileScan = HeaderFile.openScan();
         RID emptyRID = new RID();
         Tuple colCountTuple = headerFileScan.getNext(emptyRID);
+        if (colCountTuple == null){
+            System.out.println("The header tuple is empty for table: " + name);
+        }
         ValueIntClass columnCount = new ValueIntClass(colCountTuple.getTupleByteArray());
         numColumns = columnCount.value - 2;
+        columnNames = new String[numColumns];
         columnFile = new Heapfile[columnCount.value];
         headerRIDs = new RID[columnCount.value];
         indexType = new IndexType[numColumns];

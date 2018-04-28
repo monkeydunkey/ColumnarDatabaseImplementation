@@ -27,13 +27,28 @@ public class Index extends TestDriver implements GlobalConst {
     private boolean OK = true;
     private boolean FAIL = false;
 
-    public static void run( String[] args ) throws HFDiskMgrException, InvalidTupleSizeException, HFException, InvalidSlotNumberException, SpaceNotAvailableException, HFBufMgrException, IOException, AddFileEntryException, GetFileEntryException, ConstructPageException {
+    public static void run( String[] args )
+            throws HFDiskMgrException, InvalidTupleSizeException, HFException,
+            InvalidSlotNumberException, SpaceNotAvailableException, HFBufMgrException,
+            IOException, AddFileEntryException, GetFileEntryException, ConstructPageException,
+            Exception
+    {
         pcounter.initialize(); // Initializes read & write counters to 0
 
         final String COLUMN_DB_NAME = args[0];
         final String COLUMNAR_FILE_NAME = args[1];
         final String COLUMN_NAME = args[2];
         final String INDEX_TYPE = args[3];
+
+        File db_file = new File(COLUMN_DB_NAME);
+        if(db_file.exists()) {	// file found
+            System.out.printf("An existing database (%s) was found, opening database.\n", COLUMN_DB_NAME);
+            // open database with 100 buffers
+            SystemDefs sysdef = new SystemDefs(COLUMN_DB_NAME,0,100,"Clock");
+        }else
+        {
+            throw new Exception("EXCEPTION: Database provided: " + COLUMN_DB_NAME + " was not found, exiting.");
+        }
 
         /* Uncomment for debugging */
         /*
@@ -95,6 +110,7 @@ public class Index extends TestDriver implements GlobalConst {
         try {
             SystemDefs.JavabaseBM.resetAllPins();
             SystemDefs.JavabaseBM.flushAllPages();
+            SystemDefs.JavabaseDB.closeDB();
         } catch (Exception ex){
             System.out.println("could not flush the pages");
             ex.printStackTrace();
