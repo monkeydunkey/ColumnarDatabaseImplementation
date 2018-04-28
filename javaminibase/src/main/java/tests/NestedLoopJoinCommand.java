@@ -10,13 +10,16 @@ public class NestedLoopJoinCommand {
         String dbName = "";
         String OuterFileName = "";
         String InnerFileName = "";
+        String[] OuterConstraints;
+        String[] InnerConstraints;
+        String[] JoinConstraints;
+        String OuterAccType = "";
+        String[] TargetColumns;
+        String NumBuf = "";
 
         //Function Signature :
         //nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST OUTERACCTYPE [TARGETCOLUMNS] NUMBUF
 
-        String text    =
-                //"nlj column_db_name columnar_file_name_b columnar_file_name_a {A = 1,A = 2} {B = 1,B = 2} {T1.A = T2.B} test [T1.A T1.B T2.B] 50";
-"column_db_name columnar_file_name_b columnar_file_name_a {A = 1,A = 2} {B = 1,B = 2} {T1.A = T2.B} test [T1.A T1.B T2.B] 50";
         final String regex = "(\\w+) (\\w+) (\\w+) (\\{.+?\\}) (\\{.+?\\}) (\\{.+?\\}) (\\w+) (\\[.+?\\])\\s(.+$)";
 
         final String inputString = String.join(" ", split);
@@ -34,10 +37,16 @@ public class NestedLoopJoinCommand {
             }
         }
 
-        dbName = parsedArr[0] // Setting COLUMNDBNAME
-        InnerFileName = parsedArr[1] // Setting INNERFILENAME
-        OuterFileName = parsedArr[2] //Setting OUTERFILENAME
-        
+        //Setting variables from given query
+        dbName = parsedArr[0];
+        InnerFileName = parsedArr[1];
+        OuterFileName = parsedArr[2];
+        OuterConstraints = parsedArr[3].split("\\s+");
+        InnerConstraints = parsedArr[4].split("\\s+");
+        JoinConstraints = parsedArr[5].split("\\s+");
+        OuterAccType = parsedArr[6];
+        TargetColumns = parsedArr[7].split("\\s+");
+        NumBuf = parsedArr[8];
 
         System.out.println("NestedLoopJoin done!");
         System.out.println("Disk read count: "+ pcounter.rcounter);
