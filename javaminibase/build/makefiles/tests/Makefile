@@ -20,6 +20,13 @@ CMTest:CMTest.java
 cmtest: CMTest
         $(JAVA) tests.CMTest
 
+# test columnar nested loop join
+ColumnarJoinTest:ColumnarJoinTest.java
+        $(JAVAC) TestDriver.java ColumnarJoinTest.java
+
+columnarjointest: ColumnarJoinTest
+        $(JAVA) tests.ColumnarJoinTest
+
 # test buffer manager
 
 BMTest:BMTest.java
