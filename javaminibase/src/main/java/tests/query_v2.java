@@ -31,7 +31,7 @@ public class query_v2 implements GlobalConst {
     private boolean FAIL = false;
 
     public static void run( String[] args ) {
-        String queryPatt = "(\\w+)\\s(\\w+)\\s\\[((\\w+\\s?)*)\\]\\s\\{((\\w+\\s(=|!=|>|<)\\s\\w+(,\\s)?)*)\\}\\s(\\d+)";
+        String queryPatt = "(\\w+)\\s(\\w+)\\s\\[((\\w+\\s?)*)\\]\\s\\{((\\w+\\s(=|!=|>|<)\\s\\w+((\\sAND\\s|\\sOR\\s))?)*)\\}\\s(\\d+)";
         Pattern pattern = Pattern.compile(queryPatt);
 
         pcounter.initialize(); // Initializes read & write counters to 0
@@ -39,22 +39,23 @@ public class query_v2 implements GlobalConst {
         String str = "";
         String dbName = "";
         String cfName = "";
-        String[] singleSelects;
+        String[] OrSelects;
         String valConst_Value = "";
         int numBuf = 0;
         int columnCount = 0;
         String accessType = "";
         String[] targetColNames;
-        IndexType[] colIndex;
-        String[] colIndexNames;
+        ArrayList<IndexType> colIndex;
+        ArrayList<String> colIndexNames;
         AttrType[] targetColType = null;
         boolean colNamesDone = false;
         Columnarfile cFile = null;
         int newIndex = 0;
+        int indexCount = 0;
         CondExpr[] condList;
         System.out.println(queryString);
         Matcher matcher = pattern.matcher(queryString);
-        String[] parsedArr = new String[10];
+        String[] parsedArr = new String[11];
         int count = 0;
         while (matcher.find()) {
             for (int j = 0; j <= matcher.groupCount(); j++) {
@@ -65,13 +66,13 @@ public class query_v2 implements GlobalConst {
             }
         }
 
-        if (count == 10) {
+        if (count == 11) {
             dbName = parsedArr[1];
             cfName = parsedArr[2];
             targetColNames = parsedArr[3].split("\\s+");
-            singleSelects = parsedArr[5].split(",\\s");
-            System.out.println(parsedArr[9]);
-            numBuf = Integer.parseInt(parsedArr[9]);
+            OrSelects = parsedArr[5].split("\\s+AND\\s+");
+            System.out.println(parsedArr[10]);
+            numBuf = Integer.parseInt(parsedArr[10]);
         }
         else{
             System.out.println("Regex Match failed");
@@ -113,68 +114,71 @@ public class query_v2 implements GlobalConst {
                         cFile.getColumnIndexByName(targetColNames[i])+1);
             }
 
-            condList = new CondExpr[singleSelects.length + 1];
-            colIndex = new IndexType[singleSelects.length];
-            colIndexNames = new String[singleSelects.length];
+            condList = new CondExpr[OrSelects.length + 1];
+            colIndex = new ArrayList<IndexType>();//IndexType[singleSelects.length];
+            colIndexNames = new ArrayList<String>();//String[singleSelects.length];
             //Creating the selection query
-            for(int i = 0; i < singleSelects.length; i++) {
+            for(int i = 0; i < OrSelects.length; i++) {
                 boolean success = false;
                 boolean isInt = false;
-                String[] conditionStatement = singleSelects[i].split("\\s+");
+                String[] conditionStatements = OrSelects[i].split("\\s+OR\\s+");
                 condList[i] = new CondExpr();
-                if (i > 0){
-                    condList[i - 1].next = condList[i];
-                }
-                condList[i].type1 = new AttrType(AttrType.attrSymbol);
-                int colInd = cFile.getColumnIndexByName(conditionStatement[0]);
-                condList[i].operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),
-                        colInd + 1);
-                colIndex[i] = cFile.indexType[colInd];
-                if (colIndex[i].indexType == IndexType.None){
-                    colIndexNames[i] = "";
-                } else {
-                    colIndexNames[i] = cfName + ".hdr." + String.valueOf(colInd) + ((colIndex[i].indexType == IndexType.B_Index) ? ".Btree" : ".BitMap");
+                CondExpr tempExpr = condList[i];
+                for (int j = 0; j < conditionStatements.length; j++){
+                    String[] selectparts = conditionStatements[j].split("\\s+");
+                    tempExpr.type1 = new AttrType(AttrType.attrSymbol);
+                    int colInd = cFile.getColumnIndexByName(selectparts[0]);
+                    tempExpr.operand1.symbol = new FldSpec (new RelSpec(RelSpec.outer),
+                            colInd + 1);
+                    colIndex.add(cFile.indexType[colInd]);
+                    if (cFile.indexType[colInd].indexType == IndexType.None){
+                        colIndexNames.add("");
+                    } else {
+                        colIndexNames.add(cfName + ".hdr." + String.valueOf(colInd) + ((cFile.indexType[colInd].indexType == IndexType.B_Index) ? ".Btree" : ".BitMap"));
+                    }
+
+                    int opType = AttrOperator.aopEQ;
+                    switch(selectparts[1]) {
+                        case "=":
+                            opType = AttrOperator.aopEQ;
+                            break;
+                        case ">":
+                            opType = AttrOperator.aopGT;
+                            break;
+                        case "<":
+                            opType = AttrOperator.aopLT;
+                            break;
+                        case "<=":
+                            opType = AttrOperator.aopLE;
+                            break;
+                        case ">=":
+                            opType = AttrOperator.aopGE;
+                            break;
+                        case "!=":
+                            opType = AttrOperator.aopNE;
+                            break;
+                        case "default":
+                            success = false;
+                            System.out.println("None of the operator matched deafulting to equality");
+                            break;
+                    }
+                    tempExpr.op = new AttrOperator(opType);
+                    try{
+                        Integer.parseInt(selectparts[2]);
+                        isInt = true;
+                    } catch (NumberFormatException ex){
+                        isInt = false;
+                    }
+                    tempExpr.type2 =  new AttrType((isInt) ?  AttrType.attrInteger: AttrType.attrString);
+                    if( isInt )
+                    {
+                        tempExpr.operand2.integer = Integer.parseInt(selectparts[2]);
+                    }else{
+                        tempExpr.operand2.string = selectparts[2];
+                    }
                 }
 
-                int opType = AttrOperator.aopEQ;
-                switch(conditionStatement[1]) {
-                    case "=":
-                        opType = AttrOperator.aopEQ;
-                        break;
-                    case ">":
-                        opType = AttrOperator.aopGT;
-                        break;
-                    case "<":
-                        opType = AttrOperator.aopLT;
-                        break;
-                    case "<=":
-                        opType = AttrOperator.aopLE;
-                        break;
-                    case ">=":
-                        opType = AttrOperator.aopGE;
-                        break;
-                    case "!=":
-                        opType = AttrOperator.aopNE;
-                        break;
-                    case "default":
-                        success = false;
-                        System.out.println("None of the operator matched deafulting to equality");
-                        break;
-                }
-                condList[i].op = new AttrOperator(opType);
-                try{
-                    Integer.parseInt(conditionStatement[2]);
-                    isInt = true;
-                } catch (NumberFormatException ex){
-                    isInt = false;
-                }
-                condList[i].type2 =  new AttrType((isInt) ?  AttrType.attrInteger: AttrType.attrString);
-                if( isInt )
-                {
-                    condList[i].operand2.integer = Integer.parseInt(conditionStatement[2]);
-                }else{
-                    condList[i].operand2.string = conditionStatement[2];
-                }
+
             }
             condList[condList.length - 1] = null;
             AttrType [] types = cFile.type;
@@ -189,7 +193,13 @@ public class query_v2 implements GlobalConst {
             for (int j = 0; j < stringSize.length; j++){
                 stringSize[j] = stringLengths.get(j).shortValue();
             }
-            ColumnarIndexScan cfscan = new ColumnarIndexScan(cfName, colIndex, colIndexNames, types, stringSize,
+            IndexType[] colIndexArr = new IndexType[colIndex.size()];
+            String[] ccolIndexNamesArr = new String[colIndex.size()];
+            for (int j = 0; j < colIndex.size(); j++){
+                colIndexArr[j] = colIndex.get(j);
+                ccolIndexNamesArr[j] = colIndexNames.get(j);
+            }
+            ColumnarIndexScan cfscan = new ColumnarIndexScan(cfName, colIndexArr, ccolIndexNamesArr, types, stringSize,
                     types.length, targetColNames.length, projection, condList, false);
 
 

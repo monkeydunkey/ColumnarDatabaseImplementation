@@ -61,7 +61,9 @@ public class ColumnarIndexScan {
     private Object[] indScan;
     private Columnarfile f;
     private int roundRobinInd = 0;
-    HashSet<Integer> positions;
+    private ColumnarIndexScanPosition[] orConditions;
+    HashMap<Integer, Integer> positions;
+    HashMap<Integer, TID> positionsTID;
     Tuple Jtuple;
     public ColumnarIndexScan(String relName, IndexType[] index,
                              String[] indName, AttrType[] types, short[] str_sizes,
@@ -72,7 +74,9 @@ public class ColumnarIndexScan {
             UnknownIndexTypeException
     {
 
-        positions = new HashSet<Integer>();
+        positions = new HashMap<Integer, Integer>();
+        positionsTID = new HashMap<Integer, TID>();
+        orConditions = new ColumnarIndexScanPosition[selects.length - 1];
         this.relName = relName;
         this.indexTypes = index;
         this.indexNames = indName;
@@ -83,7 +87,7 @@ public class ColumnarIndexScan {
         this.outFlds = outFlds;
         this.selects = selects;
         this.indexOnly = indexOnly;
-        int indexFileName = 0;
+        int indexInd = 0;
         indScan = new Object[index.length];
         try {
             f = new Columnarfile(relName);
@@ -91,64 +95,20 @@ public class ColumnarIndexScan {
             throw new IndexException(e, "ColumnIndexScan.java: Heapfile not created");
         }
 
-        for (int i = 0; i < index.length; i++) {
-            CondExpr[] tempExpr = new CondExpr[2];
-            tempExpr[0] = new CondExpr();
-            tempExpr[0].next = null;
-            tempExpr[1] = null;
-            tempExpr[0].op = selects[i].op;
-            tempExpr[0].type1 = selects[i].type1;
-            tempExpr[0].type2 = selects[i].type2;
-            tempExpr[0].operand1 = selects[i].operand1;
-            tempExpr[0].operand2 = selects[i].operand2;
-            switch (index[i].indexType) {
-                case IndexType.BitMapIndex:
-                    try {
-                        indFile = new BitMapFile(indName[indexFileName]);
-                    } catch (Exception e) {
-                        throw new IndexException(e, "ColumnIndexScan.java: BitMap exceptions caught from BitMap constructor");
-                    }
-                    try {
-                        indScan[i] = IndexUtils.BitMap_scan(tempExpr, indFile, f);
-                    } catch (Exception e) {
-                        throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-                    }
-                    indexFileName++;
-                    break;
-
-                case IndexType.B_Index:
-                    // error check the select condition
-                    // must be of the type: value op symbol || symbol op value
-                    // but not symbol op symbol || value op value
-                    try {
-                        indFile = new BTreeFile(indName[indexFileName]);
-                    } catch (Exception e) {
-                        throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
-                    }
-
-                    try {
-                        System.out.println("Operand Created " + tempExpr[0].op.toString() + " " + tempExpr[0].type1.toString() + " " + tempExpr[0].operand2.integer + " " + indName[indexFileName] + " " + tempExpr[0].operand1.symbol.offset);
-                        if (indFile == null){
-                            System.out.printf("Index file is null");
-                        }
-                        indScan[i] = IndexUtils.BTree_scan(tempExpr, indFile);
-                    } catch (Exception e) {
-                        throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-                    }
-                    indexFileName++;
-                    break;
-                case IndexType.None:
-                    try {
-                        indScan[i] = new SerializedScan(f, selects[i].operand1.symbol.offset - 1);
-                    } catch (Exception e) {
-                        throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-                    }
-
-                    break;
-                default:
-                    throw new UnknownIndexTypeException("Only BTree, BitMap and column scan supported as of now");
-
+        for (int i = 0; i < selects.length - 1; i++) {
+            int orCondLength = 0;
+            CondExpr tempExpr = selects[i];
+            while (tempExpr != null){
+                orCondLength++;
+                tempExpr = tempExpr.next;
             }
+            //System.out.println("Or Condition length: " + orCondLength);
+            orConditions[i] = new ColumnarIndexScanPosition(f,
+                    Arrays.copyOfRange(index, indexInd, indexInd + orCondLength),
+                    Arrays.copyOfRange(indName, indexInd, indexInd + orCondLength),
+                    selects[i],
+                    indexOnly);
+            indexInd += orCondLength;
         }
 
 
@@ -213,121 +173,32 @@ public class ColumnarIndexScan {
         Object nextentry;
         TID tempTID = null;
         Integer position = null;
-        while (retTup == null && runCount < indexTypes.length){
+        while (retTup == null && runCount < selects.length - 1){
             runCount += 1;
             //System.out.println("It goes in loop");
-            switch (indexTypes[roundRobinInd].indexType) {
-                case IndexType.BitMapIndex:
-                    try {
-                        nextentry = ((BitMapFileScan)indScan[roundRobinInd]).get_next();
-                        if (nextentry != null){
-                            RID keyRID = ((LeafData)((KeyDataEntry)nextentry).data).getData();
-                            tempTID = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(keyRID).getTupleByteArray());
-                            position = tempTID.position;
-                        }
-                    } catch (Exception e){
-                        throw new ScanIteratorException(e, "ColumnarIndexScan.java:  Btree Scan error");
-                    }
+            tempTID = orConditions[roundRobinInd].get_next();
+            roundRobinInd = (roundRobinInd + 1) % (selects.length - 1);
+            runCount = (tempTID == null) ? runCount : 0;
+
+            if (tempTID != null){
+                position = tempTID.position;
+                if (positions.containsKey(position)){
+                    positions.put(position, positions.get(position) + 1);
+                } else{
+                    positions.put(position, 1);
+                }
+
+                if (positions.get(position) >= selects.length - 1){
+                    //We got this position from all the condition
+                    //System.out.println("It does come here as well " + tempTID.position + " " + tempTID.numRIDs);
+                    tid = tempTID;
+                    retTup =  new Tuple();
+                    AttrType[] Jtypes = new AttrType[noOutFlds];
+                    short[]    ts_size;
+                    ts_size = TupleUtils.setup_op_tuple(retTup, Jtypes, attrTypes, noInFlds, str_sizes, outFlds, noOutFlds);
+                    Project(f, tid, attrTypes, retTup, outFlds, noOutFlds);
                     break;
-
-                case IndexType.B_Index:
-                    // error check the select condition
-                    // must be of the type: value op symbol || symbol op value
-                    // but not symbol op symbol || value op value
-                    try {
-                        nextentry = ((BTFileScan)indScan[roundRobinInd]).get_next();
-                        if (nextentry != null){
-                            RID keyRID = ((LeafData)((KeyDataEntry)nextentry).data).getData();
-                            tempTID = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(keyRID).getTupleByteArray());
-                            position = tempTID.position;
-                        }
-
-                    } catch (Exception e){
-                        throw new ScanIteratorException(e, "ColumnarIndexScan.java:  Btree Scan error");
-                    }
-                    break;
-                case IndexType.None:
-                    try {
-                        SerializedScan tempScanObj = (SerializedScan)indScan[roundRobinInd];
-                        tempTID = tempScanObj.getNextSerialized();
-                        while (tempTID != null) {
-                            Tuple tt = f.columnFile[tempScanObj.columnVal].getRecord(tempTID.recordIDs[tempScanObj.columnVal]);
-                            //As we have to pass it to eval we need to add space for header information
-                            int TotalSpaceNeeded = (1 + 2) * 2 + tt.getLength();
-                            int headerOffset = (1 + 2) * 2;
-                            short [] _string_sizes;
-                            if (f.type[tempScanObj.columnVal].attrType == AttrType.attrString){
-                                _string_sizes = new short[1];
-                                _string_sizes[0] = (short)f.offsets[tempScanObj.columnVal];
-                            } else {
-                                _string_sizes = new short[0];
-                            }
-                            AttrType[] colType = {f.type[tempScanObj.columnVal]};
-
-
-                            CondExpr[] tempExpr = new CondExpr[2];
-                            tempExpr[0] = new CondExpr();
-                            tempExpr[0].next = null;
-                            tempExpr[1] = null;
-                            tempExpr[0].op = selects[roundRobinInd].op;
-                            tempExpr[0].type1 = selects[roundRobinInd].type1;
-                            tempExpr[0].type2 = selects[roundRobinInd].type2;
-                            tempExpr[0].operand1.symbol = new FldSpec(new RelSpec(RelSpec.outer), 1);
-                            //tempExpr[0].operand1 = selects[roundRobinInd].operand1;
-                            tempExpr[0].operand2 = selects[roundRobinInd].operand2;
-                            //System.out.println("The value comparison is " + new ValueIntClass(tt.getTupleByteArray()).value);
-                            //System.out.println("Operand Created " + tempExpr[0].op.toString() + " " + tempExpr[0].type1.toString() + " " + tempExpr[0].operand2.integer + " " + tempScanObj.columnVal);
-
-                            byte[] arr = new byte[TotalSpaceNeeded];
-                            System.arraycopy (tt.getTupleByteArray(), 0, arr, headerOffset, tt.getLength());
-                            tt = new Tuple(arr, 0, arr.length);
-
-                            try {
-                                tt.setHdr((short) 1, colType, _string_sizes);
-                            }
-                            catch (Exception e) {
-                                throw new IndexException(e, "ColumnIndexScan.java: Heapfile error");
-                            }
-
-                            boolean eval;
-                            try {
-                                eval = PredEval.Eval(tempExpr, tt, null, colType, null);
-                            }
-                            catch (Exception e) {
-                                throw new IndexException(e, "ColumnarIndexScan.java: Heapfile error");
-                            }
-
-                            if (eval) {
-                                // There is no need for projection here so returning the tuple
-                                position = tempTID.position;
-
-                                break;
-                            } else {
-                                tempTID = tempScanObj.getNextSerialized();
-                            }
-                        }
-                    } catch (Exception e) {
-                        throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
-                    }
-
-                    break;
-                default:
-                    throw new UnknownIndexTypeException("Only BTree, BitMap and column scan supported as of now");
-
-            }
-            roundRobinInd = (roundRobinInd + 1) % indexTypes.length;
-            runCount = (position == null) ? runCount : 0;
-
-            if (position != null && !positions.contains(position)){
-                //System.out.println("It does come here as well " + tempTID.position + " " + tempTID.numRIDs);
-                tid = tempTID;
-                retTup =  new Tuple();
-                AttrType[] Jtypes = new AttrType[noOutFlds];
-                short[]    ts_size;
-                ts_size = TupleUtils.setup_op_tuple(retTup, Jtypes, attrTypes, noInFlds, str_sizes, outFlds, noOutFlds);
-                Project(f, tid, attrTypes, retTup, outFlds, noOutFlds);
-                positions.add(position);
-                break;
+                }
             }
         }
        return retTup;
@@ -338,34 +209,8 @@ public class ColumnarIndexScan {
             UnknownIndexTypeException,
             Exception
     {
-        for (int i = 0; i < indexTypes.length; i++) {
-            switch (indexTypes[i].indexType) {
-                case IndexType.BitMapIndex:
-                    try {
-                        ((BitMapFileScan) indScan[i]).delete_current();
-                    } catch (Exception e) {
-                        throw new IndexException(e, "BTree error in destroying index scan.");
-                    }
-                    break;
-
-                case IndexType.B_Index:
-                    try {
-                        ((BTFileScan) indScan[i]).DestroyBTreeFileScan();
-                    } catch (Exception e) {
-                        throw new IndexException(e, "BTree error in destroying index scan.");
-                    }
-                    break;
-                case IndexType.None:
-                    try {
-                        ((SerializedScan) indScan[i]).closeTupleScan();
-                    } catch (Exception e) {
-                        throw new Exception("Error in closing scan " + e.getMessage());
-                    }
-                    break;
-                default:
-                    throw new UnknownIndexTypeException("Only BTree, BitMap and column scan supported as of now");
-
-            }
+        for (int i = 0; i < orConditions.length; i++) {
+            orConditions[i].close();
         }
     }
 }
