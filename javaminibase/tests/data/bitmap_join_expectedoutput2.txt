@@ -1,0 +1,5 @@
+T1.A T1.B T2.B
+fdas	1	qwer
+fdas	1	asdf
+reqw	2	zxcv
+reqw	2	uiop

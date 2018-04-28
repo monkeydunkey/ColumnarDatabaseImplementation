@@ -1,5 +1,6 @@
 package tests;
 
+import columnar.Columnarfile;
 import iterator.FldSpec;
 
 import java.util.regex.Matcher;
@@ -16,6 +17,24 @@ public class BitMapJoinInput {
     private String equiConst;
     private String targetColumns;
     private String numbuf;
+    private int leftJoinFieldIndex;
+    private int rightJoinFieldIndex;
+
+    public int getLeftJoinFieldIndex() {
+        return leftJoinFieldIndex;
+    }
+
+    public void setLeftJoinFieldIndex(int leftJoinFieldIndex) {
+        this.leftJoinFieldIndex = leftJoinFieldIndex;
+    }
+
+    public int getRightJoinFieldIndex() {
+        return rightJoinFieldIndex;
+    }
+
+    public void setRightJoinFieldIndex(int rightJoinFieldIndex) {
+        this.rightJoinFieldIndex = rightJoinFieldIndex;
+    }
 
     public String getColumnDB() {
         return columnDB;
@@ -82,7 +101,7 @@ public class BitMapJoinInput {
     }
 
     public static BitMapJoinInput parse(String[] split) {
-        final String regex = "(\\w+) (\\w+) (\\w+) (\\{.+?\\}) (\\{.+?\\}) (\\{.+?\\}) (\\[.+?\\])\\s(.+$)";
+        final String regex = "(\\w+) (\\w+) (\\w+) \\{(.+?)\\} \\{(.+?)\\} \\{(.+?)\\} \\[(.+?)\\]\\s(.+$)";
         final String inputString = String.join(" ", split);
 
         final Pattern pattern = Pattern.compile(regex);
@@ -103,6 +122,24 @@ public class BitMapJoinInput {
         return bitMapJoinInput;
     }
 
+    public static String getRegexMatch(String regex, String input, int group){
+        final Pattern pattern = Pattern.compile(regex);
+        final Matcher matcher = pattern.matcher(input);
+
+        while (matcher.find()) {
+            return matcher.group(group);
+        }
+
+        throw new RuntimeException("No Regex Match");
+    }
+
+    public String getT1ColumnName(String input){
+        return getRegexMatch("T1\\.(.)", input, 1);
+    }
+    public String getT2ColumnName(String input){
+        return getRegexMatch("T2\\.(.)", input, 1);
+    }
+
     public FldSpec[] getProjectionList() {
         return new FldSpec[0];//todo
     }
@@ -111,11 +148,32 @@ public class BitMapJoinInput {
         return Integer.parseInt(getNumbuf());
     }
 
-    public int getLeftJoinFieldIndex() {
-        return 0;//todo
+    public int parseLeftJoinFieldIndex(Columnarfile innerColumnarFile) {
+        String equiConst = getEquiConst();
+        equiConst = equiConst.replace(" ", "");
+
+        // seperate statments
+        // statment AND statment OR statment
+        // For bitmap statment can only be = or !=
+        // todo handle ors and ands
+
+        return innerColumnarFile.getColumnIndexByName(getT1ColumnName(equiConst));
     }
 
-    public int getRightJoinFieldIndex() {
-        return 0;//todo
+    public int parseRightJoinFieldIndex(Columnarfile outerColumnarFile) {
+        String equiConst = getEquiConst();
+        equiConst = equiConst.replace(" ", "");
+
+        // seperate statments
+        // statment AND statment OR statment
+        // For bitmap statment can only be = or !=
+        // todo handle ors and ands
+
+        return outerColumnarFile.getColumnIndexByName(getT2ColumnName(equiConst));
+    }
+
+    public void finishParsing(Columnarfile outerColumnarFile, Columnarfile innerColumnarFile){
+        setLeftJoinFieldIndex(parseLeftJoinFieldIndex(innerColumnarFile));
+        setRightJoinFieldIndex(parseRightJoinFieldIndex(outerColumnarFile));
     }
 }

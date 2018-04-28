@@ -1,0 +1,4 @@
+batchinsert ./tests/data/smalltest.txt column_db_name columnar_file_name 4
+index column_db_name columnar_file_name C BITMAP
+query column_db_name columnar_file_name [A B C D] {C = 8} 50
+quit

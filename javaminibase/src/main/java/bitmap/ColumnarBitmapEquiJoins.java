@@ -1,11 +1,14 @@
 package bitmap;
 
+import btree.ConstructPageException;
+import btree.UnpinPageException;
 import columnar.Columnarfile;
 import global.AttrType;
 import heap.*;
 import iterator.FldSpec;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class ColumnarBitmapEquiJoins {
 
@@ -20,9 +23,9 @@ public class ColumnarBitmapEquiJoins {
      * @param len_in2 number of columns of the second (inner) columnar file
      * @param t2_str_sizes list of string sizes of the second (inner) columnar file
      * @param amt_of_mem amount of memory from BitMapJoin Input
-     * @param leftColumnarFileName first (outer) columnar file
+     * @param leftColumnarFileName second (inner) columnar file
      * @param leftJoinField index of the field to join
-     * @param rightColumnarFileName second (inner) columnar file
+     * @param rightColumnarFileName first (outer) columnar file
      * @param rightJoinField index of the field to join
      * @param proj_list fields to display on the final output
      * @param n_out_flds number of fields to display on the final output
@@ -40,10 +43,20 @@ public class ColumnarBitmapEquiJoins {
             String rightColumnarFileName,
             int rightJoinField,
             FldSpec[] proj_list,
-            int n_out_flds) throws HFDiskMgrException, InvalidTupleSizeException, HFException, IOException, InvalidSlotNumberException, SpaceNotAvailableException, HFBufMgrException {
+            int n_out_flds) throws HFDiskMgrException, InvalidTupleSizeException, HFException, IOException, InvalidSlotNumberException, SpaceNotAvailableException, HFBufMgrException, ConstructPageException, UnpinPageException {
 
         Columnarfile outerColumnarfile = new Columnarfile(leftColumnarFileName);
         Columnarfile innerColumnarfile = new Columnarfile(rightColumnarFileName);
+
+        BitMapFile outerbitMapIndexFile = outerColumnarfile.getBitMapIndexFile(rightJoinField);
+        BitMapFile innerbitMapIndexFile = innerColumnarfile.getBitMapIndexFile(leftJoinField);
+
+        BitMapDirectoryIterator bmdi = new BitMapDirectoryIterator(innerbitMapIndexFile.getHeaderPage().getPageId());
+        BMHeaderPageDirectoryRecord next = bmdi.getNext();
+        while(next != null){
+            //outter loop of bitmap join
+//            BM.getDirectoryForValue()
+        }
 
     }
 

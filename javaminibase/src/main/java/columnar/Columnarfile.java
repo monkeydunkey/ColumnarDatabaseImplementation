@@ -41,6 +41,10 @@ public class Columnarfile implements Filetype, GlobalConst {
     private RID[] headerRIDs;
     public int[] offsets; //store the offset count for each column
 
+    public String getFileName() {
+        return _fileName;
+    }
+
     private static String _convertToStrings(byte[] byteStrings) {
         /*
         String[] data = new String[byteStrings.length];
@@ -757,6 +761,18 @@ public class Columnarfile implements Filetype, GlobalConst {
         return fileName;
     }
 
+    public String getBitMapIndexFileName(int column) {
+        return getBitMapIndexFileName(getFileName(), column);
+    }
+
+    public BitMapFile getBitMapIndexFile(int column){
+        try {
+            return new BitMapFile(getBitMapIndexFileName(column));
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting bitmap file from columnar file by column: "+column);
+        }
+    }
+
     public boolean markTupleDeleted(TID tid)
             throws InvalidSlotNumberException,
             InvalidUpdateException,
@@ -767,7 +783,7 @@ public class Columnarfile implements Filetype, GlobalConst {
             Exception {
         ValueIntClass toDelete = new ValueIntClass(1);
         byte[] arr = toDelete.getByteArr();
-        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns], new Tuple(arr, 0, arr.length));
+        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns-1], new Tuple(arr, 0, arr.length));
     }
 
     public boolean purgeAllDeletedTuples()

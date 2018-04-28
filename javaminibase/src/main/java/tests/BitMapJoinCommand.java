@@ -16,13 +16,18 @@ public class BitMapJoinCommand {
     public static void run(String[] split) {
         try {
             pcounter.initialize();
-            //bmj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST EQUICONST [TARGETCOLUMNS] NUMBUF
+            //bmj COLUMNDB          OUTERFILE                   INNERFILE                   OUTERCONST       INNERCONST      EQUICONST       [TARGETCOLUMNS]     NUMBUF
+            //bmj column_db_name    columnar_file_name_outter    columnar_file_name_inner   {A = 1,A = 2}   {B = 1,B = 2}   {T1.A = T2.B}   [T1.A T1.B T2.B]    50
+            // T1 = outer
+            // T2 = inner
 
             BitMapJoinInput bitMapJoinInput = BitMapJoinInput.parse(split);
 
 
             Columnarfile outterColumnarfile = new Columnarfile(bitMapJoinInput.getOuterFile());
             Columnarfile innerColumnarfile = new Columnarfile(bitMapJoinInput.getInnerFile());
+
+            bitMapJoinInput.finishParsing(outterColumnarfile,innerColumnarfile);
 
             ColumnarBitmapEquiJoins columnarBitmapEquiJoins = new ColumnarBitmapEquiJoins(
                     outterColumnarfile.type,

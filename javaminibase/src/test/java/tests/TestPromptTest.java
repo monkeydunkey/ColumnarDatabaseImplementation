@@ -85,6 +85,19 @@ public class TestPromptTest {
     }
 
     @Test
+    public void test_insert_then_query_int_bitmap() {
+        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_int_bitmap.txt"});
+        assertTrue(outContent.toString().contains(
+                "Running query test...\n" +
+                        System.lineSeparator() +
+                        "[Connecticut, Delaware, 8, 8]" + System.lineSeparator() +
+                        "[Vermont, West_Virginia, 8, 6]" + System.lineSeparator() +
+                        "[Delaware, Singapore, 8, 6]" + System.lineSeparator() +
+                        "query test finished!"
+        ));
+    }
+
+    @Test
     @Ignore
     public void test_insert_then_index_then_bitmapjoin() {
         TestPrompt.main(new String[] {"./tests/cases/phase3/test_insert_then_index_then_bitmapjoin.txt"});

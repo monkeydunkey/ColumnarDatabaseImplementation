@@ -1,6 +1,7 @@
 package bitmap;
 
 import btree.PinPageException;
+import btree.UnpinPageException;
 import diskmgr.Page;
 import global.*;
 import heap.InvalidSlotNumberException;
@@ -46,7 +47,7 @@ public class BM {
         return booleans;
     }
 
-    private static ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
+    public static ArrayList<BMHeaderPageDirectoryRecord> getDirectoryRecords(BitMapHeaderPage header) {
         try{
             short slotCnt = header.getSlotCnt();
             RID[] rids = new RID[slotCnt];
@@ -74,7 +75,7 @@ public class BM {
         return new ArrayList<>();
     }
 
-    private static Page pinPage(PageId pageno)
+    public static Page pinPage(PageId pageno)
             throws PinPageException {
         try {
             Page page = new Page();
@@ -83,6 +84,16 @@ public class BM {
         } catch (Exception e) {
             e.printStackTrace();
             throw new PinPageException(e, "");
+        }
+    }
+
+    public static void unpinPage(PageId pageno, boolean dirty)
+            throws UnpinPageException {
+        try {
+            SystemDefs.JavabaseBM.unpinPage(pageno, dirty);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new UnpinPageException(e, "");
         }
     }
 
