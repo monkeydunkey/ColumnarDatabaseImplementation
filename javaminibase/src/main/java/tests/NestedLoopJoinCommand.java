@@ -7,6 +7,11 @@ import java.util.regex.Pattern;
 public class NestedLoopJoinCommand {
     public static void run(String[] split) {
         pcounter.initialize();
+        String dbName = "";
+        String OuterFileName = "";
+        String InnerFileName = "";
+
+        //Function Signature :
         //nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST OUTERACCTYPE [TARGETCOLUMNS] NUMBUF
 
         String text    =
@@ -29,13 +34,10 @@ public class NestedLoopJoinCommand {
             }
         }
 
-        for(int i=0; i<parsedArr_count; i++){
-            System.out.println(parsedArr[i] + "\n");
-        }
-
-        //todo parse input params
-
-        //todo execute
+        dbName = parsedArr[0] // Setting COLUMNDBNAME
+        InnerFileName = parsedArr[1] // Setting INNERFILENAME
+        OuterFileName = parsedArr[2] //Setting OUTERFILENAME
+        
 
         System.out.println("NestedLoopJoin done!");
         System.out.println("Disk read count: "+ pcounter.rcounter);
