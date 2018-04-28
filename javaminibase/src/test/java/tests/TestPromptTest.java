@@ -75,7 +75,8 @@ public class TestPromptTest {
     @Test
     public void test_insert_then_query_string_bitmap() {
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_string_bitmap.txt"});
-        assertTrue(outContent.toString().contains("Running query test...\n" +
+        assertTrue(outContent.toString().contains(
+                "Running query test...\n" +
                 System.lineSeparator() +
                 "[Montana, District_of_Columbia, 2, 8]" + System.lineSeparator() +
                 "[New_Hampshire, District_of_Columbia, 6, 6]" + System.lineSeparator() +
@@ -86,13 +87,7 @@ public class TestPromptTest {
     @Test
     @Ignore
     public void test_insert_then_index_then_bitmapjoin() {
-        //todo
-        // batch insert
-        // create bitmap index
-        // create second columnar file (batch insert)
-        // create bitmap index
-        // join
-//        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_index_then_bitmapjoin.txt"});
+        TestPrompt.main(new String[] {"./tests/cases/phase3/test_insert_then_index_then_bitmapjoin.txt"});
     }
 
     // todo test bitmap directory pages overflow

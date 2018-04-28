@@ -37,6 +37,9 @@ public class TestPrompt {
         System.out.println("ACCESSTYPE valid inputs: FILESCAN, COLUMNSCAN, BTREE, or BITMAP");
         System.out.println("PURGED valid inputs: 0 -> don't purge deleted tuples, 1 -> purge deleted tuples");
 
+        System.out.println("**********Nested Loop Join Query**********");
+        System.out.println("> nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST OUTERACCTYPE [TARGETCOLUMNS] NUMBUF");
+
         System.out.println("Quit Program Execution:");
         System.out.println("> quit");
 
@@ -120,6 +123,14 @@ public class TestPrompt {
             {
                 try {
                     BitMapJoinCommand.run(split);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            else if( command.equals("nlj") )
+            {
+                try {
+                    NestedLoopJoinCommand.run(split);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
