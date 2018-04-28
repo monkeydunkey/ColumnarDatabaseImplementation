@@ -26,8 +26,8 @@ public class TestPromptTest {
 
     @Before
     public void setup(){
-//        System.setOut(new PrintStream(outContent));
-//        System.setErr(new PrintStream(errContent));
+        System.setOut(new PrintStream(outContent));
+        System.setErr(new PrintStream(errContent));
         System.out.println("=================================================");
         System.out.println("currently executing test: "+ name.getMethodName());
         System.out.println("=================================================");
@@ -35,13 +35,13 @@ public class TestPromptTest {
 
     }
 
-    @AfterClass
-    public static void cleanup(){
-//        System.setOut(out);
-//        System.setErr(err);
-//
-//        System.out.println(outContent.toString());
-//        System.out.println(errContent.toString());
+    @After
+    public void cleanup(){
+        System.setOut(out);
+        System.setErr(err);
+
+        System.out.println(outContent.toString());
+        System.out.println(errContent.toString());
     }
 
     @Test

@@ -41,12 +41,11 @@ public class BM {
 
     public static boolean[] givenDirectoryPageGetBitMap(BMHeaderPageDirectoryRecord directoryRecord) throws PinPageException, IOException, InvalidSlotNumberException {
         PageId pageno = directoryRecord.getBmPageId();
-        System.out.println("getting page number: "+pageno);
-        BMPage bmPage = new BMPage(pageno, pinPage(pageno));
+        BMPage bmPage = new BMPage(pinPage(pageno));
         if(bmPage.getSlotCnt() == 0 ){
             throw new RuntimeException("THERE SHOULD BE DATA HERE");
         }
-        Tuple record = bmPage.getRecord(new RID(pageno, 1));
+        Tuple record = bmPage.getRecord(new RID(pageno, 0));
         boolean[] booleans = BitMapFile.fromBytes(record.getTupleByteArray(), directoryRecord.arraySize);
         return booleans;
     }
@@ -106,6 +105,7 @@ public class BM {
         for (int i = 0; i < directoryRecords.size(); i++) {
             BMHeaderPageDirectoryRecord directoryRecord = directoryRecords.get(i);
             ValueClass directoryRecordValueClass = directoryRecord.getValueClass();
+
             if(valueClass instanceof ValueStrClass){
                 if(directoryRecordValueClass instanceof ValueStrClass){
                     ValueStrClass directoryRecordValueClassValue = (ValueStrClass) directoryRecordValueClass;
@@ -115,7 +115,13 @@ public class BM {
                     }
                 }
             }else if(valueClass instanceof ValueIntClass){
-
+                if(directoryRecordValueClass instanceof ValueIntClass){
+                    ValueIntClass directoryRecordValueClassValue = (ValueIntClass) directoryRecordValueClass;
+                    ValueIntClass valueClassValue = (ValueIntClass) valueClass;
+                    if(valueClassValue.equals(directoryRecordValueClassValue)){
+                        return directoryRecord;
+                    }
+                }
             }else{
                 throw new RuntimeException("Unknown Value Class type");
             }

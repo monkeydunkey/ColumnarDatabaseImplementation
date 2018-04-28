@@ -116,7 +116,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     }
 
 
-    private void unpinPage(PageId pageno, boolean dirty)
+    public static void unpinPage(PageId pageno, boolean dirty)
             throws UnpinPageException {
         try {
             SystemDefs.JavabaseBM.unpinPage(pageno, dirty /* = not DIRTY */);
@@ -148,7 +148,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     }
 
 
-    private Page pinPage(PageId pageno)
+    public static Page pinPage(PageId pageno)
             throws PinPageException {
         try {
             Page page = new Page();
@@ -236,7 +236,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return booleans;
     }
     
-    public boolean[] toBooleanArray(List list){
+    public static boolean[] toBooleanArray(List list){
         boolean[] booleans = new boolean[list.size()];
         Iterator it = list.iterator();
         int i =0;
@@ -254,18 +254,12 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         boolean[] booleans = toBooleanArray(cursorBuffer);
         System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
         System.out.println("inserting record into cursorBMPage: "+cursorBMPage.getCurPage()+" : "+cursorBuffer);
-        boolean cursorPageInsertWasSuccessful = cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
+        cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
         System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
-        if(!cursorPageInsertWasSuccessful){
-            System.out.println("cursorBMPage.insertRecord was unsuccessful");
-        }
 
         System.out.println("inserting header page with cursorBMPage: "+cursorBMPage.curPage);
         BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
-        boolean insertWasSuccessful = headerPage.insertRecord(directoryRecord.getByteArray());
-        if(!insertWasSuccessful){
-            throw new RuntimeException("insert bit map header page record was unsuccessful!, this may be because bitmap depends on HFPage behavior and HFPage is never persisted (if javaminibase creates a file and then terminates, and then reruns this will be an issue)");
-        }
+        headerPage.insertRecord(directoryRecord.getByteArray());
         System.out.println("inserting");
         System.out.println("header page slot count: "+ headerPage.getSlotCnt());
 
@@ -275,7 +269,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         cursorValueClass = null;
     }
 
-    private BMPage getNewBMPage() throws HFBufMgrException, IOException {
+    public static BMPage getNewBMPage() throws HFBufMgrException, IOException {
         Page apage = new Page();
         PageId pageId = new PageId();
         pageId = newPage(apage, 1);
@@ -285,7 +279,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return bmPage;
     }
 
-    private PageId newPage(Page page, int num)
+    public static PageId newPage(Page page, int num)
             throws HFBufMgrException {
 
         PageId tmpId = new PageId();
