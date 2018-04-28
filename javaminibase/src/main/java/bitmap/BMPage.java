@@ -57,7 +57,6 @@ public class BMPage extends Page
 
     /* Open a BMPage and make this point to the given page */
     public BMPage(PageId pageno, Page page) throws IOException {
-        data = page.getpage();
         init(pageno,page);
     }
 

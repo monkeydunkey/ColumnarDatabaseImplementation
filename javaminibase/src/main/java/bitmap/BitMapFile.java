@@ -78,7 +78,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
             PageId pgId = headerPage.getPageId();
             if (pgId.pid != INVALID_PAGE)
                 _destroyFile(pgId);
-            unpinPage(headerPageId);
+            unpinPage(headerPageId, true);
             freePage(headerPageId);
             delete_file_entry(dbname);
             headerPage = null;
@@ -116,10 +116,10 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     }
 
 
-    private void unpinPage(PageId pageno)
+    private void unpinPage(PageId pageno, boolean dirty)
             throws UnpinPageException {
         try {
-            SystemDefs.JavabaseBM.unpinPage(pageno, false /* = not DIRTY */);
+            SystemDefs.JavabaseBM.unpinPage(pageno, dirty /* = not DIRTY */);
         } catch (Exception e) {
             e.printStackTrace();
             throw new UnpinPageException(e, "");
@@ -252,11 +252,15 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     public void flushCursor() throws IOException, UnpinPageException {
         // write current buffer to page
         boolean[] booleans = toBooleanArray(cursorBuffer);
+        System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
+        System.out.println("inserting record into cursorBMPage: "+cursorBMPage.getCurPage()+" : "+cursorBuffer);
         boolean cursorPageInsertWasSuccessful = cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
+        System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
         if(!cursorPageInsertWasSuccessful){
             System.out.println("cursorBMPage.insertRecord was unsuccessful");
         }
 
+        System.out.println("inserting header page with cursorBMPage: "+cursorBMPage.curPage);
         BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
         boolean insertWasSuccessful = headerPage.insertRecord(directoryRecord.getByteArray());
         if(!insertWasSuccessful){
@@ -265,7 +269,8 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         System.out.println("inserting");
         System.out.println("header page slot count: "+ headerPage.getSlotCnt());
 
-        unpinPage(cursorBMPage.getCurPage());
+        unpinPage(cursorBMPage.getCurPage(), true);
+        System.out.println("unpinning page: "+cursorBMPage.getCurPage());
         cursorBuffer = new LinkedList<>();
         cursorValueClass = null;
     }

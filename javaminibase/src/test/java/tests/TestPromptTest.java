@@ -31,13 +31,12 @@ public class TestPromptTest {
         System.out.println("=================================================");
         System.out.println("currently executing test: "+ name.getMethodName());
         System.out.println("=================================================");
+        new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/column_db_name").deleteOnExit();
 
     }
 
     @AfterClass
     public static void cleanup(){
-        boolean delete = new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/column_db_name").delete();
-        System.out.println("delete db file was successful: "+delete);
 //        System.setOut(out);
 //        System.setErr(err);
 //
