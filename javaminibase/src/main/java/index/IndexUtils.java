@@ -227,6 +227,11 @@ public class IndexUtils {
 			}
 			else {
 				key = getValueClass(selects[0], selects[0].type2, 2);
+				if (f == null){
+					System.out.println("The columnar file was null");
+				} else {
+					System.out.println("does come here !!!!!!");
+				}
 				indScan = ((BitMapFile)indFile).new_scan(key, f);
 			}
 			return indScan;

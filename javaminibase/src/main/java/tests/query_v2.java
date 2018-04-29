@@ -124,6 +124,7 @@ public class query_v2 implements GlobalConst {
             }
 
             condList = new CondExpr[OrSelects.length + 1];
+            System.out.println("Conditions: " + OrSelects[0]);
             colIndex = new ArrayList<IndexType>();//IndexType[singleSelects.length];
             colIndexNames = new ArrayList<String>();//String[singleSelects.length];
             //Creating the selection query
@@ -134,6 +135,7 @@ public class query_v2 implements GlobalConst {
                 condList[i] = new CondExpr();
                 CondExpr tempExpr = condList[i];
                 for (int j = 0; j < conditionStatements.length; j++){
+                    System.out.println(conditionStatements[j]);
                     String[] selectparts = conditionStatements[j].split("\\s+");
                     tempExpr.type1 = new AttrType(AttrType.attrSymbol);
                     int colInd = cFile.getColumnIndexByName(selectparts[0]);
@@ -145,7 +147,7 @@ public class query_v2 implements GlobalConst {
                     } else {
                         colIndexNames.add(cfName + ".hdr." + String.valueOf(colInd) + ((cFile.indexType[colInd].indexType == IndexType.B_Index) ? ".Btree" : ".BitMap"));
                     }
-
+                    System.out.println("Index name: " + colIndexNames.get(colIndexNames.size() - 1));
                     int opType = AttrOperator.aopEQ;
                     switch(selectparts[1]) {
                         case "=":
@@ -185,6 +187,10 @@ public class query_v2 implements GlobalConst {
                     }else{
                         tempExpr.operand2.string = selectparts[2];
                     }
+                    if (j < conditionStatements.length - 1){
+                        tempExpr.next = new CondExpr();
+                    }
+                    tempExpr = tempExpr.next;
                 }
 
 

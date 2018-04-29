@@ -17,6 +17,7 @@ import iterator.*;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.function.ObjDoubleConsumer;
 
 /**
  * Created by shashankbhushan on 4/17/18.
@@ -72,7 +73,8 @@ public class ColumnarIndexScanPosition {
                                      boolean indexOnly)
             throws IndexException,
             InvalidTypeException,
-            UnknownIndexTypeException
+            UnknownIndexTypeException,
+            CloneNotSupportedException
     {
 
         positions = new HashSet<Integer>();
@@ -84,12 +86,14 @@ public class ColumnarIndexScanPosition {
         int indexFileName = 0;
         indScan = new Object[index.length];
         this.f = cf;
-
+        System.out.println("The index length is " + index.length);
         for (int i = 0; i < index.length; i++) {
             CondExpr[] tempExpr = new CondExpr[2];
             tempExpr[1] = null;
-            tempExpr[0] = currSel;
-
+            tempExpr[0] = (CondExpr) currSel.clone();
+            if (currSel == null){
+                System.out.println("The Selection passed is null inner call");
+            }
             //CondExpr[] cpyArr = {currSel};
             //System.arraycopy(cpyArr, 0, tempExpr, 0, 1);
             tempExpr[0].next = null;
@@ -255,6 +259,7 @@ public class ColumnarIndexScanPosition {
             runCount = (position == null) ? runCount : 0;
 
             if (position != null && !positions.contains(position)){
+                System.out.println();
                 //System.out.println("It does come here as well internal " + tempTID.position + " " + tempTID.numRIDs);
                 positions.add(position);
                 break;

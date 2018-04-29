@@ -9,7 +9,7 @@ import global.*;
  *  connected by OR operators.
  */
 
-public class CondExpr {
+public class CondExpr implements Cloneable{
   
   /**
    * Operator like "<"
@@ -46,6 +46,12 @@ public class CondExpr {
     operand2.integer = 0;
     
     next = null;
+  }
+
+  public Object clone() throws
+          CloneNotSupportedException
+  {
+    return super.clone();
   }
 }
 
