@@ -1,0 +1,8 @@
+batchinsert ./tests/data/sample1.txt db1 outer 4
+batchinsert ./tests/data/sample2.txt db1 inner 4
+index db1 outer D BITMAP
+index db1 outer C BITMAP
+index db1 inner D BITMAP
+index db1 inner C BITMAP
+bmj db1 outer inner {D = 5 AND C = 5} {C = 5 AND D = 5} {outer.C = inner.C} [outer.A inner.B inner.C] 50
+quit

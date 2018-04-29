@@ -84,4 +84,13 @@ class BMHeaderPageDirectoryRecord {
 
         return data;
     }
+
+    @Override
+    public String toString() {
+        return "BMHeaderPageDirectoryRecord{" +
+                "bmPageId=" + bmPageId +
+                ", valueClass=" + valueClass +
+                ", arraySize=" + arraySize +
+                '}';
+    }
 }

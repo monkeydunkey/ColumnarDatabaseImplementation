@@ -100,7 +100,7 @@ public class ColumnarBitmapEquiJoins extends Iterator {
                     proj_list, nOutFlds);
         }
         catch(Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
         }
         this.leftRelName = OuterColumnarFileName;
         this.rightRelName = InnerColumnarFileName;
@@ -123,7 +123,7 @@ public class ColumnarBitmapEquiJoins extends Iterator {
             cf2 = new Columnarfile(InnerColumnarFileName);
         }
         catch(Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
         }
         for (int i = 0; i < outerColIndexNames.length; i++){
             System.out.println("Index Name: " + outerColIndexNames[i]);
@@ -243,10 +243,13 @@ public class ColumnarBitmapEquiJoins extends Iterator {
         {
             try {
                 outerScan.close();
-                inner.close();
+                if (inner != null){
+                    inner.close();
+                }
+
             }
             catch(Exception e) {
-                System.err.println(e);
+                e.printStackTrace();
             }
             closeFlag = true;
         }

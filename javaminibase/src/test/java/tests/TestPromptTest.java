@@ -32,6 +32,7 @@ public class TestPromptTest {
         System.out.println("currently executing test: "+ name.getMethodName());
         System.out.println("=================================================");
         new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/column_db_name").deleteOnExit();
+        new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/db1").deleteOnExit();
 
     }
 
@@ -68,6 +69,11 @@ public class TestPromptTest {
     @Test
     public void test_insert_then_query_string_filescan(){
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_string_filescan.txt"});
+    }
+
+    @Test
+    public void test_insert_then_index_then_bitmapjoin_shashank(){
+        TestPrompt.main(new String[] {"./tests/cases/phase3/test_insert_then_index_then_bitmapjoin_shashank.txt"});
     }
 
     @Test

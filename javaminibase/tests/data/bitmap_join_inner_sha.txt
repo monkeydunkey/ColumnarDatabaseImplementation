@@ -1,0 +1,5 @@
+A:char(25)	B:int	C:int	D:int
+fdas	1	5	5
+reqw	2	5	5
+vczx	3	4	4
+mnvb	4	4	4

@@ -109,7 +109,7 @@ public class ColumnarIndexScanPosition {
                     } catch (Exception e) {
                         throw new IndexException(e, "ColumnIndexScan.java: BitMap exceptions caught from IndexUtils.BitMap_scan().");
                     }
-                    indexFileName++;
+
                     break;
 
                 case IndexType.B_Index:
@@ -117,11 +117,11 @@ public class ColumnarIndexScanPosition {
                     // must be of the type: value op symbol || symbol op value
                     // but not symbol op symbol || value op value
                     try {
+                        System.out.println("Name of the Btree Index we are opening: " + indName[indexFileName]);
                         indFile = new BTreeFile(indName[indexFileName]);
                     } catch (Exception e) {
                         throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from BTreeFile constructor");
                     }
-
                     try {
                         //System.out.println("Operand Created " + tempExpr[0].op.toString() + " " + tempExpr[0].type1.toString() + " " + tempExpr[0].operand2.integer + " " + indName[indexFileName] + " " + tempExpr[0].operand1.symbol.offset);
                         if (indFile == null){
@@ -131,7 +131,6 @@ public class ColumnarIndexScanPosition {
                     } catch (Exception e) {
                         throw new IndexException(e, "ColumnIndexScan.java: BTreeFile exceptions caught from IndexUtils.BTree_scan().");
                     }
-                    indexFileName++;
                     break;
                 case IndexType.None:
                     try {
@@ -147,6 +146,7 @@ public class ColumnarIndexScanPosition {
                     throw new UnknownIndexTypeException("Only BTree, BitMap and column scan supported as of now");
 
             }
+            indexFileName++;
             currSel = currSel.next;
         }
 

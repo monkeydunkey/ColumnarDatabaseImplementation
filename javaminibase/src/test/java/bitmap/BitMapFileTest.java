@@ -1,9 +1,10 @@
 package bitmap;
 
+import btree.AddFileEntryException;
+import btree.ConstructPageException;
+import btree.GetFileEntryException;
 import diskmgr.Page;
-import global.PageId;
-import global.RID;
-import global.SystemDefs;
+import global.*;
 import heap.HFBufMgrException;
 import heap.HFPage;
 import heap.Tuple;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Random;
 
 import static org.junit.Assert.*;
 
@@ -73,5 +75,28 @@ public class BitMapFileTest {
         Page page = BitMapFile.pinPage(hfpage.getCurPage());
         HFPage hfPage1 = new HFPage(page);
         System.out.println("hfpage: "+hfPage1.getSlotCnt());
+    }
+
+    @Test
+    public void hugeBitMap() throws Exception {
+        new SystemDefs("tempdbname",100000,100,"Clock");
+        BitMapCreator mapCreator = new BitMapCreator("asdfasdf", null, 1, new ValueStrClass(""));
+        Random rn = new Random();
+        int min = 0;
+        int max = 5;
+
+        do{
+            for (int i = 0; i < 8000; i++) {
+                int num = rn.nextInt(max - min + 1) + min;
+                byte[] data = new byte[4];
+                Convert.setIntValue(num, 0, data);
+                mapCreator.push(AttrType.attrInteger, data);
+            }
+            mapCreator.checkPoint();
+        } while (mapCreator.hasMore());
+        mapCreator.close();
+
+        BM bm = new BM();
+//        bm.printBitMap(mapCreator.getBitMapFile().getHeaderPage());
     }
 }

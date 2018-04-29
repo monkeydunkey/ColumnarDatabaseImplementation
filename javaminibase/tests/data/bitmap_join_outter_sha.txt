@@ -1,0 +1,5 @@
+A:int	B:char(25)	C:int	D:int
+1	qwer	5	5
+1	asdf	5	5
+2	zxcv	4	4
+2	uiop	4	4
