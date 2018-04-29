@@ -389,29 +389,19 @@ public class Columnarfile implements Filetype, GlobalConst {
         TID lastEntryTID = deserializeTuple(columnFile[numColumns + 1].getRecord(lastRID).getTupleByteArray());
         return lastEntryTID.position;
     }
-
-    public int getInsertPosition(TID tid, int batchInsertToken)
-        throws Exception
-    {
+    /*
+    public int getInsertPosition(TID tid, int batchInsertToken){
         int position = 0;
         if (batchInsertToken == currBatchInsertToken){
-            if (tid.recordIDs[numColumns + 1].pageNo.pid == currPageNo){
+            if (tid.recordIDs[numColumns + 1].pageNo.pid == currPageNo) {
                 position = (tid.recordIDs[numColumns + 1].slotNo - 1 == currSlotno) ? currPosition : getTuplePosition(currPageNo, currSlotno);
-                if (){
-                     = currPosition + 1;
-                } else {
-
-                }
             }
-        } else {
-
-        }
         currBatchInsertToken = batchInsertToken;
         currPosition = position;
         return currPosition;
     }
-
-    public TID insertTuple(byte[] tupleptr, int batchInsertToken)
+    */
+    public TID insertTuple(byte[] tupleptr)
             throws SpaceNotAvailableException,
             InvalidSlotNumberException,
             InvalidTupleSizeException,

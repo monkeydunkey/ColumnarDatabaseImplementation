@@ -25,10 +25,15 @@ public class ColumnarBitmapEquiJoins extends Iterator {
     private   FldSpec       perm_mat[];
     private   int           nOutFlds;
     private   Columnarfile  cf1, cf2;
-    private   ColumnarFileScan inner;
+    private   ColumnarIndexScan inner;
     private   String        leftRelName, rightRelName;
-    private   FldSpec[]     inner_rel_proj_list;
-    private   Iterator      outer;
+    private   FldSpec[]     inner_rel_proj_list, outer_rel_proj_list;
+    private   ColumnarIndexScan outerScan;
+    private   CondExpr[]      OuterFilter;
+    private   CondExpr[]     InnerFilter;
+    private   CondExpr[]      JoinFilter;
+    private   String[]       innerIndexNames;
+    private   IndexType[]    innerIndexes;
 
     /** Constructor
      * Initialize the two relations which are joined, including relation type,
@@ -54,12 +59,18 @@ public class ColumnarBitmapEquiJoins extends Iterator {
             int len_in2,
             short[] t2_str_sizes,
             int amt_of_mem,
-            String leftColumnarFileName,
-            int leftJoinField,
-            String rightColumnarFileName,
-            int rightJoinField,
+            String OuterColumnarFileName,
+            CondExpr[] joinFilter,
+            CondExpr[] outerFilter,
+            CondExpr[] innerFilter,
+            String InnerColumnarFileName,
             FldSpec[] proj_list,
+            IndexType[] outerColIndexArr,
+            IndexType[] innerColIndexArr,
+            String[] outerColIndexNames,
+            String[] innerColIndexNames,
             int n_out_flds )
+        throws Exception
     {
         _in1 = new AttrType[in1.length];
         _in2 = new AttrType[in2.length];
@@ -72,7 +83,7 @@ public class ColumnarBitmapEquiJoins extends Iterator {
         inner_tuple = new Tuple();
         Jtuple = new Tuple();
 
-        n_buf_pgs    = amt_of_mem;
+        n_buf_pgs  = amt_of_mem;
         inner = null;
         done  = false;
         get_from_outer = true;
@@ -91,19 +102,34 @@ public class ColumnarBitmapEquiJoins extends Iterator {
         catch(Exception e) {
             System.err.println(e);
         }
-        this.leftRelName = leftColumnarFileName;
-        this.rightRelName = rightColumnarFileName;
+        this.leftRelName = OuterColumnarFileName;
+        this.rightRelName = InnerColumnarFileName;
+        this.InnerFilter = innerFilter;
+        this.JoinFilter = joinFilter;
+        this.innerIndexes = innerColIndexArr;
+        this.innerIndexNames = innerColIndexNames;
+
         inner_rel_proj_list = new FldSpec[len_in2];
+        outer_rel_proj_list = new FldSpec[len_in1];
+        for (int i = 0; i < len_in1; i++){
+            outer_rel_proj_list[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
+        }
+
         for (int i = 0; i < len_in2; i++){
             inner_rel_proj_list[i] = new FldSpec(new RelSpec(RelSpec.outer), i+1);
         }
         try {
-            cf1 = new Columnarfile(leftColumnarFileName);
-            cf2 = new Columnarfile(rightColumnarFileName);
+            cf1 = new Columnarfile(OuterColumnarFileName);
+            cf2 = new Columnarfile(InnerColumnarFileName);
         }
         catch(Exception e) {
             System.err.println(e);
         }
+        for (int i = 0; i < outerColIndexNames.length; i++){
+            System.out.println("Index Name: " + outerColIndexNames[i]);
+        }
+        outerScan = new ColumnarIndexScan(OuterColumnarFileName, outerColIndexArr, outerColIndexNames, cf1.type, t1_str_sizes,
+                cf1.type.length, outer_rel_proj_list.length, outer_rel_proj_list, outerFilter, false);
         //perform scan and assign it to outer
     }
 
@@ -158,13 +184,14 @@ public class ColumnarBitmapEquiJoins extends Iterator {
                     inner = null;
                 }
                 try {
-                    inner = new ColumnarFileScan(relName, _in2, t2_str_sizescopy, (short)in2_len, in2_len, inner_rel_proj_list,RightFilter);
+                    inner = new ColumnarIndexScan(rightRelName, innerIndexes, innerIndexNames, cf1.type, t2_str_sizescopy,
+                            cf2.type.length, inner_rel_proj_list.length, inner_rel_proj_list, InnerFilter, false);
                 }
                 catch(Exception e) {
                     throw new NestedLoopException(e, "openScan failed");
                 }
 
-                if( (outer_tuple = outer.get_next()) == null )
+                if( (outer_tuple = outerScan.get_next()) == null )
                 {
                     done = true;
                     if( inner != null )
@@ -183,7 +210,7 @@ public class ColumnarBitmapEquiJoins extends Iterator {
             TID tid = new TID(in2_len);
             while( (inner_tuple = inner.get_next() ) != null )
             {
-                if( PredEval.Eval(OutputFilter, outer_tuple, inner_tuple, _in1, _in2) )
+                if( PredEval.Eval(JoinFilter, outer_tuple, inner_tuple, _in1, _in2) )
                 {
                     // Apply a projection on the outer and inner tuples
                     Projection.Join(outer_tuple, _in1,
@@ -215,7 +242,8 @@ public class ColumnarBitmapEquiJoins extends Iterator {
         if( !closeFlag )
         {
             try {
-                outer.close();
+                outerScan.close();
+                inner.close();
             }
             catch(Exception e) {
                 System.err.println(e);
