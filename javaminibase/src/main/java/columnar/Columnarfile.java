@@ -30,8 +30,10 @@ public class Columnarfile implements Filetype, GlobalConst {
     public PageId _metaPageId;   // page number of header page
     public int _ftype;
     public String[] columnNames;
-
-
+    private int currBatchInsertToken = -1;
+    private int currPageNo;
+    private int currSlotno;
+    private int currPosition = 0;
     private boolean _file_deleted;
     private String _fileName;
     private int INTSIZE = 4;
@@ -380,7 +382,36 @@ public class Columnarfile implements Filetype, GlobalConst {
         }
     }
 
-    public TID insertTuple(byte[] tupleptr)
+    public int getTuplePosition(int pageNo, int slotNo)
+        throws Exception
+    {
+        RID lastRID = new RID(new PageId(pageNo), slotNo - 1);
+        TID lastEntryTID = deserializeTuple(columnFile[numColumns + 1].getRecord(lastRID).getTupleByteArray());
+        return lastEntryTID.position;
+    }
+
+    public int getInsertPosition(TID tid, int batchInsertToken)
+        throws Exception
+    {
+        int position = 0;
+        if (batchInsertToken == currBatchInsertToken){
+            if (tid.recordIDs[numColumns + 1].pageNo.pid == currPageNo){
+                position = (tid.recordIDs[numColumns + 1].slotNo - 1 == currSlotno) ? currPosition : getTuplePosition(currPageNo, currSlotno);
+                if (){
+                     = currPosition + 1;
+                } else {
+
+                }
+            }
+        } else {
+
+        }
+        currBatchInsertToken = batchInsertToken;
+        currPosition = position;
+        return currPosition;
+    }
+
+    public TID insertTuple(byte[] tupleptr, int batchInsertToken)
             throws SpaceNotAvailableException,
             InvalidSlotNumberException,
             InvalidTupleSizeException,
@@ -433,6 +464,7 @@ public class Columnarfile implements Filetype, GlobalConst {
         tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
         tid.numRIDs = i;
         tid.recordIDs[numColumns + 1] = columnFile[numColumns + 1].insertRecord(serializeTuple(tid));
+
         for (int j = 0; j < numColumns; j++){
             if (indexType[j].indexType == 1){
                 try {
