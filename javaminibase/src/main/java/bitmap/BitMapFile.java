@@ -348,16 +348,32 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     /**
      * Flush the current buffer and begin on a new link list of pages
      */
-    public void setCursorUniqueValue(ValueClass value) throws IOException, HFBufMgrException, UnpinPageException {
+    public void setCursorUniqueValue(ValueClass value, String PositionEnc) throws IOException, HFBufMgrException, UnpinPageException {
         // at this point BMPage should be pointing to the first page of that Unique value
         // update the header file to contain the unique values mapping to the link list of pages
 
+        createNewHeadPage();
+        cursorValueClass = value;
+        String[] positions = PositionEnc.split("\\s+");
+        int currInd = 0;
+        for (int i = 0 ; i < positions.length; i++){
+            int presentPos = Integer.parseInt(positions[i]);
+            for (int j = currInd; j < presentPos; j++){
+                cursorBuffer.add(false);
+            }
+            cursorBuffer.add(true);
+            currInd = presentPos + 1;
+        }
+        flushCursor();
+
+        /*
         if(cursorBuffer.size() != 0 ){
             flushCursor();
         }
 
         createNewHeadPage();
         cursorValueClass = value;
+        */
 
         // insert a directory page with the following info
         // UniqueValue (string or int) -> FirstPage of that

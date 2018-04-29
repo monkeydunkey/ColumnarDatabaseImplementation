@@ -20,22 +20,24 @@ public class BitMapCreator {
 
     BitMapFile bitMapFile;
     LinkedList<Object> linkedList;
-    HashMap<Object, ValueClass> hashMap;
+    LinkedList<Integer> typeLinkedList;
+    HashMap<Object, String> hashMap;
 
     public BitMapCreator(String indexFileName, Columnarfile columnarfile, int column, ValueClass value) throws ConstructPageException, IOException, GetFileEntryException, AddFileEntryException {
         bitMapFile = new BitMapFile(indexFileName, columnarfile, column, value);
         bitMapFile.initCursor();
         linkedList = new LinkedList<>();
         hashMap = new HashMap<>();
+        typeLinkedList = new LinkedList<>();
     }
 
-    public void push(int attrType, byte[] dataArr) throws Exception {
+    public void push(int attrType, byte[] dataArr, int postion) throws Exception {
         KeyClass key;
         switch (attrType) {
             case AttrType.attrString:
                 ValueStrClass st = new ValueStrClass(dataArr);
                 key = new StringKey(st.value);
-
+                /*
                 if (linkedList.isEmpty()) {
                     linkedList.add(st.value);
                     hashMap.put(st.value, st);
@@ -48,9 +50,14 @@ public class BitMapCreator {
                 } else {
                     bitMapFile.cursorInsert(false);
                 }
+                */
                 if (!hashMap.containsKey(st.value)) {
-                    linkedList.add(st.value);
-                    hashMap.put(st.value, st);
+                    linkedList.add(st);
+                    typeLinkedList.add(AttrType.attrString);
+                    hashMap.put(st.value, String.valueOf(postion));
+
+                } else {
+                    hashMap.put(st.value, hashMap.get(st.value) + " " + String.valueOf(postion));
                 }
                 // if value is not the same, see if it is already in the list
                 // if its already in the list, populate 0
@@ -64,6 +71,7 @@ public class BitMapCreator {
 
                 // st.value
                 // insert string value here
+                /*
                 if (linkedList.isEmpty()) {
                     linkedList.add(it.value);
                     hashMap.put(it.value, it);
@@ -76,9 +84,13 @@ public class BitMapCreator {
                 } else {
                     bitMapFile.cursorInsert(false);
                 }
+                */
                 if (!hashMap.containsKey(it.value)) {
-                    linkedList.add(it.value);
-                    hashMap.put(it.value, it);
+                    linkedList.add(it);
+                    typeLinkedList.add(AttrType.attrInteger);
+                    hashMap.put(it.value, String.valueOf(postion));
+                } else {
+                    hashMap.put(it.value, hashMap.get(it.value) + " " + String.valueOf(postion));
                 }
                 // if value is not the same, see if it is already in the list
                 // if its already in the list, populate 0
@@ -93,15 +105,24 @@ public class BitMapCreator {
         return !linkedList.isEmpty();
     }
     public void close() throws IOException, UnpinPageException, PageUnpinnedException, InvalidFrameNumberException, HashEntryNotFoundException, ReplacerException {
-        bitMapFile.cursorComplete();
+        //bitMapFile.cursorComplete();
         bitMapFile.close();
     }
 
     public void checkPoint() throws HFBufMgrException, UnpinPageException, IOException {
-        Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
-        if (linkedList.size() != 0) {
-            bitMapFile.setCursorUniqueValue(hashMap.get(linkedList.peek()));
+        while (linkedList.size() != 0){
+            Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
+            Integer type = typeLinkedList.removeFirst();
+            if (AttrType.attrString == type){
+                System.out.println("The encoding is:" + hashMap.get( ((ValueStrClass)current).value ));
+                bitMapFile.setCursorUniqueValue((ValueClass)current, hashMap.get(((ValueStrClass)current).value));
+            } else {
+                System.out.println("The encoding is:" + hashMap.get( ((ValueIntClass)current).value ));
+                bitMapFile.setCursorUniqueValue((ValueClass)current, hashMap.get(((ValueIntClass)current).value));
+            }
+
         }
+
     }
 
     public BitMapFile getBitMapFile() {
