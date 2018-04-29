@@ -17,33 +17,31 @@ public class TestPrompt {
 
     private static void menu()
     {
-        System.out.println("\n---------------------------------------------- MENU ----------------------------------------------");
+        System.out.println("\n-------------------------------------------------- MENU --------------------------------------------------");
         System.out.println("Format of command line input:");
 
         System.out.println("**********Batch Insert**********");
-        System.out.println("> batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS");
-        System.out.println("DATAFILENAME should be a .txt file in the .../src/tests folder");
+        System.out.println("> batchinsert DATAFILENAME COLUMNDBNAME COLUMNARFILENAME NUMCOLUMNS\n");
 
         System.out.println("*************Index**************");
-        System.out.println("> index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE");
-        System.out.println("INDEXTYPE valid inputs: BTREE or BITMAP");
+        System.out.println("> index COLUMNDBNAME COLUMNARFILENAME COLUMNNAME INDEXTYPE\n");
 
         System.out.println("*************Query**************");
-        System.out.println("> query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE");
-        System.out.println("ACCESSTYPE valid inputs: FILESCAN, COLUMNSCAN, BTREE, or BITMAP");
+        System.out.println("> query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF\n");
 
         System.out.println("**********Delete Query**********");
-        System.out.println("> delete_query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE PURGED");
-        System.out.println("ACCESSTYPE valid inputs: FILESCAN, COLUMNSCAN, BTREE, or BITMAP");
-        System.out.println("PURGED valid inputs: 0 -> don't purge deleted tuples, 1 -> purge deleted tuples");
+        System.out.println("> delete_query COLUMNDBNAME COLUMNARFILENAME [TARGETCOLUMNNAMES] VALUECONSTRAINT NUMBUF ACCESSTYPE PURGED\n");
 
-        System.out.println("**********Nested Loop Join Query**********");
-        System.out.println("> nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST OUTERACCTYPE [TARGETCOLUMNS] NUMBUF");
+        System.out.println("********Nested Loop Join********");
+        System.out.println("> nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST [TARGETCOLUMNS] NUMBUF\n");
+
+        System.out.println("***********BitMap Join**********");
+        System.out.println("> bmj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST EQUICONST [TARGETCOLUMNS] NUMBUF\n");
 
         System.out.println("Quit Program Execution:");
         System.out.println("> quit");
 
-        System.out.println("--------------------------------------------- EXIT MENU --------------------------------------------");
+        System.out.println("------------------------------------------------- EXIT MENU ------------------------------------------------");
         System.out.print("> ");
     }
 
