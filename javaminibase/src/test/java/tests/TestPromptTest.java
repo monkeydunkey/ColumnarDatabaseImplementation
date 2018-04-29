@@ -71,6 +71,11 @@ public class TestPromptTest {
     }
 
     @Test
+    public void test_insert_then_index_then_bitmapjoin_shashank(){
+        TestPrompt.main(new String[] {"./tests/cases/phase3/test_insert_then_index_then_bitmapjoin_shashank.txt"});
+    }
+
+    @Test
     public void test_insert_then_query_string_bitmap() {
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_string_bitmap.txt"});
         assertTrue(outContent.toString().contains(
