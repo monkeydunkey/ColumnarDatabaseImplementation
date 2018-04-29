@@ -96,6 +96,7 @@ public class TestPromptTest {
     }
 
     @Test
+    @Ignore
     public void test_insert_then_query_int_huge_bitmap() {
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_int_huge_bitmap.txt"});
         assertTrue(outContent.toString().contains(
