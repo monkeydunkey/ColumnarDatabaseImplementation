@@ -32,8 +32,8 @@ public class Columnarfile implements Filetype, GlobalConst {
     public int _ftype;
     public String[] columnNames;
     private int currBatchInsertToken = -1;
-    private int currPageNo;
-    private int currSlotno;
+    private int currPageNo = -1;
+    private int currSlotno = -1;
     private int currPosition = 0;
     private boolean _file_deleted;
     private String _fileName;
@@ -390,18 +390,23 @@ public class Columnarfile implements Filetype, GlobalConst {
         TID lastEntryTID = deserializeTuple(columnFile[numColumns + 1].getRecord(lastRID).getTupleByteArray());
         return lastEntryTID.position;
     }
-    /*
-    public int getInsertPosition(TID tid, int batchInsertToken){
+
+    public int getInsertPosition(TID tid, int batchInsertToken)
+        throws Exception
+    {
         int position = 0;
-        if (batchInsertToken == currBatchInsertToken){
-            if (tid.recordIDs[numColumns + 1].pageNo.pid == currPageNo) {
-                position = (tid.recordIDs[numColumns + 1].slotNo - 1 == currSlotno) ? currPosition : getTuplePosition(currPageNo, currSlotno);
-            }
+        if ((batchInsertToken == currBatchInsertToken) && (tid.recordIDs[numColumns + 1].pageNo.pid == currPageNo)){
+            position = ((tid.recordIDs[numColumns + 1].slotNo - 1 == currSlotno) ? currPosition : getTuplePosition(currPageNo, currSlotno)) + 1;
+        } else {
+            position = columnFile[numColumns + 1].RidToPos(tid.recordIDs[numColumns + 1], this);
+        }
         currBatchInsertToken = batchInsertToken;
         currPosition = position;
+        currSlotno = tid.recordIDs[numColumns + 1].slotNo;
+        currPageNo = tid.recordIDs[numColumns + 1].pageNo.pid;
         return currPosition;
     }
-    */
+
     public TID insertTuple(byte[] tupleptr)
             throws SpaceNotAvailableException,
             InvalidSlotNumberException,
@@ -470,6 +475,79 @@ public class Columnarfile implements Filetype, GlobalConst {
             }
         }
         tid.position = columnFile[numColumns + 1].RidToPos(tid.recordIDs[numColumns + 1], this);
+        byte[] arr = serializeTuple(tid);
+        updateColumnofTuple(tid, new Tuple(arr, 0, arr.length), numColumns + 1);
+        return tid;
+    }
+
+    public TID insertTuple(byte[] tupleptr, int batchInsertToken)
+            throws SpaceNotAvailableException,
+            InvalidSlotNumberException,
+            InvalidTupleSizeException,
+            SpaceNotAvailableException,
+            HFException,
+            HFBufMgrException,
+            HFDiskMgrException,
+            IOException,
+            Exception{
+        if (tupleptr.length >= MAX_SPACE) {
+            throw new SpaceNotAvailableException(null, "Columnarfile: no available space");
+        }
+        KeyClass[] keyArr = new KeyClass[numColumns];
+        int i = 0;
+        int offset = 0; //The starting location of each column
+        TID tid = new TID(numColumns + 2);
+        tid.recordIDs = new RID[numColumns + 2];
+        for (AttrType attr: type) {
+            tid.recordIDs[i] = new RID();
+            //scan each column type
+            if (attr.attrType == AttrType.attrInteger) {
+                //insert type int
+                int intAttr = Convert.getIntValue(offset,tupleptr);
+                offset = offset + offsets[i];
+
+                byte[] intValue = new byte[offsets[i]];
+                Convert.setIntValue(intAttr, 0, intValue);
+                tid.recordIDs[i] = columnFile[i].insertRecord(intValue);
+                if (indexType[i].indexType == 1){
+                    //Btree Index
+                    keyArr[i] = new IntegerKey(intAttr);
+                }
+            }
+            if (attr.attrType == AttrType.attrString) {
+                //insert type String
+                String strAttr = Convert.getStrValue(offset,tupleptr,offsets[i]);
+                offset = offset + offsets[i];
+
+                byte[] strValue = new byte[offsets[i] + 2];
+                Convert.setStrValue(strAttr, 0, strValue);
+                tid.recordIDs[i] = columnFile[i].insertRecord(strValue);
+                if (indexType[i].indexType == 1){
+                    //Btree Index
+                    keyArr[i] = new StringKey(strAttr);
+                }
+            }
+            i++;
+        }
+        ValueIntClass newRow = new ValueIntClass(0);
+        tid.recordIDs[numColumns] = columnFile[numColumns].insertRecord(newRow.getByteArr());
+        tid.numRIDs = i;
+        tid.recordIDs[numColumns + 1] = columnFile[numColumns + 1].insertRecord(serializeTuple(tid));
+
+        for (int j = 0; j < numColumns; j++){
+            if (indexType[j].indexType == 1){
+                try {
+                    String indexFileName = _fileName + "." + String.valueOf(j) + ".Btree";
+                    //Setting the delete fashion to 1 which seems to be the default
+                    BTreeFile btree = new BTreeFile(indexFileName);
+                    btree.insert(keyArr[j], tid.recordIDs[numColumns + 1]);
+                }
+                catch (Exception ex){
+                    ex.printStackTrace();
+                }
+            }
+        }
+        tid.position = getInsertPosition(tid, batchInsertToken);//columnFile[numColumns + 1].RidToPos(tid.recordIDs[numColumns + 1], this);
         byte[] arr = serializeTuple(tid);
         updateColumnofTuple(tid, new Tuple(arr, 0, arr.length), numColumns + 1);
         return tid;
@@ -747,7 +825,7 @@ public class Columnarfile implements Filetype, GlobalConst {
             Exception {
         ValueIntClass toDelete = new ValueIntClass(1);
         byte[] arr = toDelete.getByteArr();
-        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns -1], new Tuple(arr, 0, arr.length));
+        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns], new Tuple(arr, 0, arr.length));
     }
 
     public boolean purgeAllDeletedTuples()

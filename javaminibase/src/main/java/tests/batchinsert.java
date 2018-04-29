@@ -28,6 +28,7 @@ public class batchinsert {
 		String COLUMNAR_FILE_NAME = argv[2];
 		String NUM_OF_COLUMNS = argv[3];
 
+		int batch_insert = 1;
 		System.out.println("DATAFILENAME: " + DATA_FILE_NAME);
 		System.out.println("COLUMNDBNAME: " + COLUMN_DB_NAME);
 		System.out.println("COLUMNARFILENAME: " + COLUMNAR_FILE_NAME);
@@ -151,7 +152,7 @@ public class batchinsert {
 						offset = offset + Size.STRINGSIZE;
 					}
 				}
-				cf.insertTuple(tupledata);
+				cf.insertTuple(tupledata, batch_insert);
 				offset = 0;
 				insertCount++;
 				if (insertCount%100 == 0){

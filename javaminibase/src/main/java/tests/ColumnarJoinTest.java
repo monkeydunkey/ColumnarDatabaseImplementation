@@ -210,12 +210,14 @@ class ColumnarJoinTestDriver extends TestDriver implements GlobalConst {
             e.printStackTrace();
             return status;
         }
+        /*
         if (status == OK && SystemDefs.JavabaseBM.getNumUnpinnedBuffers()
                 != SystemDefs.JavabaseBM.getNumBuffers()) {
             System.err.println("*** Opening columnar file has left pinned pages\n");
             status = FAIL;
             return status;
         }
+        */
 
         System.out.println("Join two tables on the second column\n"
                 + "Pi(outer.col1 outer.col2 outer.col3 inner.col1) (outer.col2 |X| inner.col2)");
