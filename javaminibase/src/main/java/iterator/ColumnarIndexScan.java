@@ -69,7 +69,8 @@ public class ColumnarIndexScan extends Iterator{
                              CondExpr[] selects, boolean indexOnly)
             throws IndexException,
             InvalidTypeException,
-            UnknownIndexTypeException
+            UnknownIndexTypeException,
+            CloneNotSupportedException
     {
 
         positions = new HashMap<Integer, Integer>();
@@ -100,7 +101,10 @@ public class ColumnarIndexScan extends Iterator{
                 orCondLength++;
                 tempExpr = tempExpr.next;
             }
-            //System.out.println("Or Condition length: " + orCondLength);
+            System.out.println("Or Condition length: " + orCondLength);
+            if (selects[i] == null){
+                System.out.println("The Selection passed is null");
+            }
             orConditions[i] = new ColumnarIndexScanPosition(f,
                     Arrays.copyOfRange(index, indexInd, indexInd + orCondLength),
                     Arrays.copyOfRange(indName, indexInd, indexInd + orCondLength),

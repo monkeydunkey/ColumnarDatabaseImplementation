@@ -120,7 +120,8 @@ public class TestPrompt {
             else if( command.equals("bmj") )
             {
                 try {
-                    BitMapJoinCommand.run(split);
+                    //BitMapJoinCommand.run(split);
+                    NestedLoopJoinCommand.run(split, false);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -128,7 +129,7 @@ public class TestPrompt {
             else if( command.equals("nlj") )
             {
                 try {
-                    NestedLoopJoinCommand.run(split);
+                    NestedLoopJoinCommand.run(split, true);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

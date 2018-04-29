@@ -6,7 +6,7 @@ import diskmgr.pcounter;
 import global.AttrType;
 import global.TID;
 import heap.*;
-import index.ColumnarIndexScan;
+import iterator.ColumnarIndexScan;
 
 import java.io.IOException;
 import java.util.regex.Matcher;

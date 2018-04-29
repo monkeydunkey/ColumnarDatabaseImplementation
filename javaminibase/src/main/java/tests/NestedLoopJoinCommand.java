@@ -22,6 +22,7 @@ public class NestedLoopJoinCommand {
             boolean success = false;
             boolean isInt = false;
             String[] conditionStatements = AndCond[i].split("\\s+OR\\s+");
+            //System.out.println(conditionStatements[0] + " : " + AndCond[i]);
             cond[i] = new CondExpr();
             CondExpr tempExpr = cond[i];
             for (int j = 0; j < conditionStatements.length; j++){
@@ -34,7 +35,7 @@ public class NestedLoopJoinCommand {
                 if (cf.indexType[colInd].indexType == IndexType.None){
                     colIndexNames.add("");
                 } else {
-                    colIndexNames.add(cond + ".hdr." + String.valueOf(colInd) + ((cf.indexType[colInd].indexType == IndexType.B_Index) ? ".Btree" : ".BitMap"));
+                    colIndexNames.add(cf.getFileName() + "." + String.valueOf(colInd) + ((cf.indexType[colInd].indexType == IndexType.B_Index) ? ".Btree" : ".BitMap"));
                 }
 
                 int opType = AttrOperator.aopEQ;
@@ -76,6 +77,10 @@ public class NestedLoopJoinCommand {
                 }else{
                     tempExpr.operand2.string = selectparts[2];
                 }
+                if (j < conditionStatements.length - 1){
+                    tempExpr.next = new CondExpr();
+                }
+                tempExpr = tempExpr.next;
             }
 
 
@@ -131,6 +136,11 @@ public class NestedLoopJoinCommand {
                 colInd = innerFile.getColumnIndexByName(selectparts[2].split("\\.")[1]);
                 tempExpr.operand2.symbol = new FldSpec (new RelSpec(RelSpec.innerRel),
                         colInd + 1);
+
+                if (j < conditionStatements.length - 1){
+                    tempExpr.next = new CondExpr();
+                }
+                tempExpr = tempExpr.next;
             }
 
 
@@ -138,8 +148,8 @@ public class NestedLoopJoinCommand {
         cond[cond.length - 1] = null;
     }
 
-
-    public static void run(String[] split)
+    //bitmapNLJ if True then nested loop join else bitmap equi Join
+    public static void run(String[] split, Boolean bitmapNLJ)
         throws Exception
     {
         pcounter.initialize();
@@ -157,7 +167,9 @@ public class NestedLoopJoinCommand {
         //nlj COLUMNDB OUTERFILE INNERFILE OUTERCONST INNERCONST JOINCONST [TARGETCOLUMNS] NUMBUF
 
         //final String regex = "(\\w+) (\\w+) (\\w+) (\\{.+?\\}) (\\{.+?\\}) (\\{.+?\\}) (\\w+) (\\[.+?\\])\\s(.+$)";
-        final String regex = "(\\w+) (\\w+) (\\w+) \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*)\\} \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*)\\} \\{((\\w+\\.\\w+ (=|!=|>|<) \\w+\\.\\w+(( AND | OR ))?)*)\\} \\[((\\w+\\.\\w+ ?)*)\\] (\\d+)";
+        //final String regex = "(\\w+) (\\w+) (\\w+) \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*)\\} \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*)\\} \\{((\\w+\\.\\w+ (=|!=|>|<) \\w+\\.\\w+(( AND | OR ))?)*)\\} \\[((\\w+\\.\\w+ ?)*)\\] (\\d+)";
+        final String regex = "(\\w+) (\\w+) (\\w+) \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*| )\\} \\{((\\w+ (=|!=|>|<) \\w+(( AND | OR ))?)*| )\\} \\{((\\w+\\.\\w+ (=|!=|>|<) \\w+\\.\\w+(( AND | OR ))?)*)\\} \\[((\\w+\\.\\w+ ?)*)\\] (\\d+)";
+
 
         final String inputString = String.join(" ", split);
         final Pattern pattern = Pattern.compile(regex);
@@ -243,17 +255,31 @@ public class NestedLoopJoinCommand {
 
             AttrType [] outerTypes = outerFile.type;
             FldSpec[] OuterProjection = new FldSpec[outerTypes.length];
-            ArrayList<Integer> stringLengths = new ArrayList<Integer>();
+            ArrayList<Integer> outerStringLengths = new ArrayList<Integer>();
             for (int j = 0; j < outerTypes.length; j++){
                 OuterProjection[j] = new FldSpec(new RelSpec(RelSpec.outer), j+1);
                 if (outerTypes[j].attrType == AttrType.attrString){
-                    stringLengths.add(outerFile.offsets[j]);
+                    outerStringLengths.add(outerFile.offsets[j]);
                 }
             }
-            short[] stringSize = new short[stringLengths.size()];
-            for (int j = 0; j < stringSize.length; j++){
-                stringSize[j] = stringLengths.get(j).shortValue();
+
+            ArrayList<Integer> innerStringLengths = new ArrayList<Integer>();
+            for (int j = 0; j < innerFile.type.length; j++){
+                if (innerFile.type[j].attrType == AttrType.attrString){
+                    innerStringLengths.add(innerFile.offsets[j]);
+                }
             }
+
+            short[] outerStringSize = new short[outerStringLengths.size()];
+            for (int j = 0; j < outerStringSize.length; j++){
+                outerStringSize[j] = outerStringLengths.get(j).shortValue();
+            }
+
+            short[] innerStringSize = new short[innerStringLengths.size()];
+            for (int j = 0; j < outerStringSize.length; j++){
+                innerStringSize[j] = innerStringLengths.get(j).shortValue();
+            }
+
             IndexType[] colIndexArr = new IndexType[colIndex.size()];
             String[] ccolIndexNamesArr = new String[colIndex.size()];
             for (int j = 0; j < colIndex.size(); j++){
@@ -262,25 +288,50 @@ public class NestedLoopJoinCommand {
             }
 
 
+            IndexType[] innerColIndexArr = new IndexType[InnerColIndex.size()];
+            String[] innerColIndexNamesArr = new String[InnerColIndex.size()];
+            for (int j = 0; j < InnerColIndex.size(); j++){
+                innerColIndexArr[j] = InnerColIndex.get(j);
+                innerColIndexNamesArr[j] = innerColIndexNames.get(j);
+            }
 
-            ColumnarIndexScan cfscan = new ColumnarIndexScan(OuterFileName, colIndexArr, ccolIndexNamesArr, outerTypes, stringSize,
-                    outerTypes.length, OuterProjection.length, OuterProjection, OuterCondList, false);
 
             CondExpr[] joinCondition = new CondExpr[JoinConstraints.length + 1];
             createJoinQuery(joinCondition, JoinConstraints, outerFile, innerFile);
 
-            ColumnarNestedLoopJoins nlj = new ColumnarNestedLoopJoins(outerFile.type, outerFile.numColumns, stringSize,
-                    innerFile.type, innerFile.numColumns, stringSize, NumBuf, cfscan, InnerFileName, joinCondition,
-                    InnerCondList, projection, projection.length);
+            if (bitmapNLJ){
+                ColumnarIndexScan cfscan = new ColumnarIndexScan(OuterFileName, colIndexArr, ccolIndexNamesArr, outerTypes, outerStringSize,
+                        outerTypes.length, OuterProjection.length, OuterProjection, OuterCondList, false);
+
+                ColumnarNestedLoopJoins nlj = new ColumnarNestedLoopJoins(outerFile.type, outerFile.numColumns, outerStringSize,
+                        innerFile.type, innerFile.numColumns, innerStringSize, NumBuf, cfscan, InnerFileName, joinCondition,
+                        InnerCondList, projection, projection.length);
 
 
-            Tuple newtuple = nlj.get_next();
+                Tuple newtuple = nlj.get_next();
 
-            while(newtuple != null) {
-                newtuple.print(targetColType);
-                newtuple = nlj.get_next();
+                while(newtuple != null) {
+                    newtuple.print(targetColType);
+                    newtuple = nlj.get_next();
+                }
+                cfscan.close();
+                nlj.close();
+            } else {
+                ColumnarBitmapEquiJoins cfs = new ColumnarBitmapEquiJoins(
+                        outerTypes, outerTypes.length, outerStringSize, innerFile.type,
+                        innerFile.numColumns, innerStringSize, NumBuf,
+                        OuterFileName, joinCondition, OuterCondList, InnerCondList,
+                        InnerFileName, projection, colIndexArr, innerColIndexArr,
+                        ccolIndexNamesArr, innerColIndexNamesArr, projection.length);
+                Tuple newtuple = cfs.get_next();
+
+                while(newtuple != null) {
+                    newtuple.print(targetColType);
+                    newtuple = cfs.get_next();
+                }
+                cfs.close();
             }
-            cfscan.close();
+
         }
         catch( Exception E ) {
             E.printStackTrace();
