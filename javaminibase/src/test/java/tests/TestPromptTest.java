@@ -26,8 +26,8 @@ public class TestPromptTest {
 
     @Before
     public void setup(){
-        System.setOut(new PrintStream(outContent));
-        System.setErr(new PrintStream(errContent));
+//        System.setOut(new PrintStream(outContent));
+//        System.setErr(new PrintStream(errContent));
         System.out.println("=================================================");
         System.out.println("currently executing test: "+ name.getMethodName());
         System.out.println("=================================================");
@@ -37,11 +37,11 @@ public class TestPromptTest {
 
     @After
     public void cleanup(){
-        System.setOut(out);
-        System.setErr(err);
+//        System.setOut(out);
+//        System.setErr(err);
 
-        System.out.println(outContent.toString());
-        System.out.println(errContent.toString());
+//        System.out.println(outContent.toString());
+//        System.out.println(errContent.toString());
     }
 
     @Test
@@ -85,6 +85,19 @@ public class TestPromptTest {
     @Test
     public void test_insert_then_query_int_bitmap() {
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_int_bitmap.txt"});
+        assertTrue(outContent.toString().contains(
+                "Running query test...\n" +
+                        System.lineSeparator() +
+                        "[Connecticut, Delaware, 8, 8]" + System.lineSeparator() +
+                        "[Vermont, West_Virginia, 8, 6]" + System.lineSeparator() +
+                        "[Delaware, Singapore, 8, 6]" + System.lineSeparator() +
+                        "query test finished!"
+        ));
+    }
+
+    @Test
+    public void test_insert_then_query_int_huge_bitmap() {
+        TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_int_huge_bitmap.txt"});
         assertTrue(outContent.toString().contains(
                 "Running query test...\n" +
                         System.lineSeparator() +
