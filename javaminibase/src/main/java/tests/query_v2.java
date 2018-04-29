@@ -1,17 +1,14 @@
 package tests;
 
-import btree.BTreeFile;
 import columnar.Columnarfile;
 import diskmgr.pcounter;
 import global.*;
 import heap.Tuple;
-import index.ColumnIndexScan;
-import index.ColumnarIndexScan;
+import iterator.ColumnarIndexScan;
 import iterator.*;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -215,12 +212,10 @@ public class query_v2 implements GlobalConst {
                     types.length, targetColNames.length, projection, condList, false);
 
 
-            TID emptyTID = new TID(5);
-            Tuple newtuple = cfscan.get_next(emptyTID);
-
+            Tuple newtuple = cfscan.get_next();
             while(newtuple != null) {
                 newtuple.print(targetColType);
-                newtuple = cfscan.get_next(emptyTID);
+                newtuple = cfscan.get_next();
             }
             cfscan.close();
         }
