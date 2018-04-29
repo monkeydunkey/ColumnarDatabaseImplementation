@@ -210,7 +210,15 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         //       1                              4
         //       8                              1
 
-        if((Math.ceil(cursorBuffer.size() / 8) + 4) == ((double) cursorBMPage.available_space())){
+
+        double bufferSizeInBytes = Math.ceil(cursorBuffer.size() / 8) + 8;
+        double availableSpace = cursorBMPage.available_space();
+
+        System.out.println("current value: "+cursorValueClass.toString());
+        System.out.println("bufferSizeInBytes: "+bufferSizeInBytes);
+        System.out.println("availableSpace: "+availableSpace);
+
+        if(bufferSizeInBytes == availableSpace){
             addLinkBMPage();
         }
 
@@ -272,6 +280,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         BMPage newBMPage = getNewBMPage();
         cursorBMPage.setNextPage(newBMPage.curPage);
         unpinPage(cursorBMPage.getCurPage(), true);
+        cursorBuffer = new LinkedList<>();
         cursorBMPage = newBMPage;
     }
 

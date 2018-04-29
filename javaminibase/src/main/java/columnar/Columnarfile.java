@@ -1,6 +1,7 @@
 package columnar;
 
 import bitmap.BM;
+import bitmap.BitMapCreator;
 import bitmap.BitMapFile;
 import btree.*;
 import diskmgr.Page;
@@ -658,11 +659,7 @@ public class Columnarfile implements Filetype, GlobalConst {
 
         try {
             String indexFileName = getBitMapIndexFileName(_fileName, column);
-            bitMapFile = new BitMapFile(indexFileName, this, column, value);
-
-            bitMapFile.initCursor();
-            LinkedList<Object> linkedList = new LinkedList<>();
-            HashMap<Object, ValueClass> hashMap = new HashMap<>();
+            BitMapCreator bitMapCreator = new BitMapCreator(indexFileName, this, column, value);
 
             do {
                 TupleScan cfs = new TupleScan(this);
@@ -670,83 +667,23 @@ public class Columnarfile implements Filetype, GlobalConst {
                 Tuple dataTuple = cfs.getNextInternal(emptyTID);
                 while (dataTuple != null) {
                     int offset = 0;
-                    KeyClass key;
                     for (int i = 0; i < column; i++) {
                         offset += (type[i].attrType == AttrType.attrString) ? offsets[i] + 2 : offsets[i];
                     }
-                    int tempOffset = (type[column].attrType == AttrType.attrString) ? offsets[column] + 2 : offsets[column];
+                    int attrType = type[column].attrType;
+                    int tempOffset = (attrType == AttrType.attrString) ? offsets[column] + 2 : offsets[column];
                     byte[] dataArr = new byte[tempOffset];
                     System.arraycopy(dataTuple.getTupleByteArray(), offset, dataArr, 0, tempOffset);
-                    switch (type[column].attrType) {
-                        case AttrType.attrString:
-                            ValueStrClass st = new ValueStrClass(dataArr);
-                            key = new StringKey(st.value);
 
-                            if (linkedList.isEmpty()) {
-                                linkedList.add(st.value);
-                                hashMap.put(st.value, st);
-                                bitMapFile.setCursorUniqueValue(st);
-                            }
-                            // does the value, match the current value being iterated on?
-                            // if same value as current push 1 and continue
-                            if (linkedList.peek().equals(st.value)) {
-                                bitMapFile.cursorInsert(true);
-                            } else {
-                                bitMapFile.cursorInsert(false);
-                            }
-                            if (!hashMap.containsKey(st.value)) {
-                                linkedList.add(st.value);
-                                hashMap.put(st.value, st);
-                            }
-                            // if value is not the same, see if it is already in the list
-                            // if its already in the list, populate 0
-                            // if it is not already in the list, add to list and populate 0
+                    bitMapCreator.push(attrType, dataArr);
 
-
-                            break;
-                        case AttrType.attrInteger:
-                            ValueIntClass it = new ValueIntClass(dataArr);
-                            key = new IntegerKey(it.value);
-
-                            // st.value
-                            // insert string value here
-                            if (linkedList.isEmpty()) {
-                                linkedList.add(it.value);
-                                hashMap.put(it.value, it);
-                                bitMapFile.setCursorUniqueValue(it);
-                            }
-                            // does the value, match the current value being iterated on?
-                            // if same value as current push 1 and continue
-                            if (linkedList.peek().equals(it.value)) {
-                                bitMapFile.cursorInsert(true);
-                            } else {
-                                bitMapFile.cursorInsert(false);
-                            }
-                            if (!hashMap.containsKey(it.value)) {
-                                linkedList.add(it.value);
-                                hashMap.put(it.value, it);
-                            }
-                            // if value is not the same, see if it is already in the list
-                            // if its already in the list, populate 0
-                            // if it is not already in the list, add to list and populate 0
-                            break;
-                        default:
-                            throw new Exception("Unexpected AttrType" + type[column].toString());
-                    }
                     emptyTID = new TID(numColumns + 2);
                     dataTuple = cfs.getNextInternal(emptyTID);
                 }
-                Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
-                if (linkedList.size() != 0) {
-                    bitMapFile.setCursorUniqueValue(hashMap.get(linkedList.peek()));
-                }
+                bitMapCreator.checkPoint();
+            } while (bitMapCreator.hasMore());
 
-                // iterate through all tuples for each unique value
-                // link list maintains ordered list of unique values
-                // hashmap ensures we do not insert duplicate values with O(1) time on the check
-            } while (!linkedList.isEmpty());
-            bitMapFile.cursorComplete();
-            bitMapFile.close();
+            bitMapCreator.close();
             updateIndexType(column, IndexType.BitMapIndex);
 
         } catch (Exception ex) {
