@@ -213,6 +213,7 @@ public class query_v2 implements GlobalConst {
             for (int j = 0; j < colIndex.size(); j++){
                 colIndexArr[j] = colIndex.get(j);
                 ccolIndexNamesArr[j] = colIndexNames.get(j);
+                System.out.println("IndexName: " + ccolIndexNamesArr[j] + " index type " + colIndexArr[j]);
             }
             ColumnarIndexScan cfscan = new ColumnarIndexScan(cfName, colIndexArr, ccolIndexNamesArr, types, stringSize,
                     types.length, targetColNames.length, projection, condList, false);

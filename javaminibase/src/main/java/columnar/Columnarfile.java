@@ -747,7 +747,7 @@ public class Columnarfile implements Filetype, GlobalConst {
             Exception {
         ValueIntClass toDelete = new ValueIntClass(1);
         byte[] arr = toDelete.getByteArr();
-        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns-1], new Tuple(arr, 0, arr.length));
+        return columnFile[numColumns].updateRecord(tid.recordIDs[numColumns -1], new Tuple(arr, 0, arr.length));
     }
 
     public boolean purgeAllDeletedTuples()

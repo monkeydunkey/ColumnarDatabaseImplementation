@@ -243,7 +243,10 @@ public class ColumnarBitmapEquiJoins extends Iterator {
         {
             try {
                 outerScan.close();
-                inner.close();
+                if (inner != null){
+                    inner.close();
+                }
+
             }
             catch(Exception e) {
                 e.printStackTrace();
