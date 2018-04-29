@@ -397,7 +397,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         return false;
     }
 
-    public IndexFileScan new_scan(ValueClass valueClass, Columnarfile f)
+    public IndexFileScan new_scan(ValueClass valueClass, Columnarfile f, Boolean equalityIne)
             throws InvalidSlotNumberException, PinPageException, IOException, InvalidTupleSizeException {
         // go through directory pages
         // get the linklist that matches the given key
@@ -407,6 +407,6 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         }
 
         // pass that linked list to bitMap file scan
-        return new BitMapFileScan(directoryForValue, f);
+        return new BitMapFileScan(directoryForValue, f, equalityIne);
     }
 }

@@ -21,6 +21,7 @@ public class BitMapFileScan extends IndexFileScan {
     private final Columnarfile columnarFile;
     private int currentPosition = 0;
     private SerializedScan internalScan;
+    private Boolean ineq;
 
     public BitMapFileScan(){
         directoryForValue = null;
@@ -29,13 +30,14 @@ public class BitMapFileScan extends IndexFileScan {
     }
 
 
-    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile)
+    public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile, Boolean ineq)
             throws InvalidSlotNumberException, IOException, PinPageException, InvalidTupleSizeException {
         this.directoryForValue = directoryForValue;
         boolean[] booleans = BM.givenDirectoryPageGetBitMap(directoryForValue);
         this.booleans = booleans;
         this.columnarFile = columnarfile;
         this.internalScan = new SerializedScan(columnarfile);
+        this.ineq = ineq;
     }
     @Override
     /**
@@ -53,10 +55,9 @@ public class BitMapFileScan extends IndexFileScan {
         Tuple tuple = null;
         //System.out.println(Arrays.toString(booleans));
         while(tuple == null && currentPosition < booleans.length){
-            if(booleans[currentPosition]){
+            if((booleans[currentPosition] && ineq) || (!booleans[currentPosition] && !ineq)){
 //                System.out.println("position matches bitmap index and condition! "+currentPosition);
 //
-
                 KeyClass keyClass = null;
                 RID ridByPosition = null;
 

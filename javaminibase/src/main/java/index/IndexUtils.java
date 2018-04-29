@@ -6,6 +6,8 @@ import btree.*;
 import heap.InvalidSlotNumberException;
 import heap.InvalidTupleSizeException;
 import iterator.*;
+import javafx.beans.binding.BooleanExpression;
+
 import java.io.*;
 
 
@@ -220,19 +222,15 @@ public class IndexUtils {
 
 		// symbol = value
 		ValueClass key;
-		if (selects[0].op.attrOperator == AttrOperator.aopEQ) {
+		if ((selects[0].op.attrOperator == AttrOperator.aopEQ) || (selects[0].op.attrOperator == AttrOperator.aopNE)) {
+			Boolean ineq = (selects[0].op.attrOperator == AttrOperator.aopEQ) ? true : false;
 			if (selects[0].type1.attrType != AttrType.attrSymbol) {
 				key = getValueClass(selects[0], selects[0].type1, 1);
-				indScan = ((BitMapFile)indFile).new_scan(key, f);
+				indScan = ((BitMapFile)indFile).new_scan(key, f, ineq);
 			}
 			else {
 				key = getValueClass(selects[0], selects[0].type2, 2);
-				if (f == null){
-					System.out.println("The columnar file was null");
-				} else {
-					System.out.println("does come here !!!!!!");
-				}
-				indScan = ((BitMapFile)indFile).new_scan(key, f);
+				indScan = ((BitMapFile)indFile).new_scan(key, f, ineq);
 			}
 			return indScan;
 		}
