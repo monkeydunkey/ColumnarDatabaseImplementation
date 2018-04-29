@@ -189,10 +189,20 @@ public class ColumnarIndexScanPosition {
                     // but not symbol op symbol || value op value
                     try {
                         nextentry = ((BTFileScan)indScan[roundRobinInd]).get_next();
-                        if (nextentry != null){
+                        while (nextentry != null){
                             RID keyRID = ((LeafData)((KeyDataEntry)nextentry).data).getData();
                             tempTID = f.deserializeTuple(f.columnFile[f.numColumns + 1].getRecord(keyRID).getTupleByteArray());
-                            position = tempTID.position;
+
+                            //Checking if tuple is marked for Deletion and skip it if so
+                            byte[] test = f.columnFile[tempTID.recordIDs.length -2].getRecord(tempTID.recordIDs[tempTID.recordIDs.length -2]).getTupleByteArray();
+                            ValueIntClass n1 = new ValueIntClass(test);
+                            if (n1.value == 0){
+                                position = tempTID.position;
+                                break;
+                            } else {
+                                nextentry = ((BTFileScan)indScan[roundRobinInd]).get_next();
+                            }
+
                         }
 
                     } catch (Exception e){
