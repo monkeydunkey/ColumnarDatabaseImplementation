@@ -22,6 +22,12 @@ public class BitMapFileScan extends IndexFileScan {
     private int currentPosition = 0;
     private SerializedScan internalScan;
 
+    public BitMapFileScan(){
+        directoryForValue = null;
+        booleans = null;
+        columnarFile = null;
+    }
+
 
     public BitMapFileScan(BMHeaderPageDirectoryRecord directoryForValue, Columnarfile columnarfile)
             throws InvalidSlotNumberException, IOException, PinPageException, InvalidTupleSizeException {

@@ -214,10 +214,6 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         double bufferSizeInBytes = Math.ceil(cursorBuffer.size() / 8) + 8;
         double availableSpace = cursorBMPage.available_space();
 
-        System.out.println("current value: "+cursorValueClass.toString());
-        System.out.println("bufferSizeInBytes: "+bufferSizeInBytes);
-        System.out.println("availableSpace: "+availableSpace);
-
         if(bufferSizeInBytes == availableSpace){
             addLinkBMPage();
         }
@@ -260,10 +256,16 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     public void flushCursor() throws IOException, UnpinPageException {
         // write current buffer to page
         boolean[] booleans = toBooleanArray(cursorBuffer);
-        cursorBMPage.insertRecord(toBytes(booleans));
+        RID rid = cursorBMPage.insertRecord(toBytes(booleans));
+        errorCheckInsert(rid);
 
-        BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
-        headerPage.insertRecord(directoryRecord.getByteArray());
+        addDirectoryPage(booleans);//todo only add directory page if this is the first BMPage for this vector
+
+        System.out.println("================================================");
+        System.out.println("flushing page: "+cursorBMPage.getCurPage());
+        System.out.println("writing array: "+Arrays.toString(booleans));
+        System.out.println("writing array: "+booleans.length);
+        System.out.println("================================================");
 
         unpinPage(cursorBMPage.getCurPage(), true);
         cursorBuffer = new LinkedList<>();
@@ -273,15 +275,40 @@ public class BitMapFile extends IndexFile implements GlobalConst {
 
     public void addLinkBMPage() throws IOException, HFBufMgrException, UnpinPageException {
         boolean[] booleans = toBooleanArray(cursorBuffer);
-        cursorBMPage.insertRecord(toBytes(booleans));
+        RID rid = cursorBMPage.insertRecord(toBytes(booleans));
+        errorCheckInsert(rid);
 
-        BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
-        headerPage.insertRecord(directoryRecord.getByteArray());
+        BMHeaderPageDirectoryRecord directoryRecord = addDirectoryPage(booleans);
+
+
         BMPage newBMPage = getNewBMPage();
         cursorBMPage.setNextPage(newBMPage.curPage);
+
+        System.out.println("================================================");
+        System.out.println("adding a new link to page, current directory page: "+ directoryRecord);
+        System.out.println("writing array: "+Arrays.toString(booleans));
+        System.out.println("writing array: "+booleans.length);
+        System.out.println("================================================");
+
         unpinPage(cursorBMPage.getCurPage(), true);
         cursorBuffer = new LinkedList<>();
         cursorBMPage = newBMPage;
+    }
+
+    private void errorCheckInsert(RID rid) {
+        if(rid == null){
+            System.out.println("================================================");
+            System.out.println("error inserting record into page!!!!!!!!");
+            System.out.println("page details: "+cursorBMPage);
+            System.out.println("================================================");
+            throw new RuntimeException("error inserting page!");
+        }
+    }
+
+    private BMHeaderPageDirectoryRecord addDirectoryPage(boolean[] booleans) throws IOException {
+        BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
+        headerPage.insertRecord(directoryRecord.getByteArray());
+        return directoryRecord;
     }
 
     public static BMPage getNewBMPage() throws HFBufMgrException, IOException {
@@ -375,6 +402,9 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         // go through directory pages
         // get the linklist that matches the given key
         BMHeaderPageDirectoryRecord directoryForValue = BM.getDirectoryForValue(valueClass, headerPage);
+        if(directoryForValue == null){
+            return new EmptyBitMapFileScan();
+        }
 
         // pass that linked list to bitMap file scan
         return new BitMapFileScan(directoryForValue, f);

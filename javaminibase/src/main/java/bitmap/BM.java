@@ -39,13 +39,19 @@ public class BM {
         }
     }
 
-    public static boolean[] givenDirectoryPageGetBitMap(BMHeaderPageDirectoryRecord directoryRecord) throws PinPageException, IOException, InvalidSlotNumberException {
+    public static boolean[] givenDirectoryPageGetBitMap(BMHeaderPageDirectoryRecord directoryRecord) throws PinPageException, IOException{
         PageId pageno = directoryRecord.getBmPageId();
         BMPage bmPage = new BMPage(pinPage(pageno));
         if(bmPage.getSlotCnt() == 0 ){
             throw new RuntimeException("THERE SHOULD BE DATA HERE");
         }
-        Tuple record = bmPage.getRecord(new RID(pageno, 0));
+        Tuple record = null;
+        try {
+            record = bmPage.getRecord(new RID(pageno, 0));
+        } catch (InvalidSlotNumberException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
         boolean[] booleans = BitMapFile.fromBytes(record.getTupleByteArray(), directoryRecord.arraySize);
         return booleans;
     }

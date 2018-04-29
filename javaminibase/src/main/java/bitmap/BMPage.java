@@ -2,6 +2,7 @@ package bitmap;
 
 import java.io.*;
 import java.lang.*;
+import java.util.Arrays;
 
 import global.*;
 import diskmgr.*;
@@ -710,4 +711,17 @@ public class BMPage extends Page
         throw new Exception("The given position does not exists");
     }
 
+    @Override
+    public String toString() {
+        return "BMPage{" +
+                "curPage=" + curPage +
+                ", slotCnt=" + slotCnt +
+                ", usedPtr=" + usedPtr +
+                ", freeSpace=" + freeSpace +
+                ", type=" + type +
+                ", prevPage=" + prevPage +
+                ", nextPage=" + nextPage +
+                ", data=" + Arrays.toString(data) +
+                '}';
+    }
 }

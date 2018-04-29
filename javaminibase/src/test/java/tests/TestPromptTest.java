@@ -32,6 +32,7 @@ public class TestPromptTest {
         System.out.println("currently executing test: "+ name.getMethodName());
         System.out.println("=================================================");
         new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/column_db_name").deleteOnExit();
+        new File("/Users/james_kieley/Documents/GitHub/CSE510-DBMS-Project/javaminibase/db1").deleteOnExit();
 
     }
 
@@ -101,7 +102,6 @@ public class TestPromptTest {
     }
 
     @Test
-    @Ignore
     public void test_insert_then_query_int_huge_bitmap() {
         TestPrompt.main(new String[] {"./tests/cases/test_insert_then_query_int_huge_bitmap.txt"});
         assertTrue(outContent.toString().contains(
