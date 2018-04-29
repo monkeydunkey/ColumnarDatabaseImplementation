@@ -47,11 +47,11 @@ public class batchinsert {
 			if(db_file.exists()) {	// file found
 				System.out.printf("An existing database (%s) was found, opening database.\n", COLUMN_DB_NAME);
 				// open database with 100 buffers
-				sysdef = new SystemDefs(COLUMN_DB_NAME,0,100,"Clock");
+				sysdef = new SystemDefs(COLUMN_DB_NAME,0,100000,"Clock");
 			}else
 			{
 				System.out.println("Opening new DB: " + COLUMN_DB_NAME);
-				sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100,"Clock");
+				sysdef = new SystemDefs(COLUMN_DB_NAME,100000,100000,"Clock");
 			}
 
 			//Borrowed tokenizer
@@ -108,6 +108,9 @@ public class batchinsert {
 			else setup a new file
 			*/
 			Columnarfile cf;
+			System.out.println("Page Read and Write Counts before Starting");
+			System.out.println("Disk read count: "+ pcounter.rcounter);
+			System.out.println("Disk write count: "+ pcounter.wcounter );
 			try {
 				//checking if the file exists
 				System.out.println("Table Name: " + COLUMNAR_FILE_NAME + "aa");
@@ -120,11 +123,13 @@ public class batchinsert {
 				System.out.println("*** Columnar File initialization left unpinned pages\n");
 			}
 			//cf.setColumnNames(columnnames);
-
+			System.out.println("Page Read and Write Counts after Columnar File Initialization");
+			System.out.println("Disk read count: "+ pcounter.rcounter);
+			System.out.println("Disk write count: "+ pcounter.wcounter );
 
 			System.out.println("Inserting tuples START");
 			//Putting in records
-			
+			int insertCount = 0;
 			byte [] tupledata = new byte[tuplelength];
 			int offset = 0;
 
@@ -148,8 +153,14 @@ public class batchinsert {
 				}
 				cf.insertTuple(tupledata);
 				offset = 0;
-			
-				Arrays.fill(tupledata, (byte)0);
+				insertCount++;
+				if (insertCount%100 == 0){
+					System.out.printf("Page Read and Write Counts after (%d) inserts\n",insertCount );
+					System.out.println("Disk read count: "+ pcounter.rcounter);
+					System.out.println("Disk write count: "+ pcounter.wcounter );
+					Arrays.fill(tupledata, (byte)0);
+				}
+
 			}
 			if (SystemDefs.JavabaseBM.getNumUnpinnedBuffers() != SystemDefs.JavabaseBM.getNumBuffers()) {
 				System.out.println("*** Insert left unpinned pages\n");
