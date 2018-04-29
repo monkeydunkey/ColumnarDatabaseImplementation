@@ -200,7 +200,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         cursorBMPage = bmPage;
     }
 
-    public void cursorInsert(boolean bit) throws IOException {
+    public void cursorInsert(boolean bit) throws IOException, UnpinPageException, HFBufMgrException {
         // write x number of bits to local buffer
         // when x number of bits has been exceeded local buffer, create new page and link
         cursorBuffer.add(bit);
@@ -211,7 +211,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         //       8                              1
 
         if((Math.ceil(cursorBuffer.size() / 8) + 4) == ((double) cursorBMPage.available_space())){
-            //flushCursor(); add new link then flush page
+            addLinkBMPage();
         }
 
 
@@ -252,21 +252,27 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     public void flushCursor() throws IOException, UnpinPageException {
         // write current buffer to page
         boolean[] booleans = toBooleanArray(cursorBuffer);
-        System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
-        System.out.println("inserting record into cursorBMPage: "+cursorBMPage.getCurPage()+" : "+cursorBuffer);
-        cursorBMPage.insertRecord(toBytes(toBooleanArray(cursorBuffer)));
-        System.out.println("cursorBMPage slot count: "+cursorBMPage.getSlotCnt());
+        cursorBMPage.insertRecord(toBytes(booleans));
 
-        System.out.println("inserting header page with cursorBMPage: "+cursorBMPage.curPage);
         BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
         headerPage.insertRecord(directoryRecord.getByteArray());
-        System.out.println("inserting");
-        System.out.println("header page slot count: "+ headerPage.getSlotCnt());
 
         unpinPage(cursorBMPage.getCurPage(), true);
-        System.out.println("unpinning page: "+cursorBMPage.getCurPage());
         cursorBuffer = new LinkedList<>();
         cursorValueClass = null;
+        cursorBMPage = null;
+    }
+
+    public void addLinkBMPage() throws IOException, HFBufMgrException, UnpinPageException {
+        boolean[] booleans = toBooleanArray(cursorBuffer);
+        cursorBMPage.insertRecord(toBytes(booleans));
+
+        BMHeaderPageDirectoryRecord directoryRecord = new BMHeaderPageDirectoryRecord(cursorBMPage.curPage, cursorValueClass, booleans.length);
+        headerPage.insertRecord(directoryRecord.getByteArray());
+        BMPage newBMPage = getNewBMPage();
+        cursorBMPage.setNextPage(newBMPage.curPage);
+        unpinPage(cursorBMPage.getCurPage(), true);
+        cursorBMPage = newBMPage;
     }
 
     public static BMPage getNewBMPage() throws HFBufMgrException, IOException {

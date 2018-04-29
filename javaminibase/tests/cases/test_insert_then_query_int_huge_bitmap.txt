@@ -1,0 +1,2 @@
+batchinsert ./tests/data/smalltest_bitmap_huge.txt column_db_name columnar_file_name 4
+quit
