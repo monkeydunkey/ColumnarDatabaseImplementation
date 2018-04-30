@@ -11,10 +11,7 @@ import iterator.ColumnarFileScan;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 
 interface Filetype {
     int TEMP = 0;
@@ -43,7 +40,8 @@ public class Columnarfile implements Filetype, GlobalConst {
     private int headerTupleOffset = 12;
     private RID[] headerRIDs;
     public int[] offsets; //store the offset count for each column
-
+    HashSet<Integer> posArr = new HashSet<>();
+    HashSet<String> SlotArr = new HashSet<>();
     public String getFileName() {
         return _fileName;
     }
@@ -395,13 +393,15 @@ public class Columnarfile implements Filetype, GlobalConst {
         throws Exception
     {
         int position = 0;
+        String slotPos = tid.recordIDs[numColumns + 1].pageNo.pid + ", " + tid.recordIDs[numColumns + 1].slotNo;
         if ((batchInsertToken == currBatchInsertToken) && (tid.recordIDs[numColumns + 1].pageNo.pid == currPageNo)){
-            position = ((tid.recordIDs[numColumns + 1].slotNo - 1 == currSlotno) ? currPosition : getTuplePosition(currPageNo, currSlotno)) + 1;
+            position = ((tid.recordIDs[numColumns + 1].slotNo - 1 == currSlotno) ? currPosition : getTuplePosition(currPageNo, tid.recordIDs[numColumns + 1].slotNo)) + 1;
         } else {
             position = columnFile[numColumns + 1].RidToPos(tid.recordIDs[numColumns + 1], this);
         }
         currBatchInsertToken = batchInsertToken;
         currPosition = position;
+        posArr.add(position);
         currSlotno = tid.recordIDs[numColumns + 1].slotNo;
         currPageNo = tid.recordIDs[numColumns + 1].pageNo.pid;
         return currPosition;
@@ -760,28 +760,30 @@ public class Columnarfile implements Filetype, GlobalConst {
         try {
             String indexFileName = getBitMapIndexFileName(_fileName, column);
             BitMapCreator bitMapCreator = new BitMapCreator(indexFileName, this, column, value);
-
-            do {
-                TupleScan cfs = new TupleScan(this);
-                TID emptyTID = new TID(numColumns + 2);
-                Tuple dataTuple = cfs.getNextInternal(emptyTID);
-                while (dataTuple != null) {
-                    int offset = 0;
-                    for (int i = 0; i < column; i++) {
-                        offset += (type[i].attrType == AttrType.attrString) ? offsets[i] + 2 : offsets[i];
-                    }
-                    int attrType = type[column].attrType;
-                    int tempOffset = (attrType == AttrType.attrString) ? offsets[column] + 2 : offsets[column];
-                    byte[] dataArr = new byte[tempOffset];
-                    System.arraycopy(dataTuple.getTupleByteArray(), offset, dataArr, 0, tempOffset);
-
-                    bitMapCreator.push(attrType, dataArr);
-
-                    emptyTID = new TID(numColumns + 2);
-                    dataTuple = cfs.getNextInternal(emptyTID);
+            int position = 0;
+            TupleScan cfs = new TupleScan(this);
+            TID emptyTID = new TID(numColumns + 2);
+            Tuple dataTuple = cfs.getNextInternal(emptyTID);
+            while (dataTuple != null) {
+                int offset = 0;
+                for (int i = 0; i < column; i++) {
+                    offset += (type[i].attrType == AttrType.attrString) ? offsets[i] + 2 : offsets[i];
                 }
-                bitMapCreator.checkPoint();
-            } while (bitMapCreator.hasMore());
+                int attrType = type[column].attrType;
+                int tempOffset = (attrType == AttrType.attrString) ? offsets[column] + 2 : offsets[column];
+                TID positionTID = deserializeTuple(columnFile[numColumns + 1].getRecord(emptyTID.recordIDs[numColumns + 1]).getTupleByteArray());
+                position = positionTID.position;
+                //System.out.println("The tuple postion is: " + position);
+                byte[] dataArr = new byte[tempOffset];
+                System.arraycopy(dataTuple.getTupleByteArray(), offset, dataArr, 0, tempOffset);
+
+                bitMapCreator.push(attrType, dataArr, position);
+
+                emptyTID = new TID(numColumns + 2);
+                dataTuple = cfs.getNextInternal(emptyTID);
+                //position++;
+            }
+            bitMapCreator.checkPoint();
 
             bitMapCreator.close();
             updateIndexType(column, IndexType.BitMapIndex);

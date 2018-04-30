@@ -1211,35 +1211,54 @@ public class Heapfile implements Filetype,  GlobalConst {
 	HFPage currentPage = new HFPage();
 	HFPage currentDataPage = new HFPage();;
 	PageId dirPageId = new PageId(_firstDirPageId.pid);
+	  PageId  nextDirPageId;
 	RID currentPageRid;
 	DataPageInfo dpinfo;
 	pinPage(dirPageId, currentPage, false);
-	for (currentPageRid = currentPage.firstRecord();
-	   currentPageRid != null;
-	   currentPageRid = currentPage.nextRecord(currentPageRid)) {
-	  //search all pages
-	  temp = currentPage.getRecord(currentPageRid);
-	  dpinfo = new DataPageInfo(temp);
-	  pinPage(dpinfo.pageId, currentDataPage, false/*Rddisk*/);
-	  if (dpinfo.pageId.pid == rid.pageNo.pid) {
-		  if (rid.slotNo == 0){
-			  position++;
-		  } else {
-			  RID lastRID = new RID(dpinfo.pageId, rid.slotNo - 1);
-			  TID lastEntryTID = cf.deserializeTuple(currentDataPage.getRecord(lastRID).getTupleByteArray());
-			  position =  lastEntryTID.position + 1;
-		  }
-		  unpinPage(dpinfo.pageId, false/*undirty*/);
-		  break;
-	  }
-	  else {
-		  RID lastRID = new RID(dpinfo.pageId, dpinfo.recct - 1);
-		  TID lastEntryTID = cf.deserializeTuple(currentDataPage.getRecord(lastRID).getTupleByteArray());
-		  position = lastEntryTID.position + 1;
-	  }
-	  unpinPage(dpinfo.pageId, false/*undirty*/);
+	while (dirPageId.pid != INVALID_PAGE) {
+		for (currentPageRid = currentPage.firstRecord();
+			 currentPageRid != null;
+			 currentPageRid = currentPage.nextRecord(currentPageRid)) {
+			//search all pages
+			temp = currentPage.getRecord(currentPageRid);
+			dpinfo = new DataPageInfo(temp);
+			pinPage(dpinfo.pageId, currentDataPage, false/*Rddisk*/);
+			if (dpinfo.pageId.pid == rid.pageNo.pid) {
+				if (rid.slotNo == 0) {
+					position++;
+				} else {
+					RID lastRID = new RID(dpinfo.pageId, rid.slotNo - 1);
+					TID lastEntryTID = cf.deserializeTuple(currentDataPage.getRecord(lastRID).getTupleByteArray());
+					position = lastEntryTID.position + 1;
+				}
+				unpinPage(dpinfo.pageId, false/*undirty*/);
+				break;
+			} else {
+				RID lastRID = new RID(dpinfo.pageId, dpinfo.recct - 1);
+				TID lastEntryTID = cf.deserializeTuple(currentDataPage.getRecord(lastRID).getTupleByteArray());
+				position = lastEntryTID.position;
+			}
+			unpinPage(dpinfo.pageId, false/*undirty*/);
+		}
+
+
+		nextDirPageId = currentPage.getNextPage();
+		try{
+			unpinPage(dirPageId, false);
+		}
+		catch(Exception e) {
+			throw new HFException (e, "heapfile,_find,unpinpage failed");
+		}
+
+		dirPageId.pid = nextDirPageId.pid;
+		if(dirPageId.pid != INVALID_PAGE)
+		{
+			pinPage(dirPageId, currentPage, false/*Rdisk*/);
+			if(currentPage == null)
+				throw new HFException(null, "pinPage return null page");
+		}
+
 	}
-	unpinPage(dirPageId, false);
 	return position;
   }
 
