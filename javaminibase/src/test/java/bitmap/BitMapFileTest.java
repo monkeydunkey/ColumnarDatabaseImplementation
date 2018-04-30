@@ -77,26 +77,26 @@ public class BitMapFileTest {
         System.out.println("hfpage: "+hfPage1.getSlotCnt());
     }
 
-    @Test
-    public void hugeBitMap() throws Exception {
-        new SystemDefs("tempdbname",100000,100,"Clock");
-        BitMapCreator mapCreator = new BitMapCreator("asdfasdf", null, 1, new ValueStrClass(""));
-        Random rn = new Random();
-        int min = 0;
-        int max = 5;
-
-        do{
-            for (int i = 0; i < 8000; i++) {
-                int num = rn.nextInt(max - min + 1) + min;
-                byte[] data = new byte[4];
-                Convert.setIntValue(num, 0, data);
-                mapCreator.push(AttrType.attrInteger, data);
-            }
-            mapCreator.checkPoint();
-        } while (mapCreator.hasMore());
-        mapCreator.close();
-
-        BM bm = new BM();
-//        bm.printBitMap(mapCreator.getBitMapFile().getHeaderPage());
-    }
+//    @Test
+//    public void hugeBitMap() throws Exception {
+//        new SystemDefs("tempdbname",100000,100,"Clock");
+//        BitMapCreator mapCreator = new BitMapCreator("asdfasdf", null, 1, new ValueStrClass(""));
+//        Random rn = new Random();
+//        int min = 0;
+//        int max = 5;
+//
+//        do{
+//            for (int i = 0; i < 8000; i++) {
+//                int num = rn.nextInt(max - min + 1) + min;
+//                byte[] data = new byte[4];
+//                Convert.setIntValue(num, 0, data);
+//                mapCreator.push(AttrType.attrInteger, data);
+//            }
+//            mapCreator.checkPoint();
+//        } while (mapCreator.hasMore());
+//        mapCreator.close();
+//
+//        BM bm = new BM();
+////        bm.printBitMap(mapCreator.getBitMapFile().getHeaderPage());
+//    }
 }
