@@ -263,7 +263,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
 
         System.out.println("================================================");
         System.out.println("flushing page: "+cursorBMPage.getCurPage());
-        System.out.println("writing array: "+Arrays.toString(booleans));
+        //System.out.println("writing array: "+Arrays.toString(booleans));
         System.out.println("writing array: "+booleans.length);
         System.out.println("================================================");
 
@@ -348,7 +348,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     /**
      * Flush the current buffer and begin on a new link list of pages
      */
-    public void setCursorUniqueValue(ValueClass value, String PositionEnc) throws IOException, HFBufMgrException, UnpinPageException {
+    public void setCursorUniqueValue(ValueClass value, String PositionEnc, int maxPostion) throws IOException, HFBufMgrException, UnpinPageException {
         // at this point BMPage should be pointing to the first page of that Unique value
         // update the header file to contain the unique values mapping to the link list of pages
 
@@ -364,6 +364,10 @@ public class BitMapFile extends IndexFile implements GlobalConst {
             cursorBuffer.add(true);
             currInd = presentPos + 1;
         }
+        for (int j = currInd; j <= maxPostion; j++){
+            cursorBuffer.add(false);
+        }
+        System.out.println("The bit buffer size is: " + cursorBuffer.size());
         flushCursor();
 
         /*

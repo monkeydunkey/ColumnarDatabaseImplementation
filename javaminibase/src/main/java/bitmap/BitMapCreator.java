@@ -22,6 +22,7 @@ public class BitMapCreator {
     LinkedList<Object> linkedList;
     LinkedList<Integer> typeLinkedList;
     HashMap<Object, String> hashMap;
+    int maxPosition;
 
     public BitMapCreator(String indexFileName, Columnarfile columnarfile, int column, ValueClass value) throws ConstructPageException, IOException, GetFileEntryException, AddFileEntryException {
         bitMapFile = new BitMapFile(indexFileName, columnarfile, column, value);
@@ -29,10 +30,12 @@ public class BitMapCreator {
         linkedList = new LinkedList<>();
         hashMap = new HashMap<>();
         typeLinkedList = new LinkedList<>();
+        maxPosition = 0;
     }
 
     public void push(int attrType, byte[] dataArr, int postion) throws Exception {
         KeyClass key;
+        maxPosition = (postion > maxPosition) ? postion : maxPosition;
         switch (attrType) {
             case AttrType.attrString:
                 ValueStrClass st = new ValueStrClass(dataArr);
@@ -114,11 +117,11 @@ public class BitMapCreator {
             Object current = linkedList.removeFirst();// fifo queue https://stackoverflow.com/questions/9580457/fifo-class-in-java
             Integer type = typeLinkedList.removeFirst();
             if (AttrType.attrString == type){
-                System.out.println("The encoding is:" + hashMap.get( ((ValueStrClass)current).value ));
-                bitMapFile.setCursorUniqueValue((ValueClass)current, hashMap.get(((ValueStrClass)current).value));
+                System.out.println("The encoding is:" + hashMap.get( ((ValueStrClass)current).value ) + " max Value: " + maxPosition);
+                bitMapFile.setCursorUniqueValue((ValueClass)current, hashMap.get(((ValueStrClass)current).value), maxPosition);
             } else {
-                System.out.println("The encoding is:" + hashMap.get( ((ValueIntClass)current).value ));
-                bitMapFile.setCursorUniqueValue((ValueClass)current, hashMap.get(((ValueIntClass)current).value));
+                System.out.println("The encoding is:" + hashMap.get( ((ValueIntClass)current).value ) + " max Value: " + maxPosition);
+                bitMapFile.setCursorUniqueValue((ValueClass)current, hashMap.get(((ValueIntClass)current).value), maxPosition);
             }
 
         }
