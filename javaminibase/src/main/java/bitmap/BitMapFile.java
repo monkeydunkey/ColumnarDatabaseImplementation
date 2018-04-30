@@ -255,9 +255,7 @@ public class BitMapFile extends IndexFile implements GlobalConst {
 
     public void flushCursor() throws IOException, UnpinPageException {
         // write current buffer to page
-        boolean[] booleans = toBooleanArray(cursorBuffer);
-        RID rid = cursorBMPage.insertRecord(toBytes(booleans));
-        errorCheckInsert(rid);
+        boolean[] booleans = convertBufferAndWriteToBMPage();
 
         addDirectoryPage(booleans);//todo only add directory page if this is the first BMPage for this vector
 
@@ -274,12 +272,9 @@ public class BitMapFile extends IndexFile implements GlobalConst {
     }
 
     public void addLinkBMPage() throws IOException, HFBufMgrException, UnpinPageException {
-        boolean[] booleans = toBooleanArray(cursorBuffer);
-        RID rid = cursorBMPage.insertRecord(toBytes(booleans));
-        errorCheckInsert(rid);
+        boolean[] booleans = convertBufferAndWriteToBMPage();
 
         BMHeaderPageDirectoryRecord directoryRecord = addDirectoryPage(booleans);
-
 
         BMPage newBMPage = getNewBMPage();
         cursorBMPage.setNextPage(newBMPage.curPage);
@@ -293,6 +288,43 @@ public class BitMapFile extends IndexFile implements GlobalConst {
         unpinPage(cursorBMPage.getCurPage(), true);
         cursorBuffer = new LinkedList<>();
         cursorBMPage = newBMPage;
+    }
+
+    private boolean[] convertBufferAndWriteToBMPage() throws IOException {
+        boolean[] booleans = toBooleanArray(cursorBuffer);
+        byte[] bytes = toBytes(booleans);
+        writeToBMPage(booleans, bytes);
+        return booleans;
+    }
+
+    /**
+     *         // bmpage records:
+     *         //bmPage.getRecord(new RID(pageno, 0)); == true/false flag is the entire byte array false? size 0
+     *         //record = bmPage.getRecord(new RID(pageno, 1)); == size of the array on this page
+     *         //record = bmPage.getRecord(new RID(pageno, 2)); == the array of bytes
+     * @param booleans
+     * @param bitMapBytes
+     * @throws IOException
+     */
+    private void writeToBMPage(boolean[] booleans, byte[] bitMapBytes) throws IOException {
+        // are all booleans false
+        boolean allBoolsAreFalse = allBoolsAreFalse(booleans);
+        byte[] arraySizeByteArray = new byte[4];
+        Convert.setIntValue(booleans.length,0,arraySizeByteArray);
+
+        errorCheckInsert(cursorBMPage.insertRecord(new byte[]{ (byte) (allBoolsAreFalse ? 1 : 0) }));
+        errorCheckInsert(cursorBMPage.insertRecord(arraySizeByteArray));
+        errorCheckInsert(cursorBMPage.insertRecord(bitMapBytes));
+    }
+
+    private boolean allBoolsAreFalse(boolean[] booleans){
+        boolean allBoolsAreFalse = true;
+        for (boolean aBoolean : booleans) {
+            if(aBoolean){
+                allBoolsAreFalse = false;
+            }
+        }
+        return  allBoolsAreFalse;
     }
 
     private void errorCheckInsert(RID rid) {

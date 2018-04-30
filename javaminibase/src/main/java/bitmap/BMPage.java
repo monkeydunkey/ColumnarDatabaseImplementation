@@ -268,6 +268,13 @@ public class BMPage extends Page
     public void setSlot(int slotno, int length, int offset)
             throws IOException {
         int position = DPFIXED + slotno * SIZE_OF_SLOT;
+
+        System.out.println("=======================");
+        System.out.println("postition: "+position);
+        System.out.println("length: "+length);
+        System.out.println("offset: "+offset);
+
+
         Convert.setShortValue((short) length, position, data);
         Convert.setShortValue((short) offset, position + 2, data);
     }

@@ -46,6 +46,7 @@ public class BM {
             throw new RuntimeException("THERE SHOULD BE DATA HERE");
         }
         Tuple record = null;
+        System.out.println("pagenum: "+pageno);
         try {
             record = bmPage.getRecord(new RID(pageno, 0));
         } catch (InvalidSlotNumberException e) {

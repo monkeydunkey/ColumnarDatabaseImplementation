@@ -99,4 +99,20 @@ public class BitMapFileTest {
         BM bm = new BM();
 //        bm.printBitMap(mapCreator.getBitMapFile().getHeaderPage());
     }
+
+    @Test
+    public void booleanByteConversion(){
+        byte a = (byte) 0;
+        byte b = (byte) 1;
+        System.out.println("b:"+b);
+        System.out.println("a:"+a);
+
+        int a1 = a;
+        int b1 = b;
+
+        System.out.println("a1:"+a1);
+        System.out.println("b1:"+b1);
+
+
+    }
 }
